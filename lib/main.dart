@@ -60,7 +60,7 @@ class RoozStoreApp extends ConsumerWidget {
         Locale('ar', 'SA'),
         Locale('en', 'US'),
       ],
-      localizationsDelegates: const [
+      localizationsDelegates: [
         GlobalMaterialLocalizations.delegate,
         GlobalWidgetsLocalizations.delegate,
         GlobalCupertinoLocalizations.delegate,
