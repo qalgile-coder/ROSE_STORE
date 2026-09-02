@@ -43,7 +43,7 @@ class RoozStoreApp extends ConsumerWidget {
     final userModel = ref.watch(userModelProvider);
     
     ThemeMode activeThemeMode = settings.themeMode;
-    final user = userModel.asData?.value;
+    final user = userModel.valueOrNull;
     
     if (user != null && user.role != UserRole.customer) {
       activeThemeMode = ThemeMode.dark;
@@ -60,7 +60,7 @@ class RoozStoreApp extends ConsumerWidget {
         Locale('ar', 'SA'),
         Locale('en', 'US'),
       ],
-      localizationsDelegates: [
+      localizationsDelegates: const [
         GlobalMaterialLocalizations.delegate,
         GlobalWidgetsLocalizations.delegate,
         GlobalCupertinoLocalizations.delegate,

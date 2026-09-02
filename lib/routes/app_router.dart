@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+
 import '../core/providers.dart';
 import '../models/user_model.dart';
 import '../screens/splash_screen.dart';
@@ -99,63 +101,59 @@ final routerProvider = Provider<GoRouter>((ref) {
       final authState = ref.read(authStateProvider);
       final userModel = ref.read(userModelProvider);
       final splashWait = ref.read(splashDurationProvider);
-      final settings = ref.read(systemSettingsProvider).asData?.value;
+      final settings = ref.read(systemSettingsProvider).valueOrNull;
 
-      final loggingIn = state.matchedLocation == '/login' || 
-                         state.matchedLocation == '/welcome' || 
-                         state.matchedLocation == '/signup';
+      final loggingIn = state.matchedLocation == '/login' ||
+          state.matchedLocation == '/welcome' ||
+          state.matchedLocation == '/signup';
 
-      // 1. Maintenance Mode Logic (Super Admin bypasses this)
       if (settings?.maintenanceMode == true) {
-        final isSuperAdmin = userModel.asData?.value?.role == UserRole.superAdmin;
+        final isSuperAdmin = userModel.valueOrNull?.role == UserRole.superAdmin;
         if (!isSuperAdmin && state.matchedLocation != '/maintenance') {
           return '/maintenance';
         }
       }
 
-      // 2. Splash Duration logic
       if (splashWait.isLoading) return null;
-
-      // 2. Auth Loading logic
       if (authState.isLoading) return null;
 
-      final user = authState.asData?.value;
-      
-      // 3. Not Logged In logic
+      final user = authState.valueOrNull;
+
       if (user == null) {
         return loggingIn ? null : '/welcome';
       }
 
-      // 4. Logged In logic (Check Profile)
       if (userModel.isLoading) return null;
 
-      final model = userModel.asData?.value;
-      
-      // 5. Handle Error/Missing Profile
+      final model = userModel.valueOrNull;
+
       if (userModel.hasError || model == null) {
-        // If we have an error, we check if we were already logged in and just had a blip
-        // But if it's the first load, we might need to go to welcome
         if (loggingIn || state.matchedLocation == '/') return null;
-        
-        // If the user was already on a dashboard, don't kick them out immediately on a timeout
         if (userModel.hasError && userModel.error is! Exception) return null;
-        
         return '/welcome';
       }
 
-      // 6. Role-based Dashboard Redirection
       final isPublicScreen = loggingIn || state.matchedLocation == '/' || state.matchedLocation == '/welcome';
-      
+
       if (isPublicScreen) {
         String target = '/welcome';
         switch (model.role) {
-          case UserRole.superAdmin: target = '/admin'; break;
-          case UserRole.vendor: target = '/vendor'; break;
-          case UserRole.customer: target = '/customer'; break;
-          case UserRole.rider: target = '/rider'; break;
-          default: target = '/welcome';
+          case UserRole.superAdmin:
+            target = '/admin';
+            break;
+          case UserRole.vendor:
+            target = '/vendor';
+            break;
+          case UserRole.customer:
+            target = '/customer';
+            break;
+          case UserRole.rider:
+            target = '/rider';
+            break;
+          default:
+            target = '/welcome';
         }
-        
+
         if (state.matchedLocation != target) {
           return target;
         }
@@ -167,17 +165,17 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(path: '/', builder: (context, state) => const SplashScreen()),
       GoRoute(path: '/developer-profile', builder: (context, state) => const DeveloperProfileScreen()),
       GoRoute(
-        path: '/maintenance', 
+        path: '/maintenance',
         builder: (context, state) => Scaffold(
           body: Center(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Icon(Icons.settings_suggest_rounded, size: 80, color: Color(0xFFC9A27E)),
-                const SizedBox(height: 24),
-                const Text('Zen Mart Pro', style: TextStyle(fontSize: 24, fontWeight: FontWeight.w900)),
-                const SizedBox(height: 12),
-                const Padding(
+              children: const [
+                Icon(Icons.settings_suggest_rounded, size: 80, color: Color(0xFFC9A27E)),
+                SizedBox(height: 24),
+                Text('ROOZ Store', style: TextStyle(fontSize: 24, fontWeight: FontWeight.w900)),
+                SizedBox(height: 12),
+                Padding(
                   padding: EdgeInsets.symmetric(horizontal: 48),
                   child: Text(
                     'We are currently performing scheduled maintenance to improve your experience. Please check back shortly.',
@@ -203,20 +201,34 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(path: '/admin/shops', builder: (context, state) => const ShopManagementScreen()),
       GoRoute(path: '/admin/categories', builder: (context, state) => const CategoryManagementScreen()),
       GoRoute(path: '/admin/coupons', builder: (context, state) => const admin.CouponManagementScreen()),
-      GoRoute(path: '/admin/users', builder: (context, state) => UserManagementScreen(initialTab: int.tryParse(state.uri.queryParameters['tab'] ?? '0') ?? 0)),
-      GoRoute(path: '/admin/riders', builder: (context, state) => Scaffold(
-        appBar: AppBar(title: const Text('Rider Management', style: TextStyle(fontWeight: FontWeight.w900)), centerTitle: true),
-        body: const RiderManagementScreen(),
-      )),
+      GoRoute(
+        path: '/admin/users',
+        builder: (context, state) => UserManagementScreen(
+          initialTab: int.tryParse(state.uri.queryParameters['tab'] ?? '0') ?? 0,
+        ),
+      ),
+      GoRoute(
+        path: '/admin/riders',
+        builder: (context, state) => Scaffold(
+          appBar: AppBar(title: const Text('Rider Management', style: TextStyle(fontWeight: FontWeight.w900)), centerTitle: true),
+          body: const RiderManagementScreen(),
+        ),
+      ),
       GoRoute(path: '/admin/pending-orders', builder: (context, state) => const PendingOrdersScreen()),
-      GoRoute(path: '/admin/customers', builder: (context, state) => Scaffold(
-        appBar: AppBar(title: const Text('Customer Management', style: TextStyle(fontWeight: FontWeight.w900)), centerTitle: true),
-        body: const CustomerManagementScreen(),
-      )),
-      GoRoute(path: '/admin/vendors', builder: (context, state) => Scaffold(
-        appBar: AppBar(title: const Text('Vendor Management', style: TextStyle(fontWeight: FontWeight.w900)), centerTitle: true),
-        body: const VendorManagementScreen(),
-      )),
+      GoRoute(
+        path: '/admin/customers',
+        builder: (context, state) => Scaffold(
+          appBar: AppBar(title: const Text('Customer Management', style: TextStyle(fontWeight: FontWeight.w900)), centerTitle: true),
+          body: const CustomerManagementScreen(),
+        ),
+      ),
+      GoRoute(
+        path: '/admin/vendors',
+        builder: (context, state) => Scaffold(
+          appBar: AppBar(title: const Text('Vendor Management', style: TextStyle(fontWeight: FontWeight.w900)), centerTitle: true),
+          body: const VendorManagementScreen(),
+        ),
+      ),
       GoRoute(path: '/admin/approvals', builder: (context, state) => const ApprovalCenterScreen()),
       GoRoute(path: '/admin/payouts', builder: (context, state) => const PayoutManagementScreen()),
       GoRoute(path: '/admin/system', builder: (context, state) => const SystemSettingsScreen()),
@@ -249,7 +261,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(path: '/vendor/edit-shop', builder: (context, state) => const EditShopScreen()),
       GoRoute(path: '/vendor/analytics', builder: (context, state) => const VendorSalesAnalyticsScreen()),
       GoRoute(path: '/vendor/orders', builder: (context, state) => const VendorOrdersScreen()),
-      GoRoute(path: '/vendor/order-details/:id', builder: (context, state) => VendorOrderDetailsScreen(orderId: state.pathParameters['id']!)),
+      GoRoute(
+        path: '/vendor/order-details/:id',
+        builder: (context, state) => VendorOrderDetailsScreen(orderId: state.pathParameters['id']!),
+      ),
       GoRoute(path: '/vendor/products', builder: (context, state) => const ProductManagementScreen()),
       GoRoute(path: '/vendor/low-stock', builder: (context, state) => const LowStockScreen()),
       GoRoute(path: '/vendor/reviews', builder: (context, state) => const VendorReviewsScreen()),
@@ -263,43 +278,41 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(path: '/customer/cart', builder: (context, state) => const CartScreen()),
       GoRoute(path: '/customer/checkout', builder: (context, state) => const CheckoutScreen()),
       GoRoute(path: '/customer/orders', builder: (context, state) => const CustomerOrdersScreen()),
-      GoRoute(path: '/customer/order-details/:id', builder: (context, state) => CustomerOrderDetailsScreen(orderId: state.pathParameters['id']!)),
-      GoRoute(path: '/customer/order-success/:id', builder: (context, state) => OrderSuccessScreen(orderId: state.pathParameters['id']!)),
+      GoRoute(
+        path: '/customer/order-details/:id',
+        builder: (context, state) => CustomerOrderDetailsScreen(orderId: state.pathParameters['id']!),
+      ),
+      GoRoute(
+        path: '/customer/order-success/:id',
+        builder: (context, state) => OrderSuccessScreen(orderId: state.pathParameters['id']!),
+      ),
       GoRoute(path: '/customer/featured-shops', builder: (context, state) => const FeaturedShopsScreen()),
       GoRoute(path: '/customer/nearby-shops', builder: (context, state) => const NearbyShopsScreen()),
       GoRoute(path: '/customer/trending-products', builder: (context, state) => const TrendingProductsScreen()),
-      GoRoute(path: '/customer/category/:name', builder: (context, state) => CategoryShopsScreen(category: state.pathParameters['name']!)),
+      GoRoute(
+        path: '/customer/category/:name',
+        builder: (context, state) => CategoryShopsScreen(category: state.pathParameters['name']!),
+      ),
       GoRoute(path: '/customer/offer', builder: (context, state) => OfferDetailsScreen(offer: state.extra as OfferModel)),
       GoRoute(path: '/customer/product', builder: (context, state) => ProductDetailsScreen(product: state.extra as ProductModel)),
       GoRoute(
-        path: '/customer/product-reviews/:id/:name', 
+        path: '/customer/product-reviews/:id/:name',
         builder: (context, state) => ProductReviewsScreen(
           productId: state.pathParameters['id']!,
           productName: state.pathParameters['name']!,
-        )
+        ),
       ),
       GoRoute(path: '/customer/shop/:id', builder: (context, state) => ShopDetailScreen(shopId: state.pathParameters['id']!)),
       GoRoute(path: '/customer/notifications', builder: (context, state) => const CustomerNotificationsScreen()),
       GoRoute(
         path: '/product/:id',
-        builder: (context, state) {
-          final id = state.pathParameters['id']!;
-          return FutureBuilder(
-            future: FirebaseFirestore.instance.collection('products').doc(id).get(),
-            builder: (context, snapshot) {
-              if (snapshot.connectionState == ConnectionState.waiting) {
-                return const Scaffold(body: Center(child: CircularProgressIndicator()));
-              }
-              if (snapshot.hasData && snapshot.data!.exists) {
-                return ProductDetailsScreen(product: ProductModel.fromFirestore(snapshot.data!));
-              }
-              return const Scaffold(body: Center(child: Text('Product not found')));
-            },
-          );
-        },
+        builder: (context, state) => ProductRouteWidget(productId: state.pathParameters['id']!),
       ),
       GoRoute(path: '/rider', builder: (context, state) => const RiderDashboard()),
-      GoRoute(path: '/rider/order-details/:id', builder: (context, state) => OrderDetailsScreen(orderId: state.pathParameters['id']!)),
+      GoRoute(
+        path: '/rider/order-details/:id',
+        builder: (context, state) => OrderDetailsScreen(orderId: state.pathParameters['id']!),
+      ),
       GoRoute(path: '/rider/active-tasks', builder: (context, state) => const ActiveTasksScreen()),
       GoRoute(path: '/rider/performance', builder: (context, state) => const PerformanceDetailsScreen()),
       GoRoute(path: '/rider/reviews', builder: (context, state) => const RiderReviewsScreen()),
@@ -312,11 +325,23 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(path: '/rider/alerts', builder: (context, state) => const AlertsScreen()),
       GoRoute(path: '/rider/documents', builder: (context, state) => const DocumentsScreen()),
       GoRoute(path: '/support', builder: (context, state) => const SupportHubScreen()),
-      GoRoute(path: '/support/create-ticket', builder: (context, state) => CreateTicketScreen(initialCategory: state.extra as String?)),
-      GoRoute(path: '/support/ticket-chat/:id', builder: (context, state) => TicketChatScreen(ticketId: state.pathParameters['id']!)),
-      GoRoute(path: '/support/live-chat/:id', builder: (context, state) => LiveChatScreen(chatId: state.pathParameters['id']!)),
+      GoRoute(
+        path: '/support/create-ticket',
+        builder: (context, state) => CreateTicketScreen(initialCategory: state.extra as String?),
+      ),
+      GoRoute(
+        path: '/support/ticket-chat/:id',
+        builder: (context, state) => TicketChatScreen(ticketId: state.pathParameters['id']!),
+      ),
+      GoRoute(
+        path: '/support/live-chat/:id',
+        builder: (context, state) => LiveChatScreen(chatId: state.pathParameters['id']!),
+      ),
       GoRoute(path: '/support/emergency', builder: (context, state) => const EmergencyReportScreen()),
-      GoRoute(path: '/support/emergency-details/:id', builder: (context, state) => EmergencyDetailsScreen(reportId: state.pathParameters['id']!)),
+      GoRoute(
+        path: '/support/emergency-details/:id',
+        builder: (context, state) => EmergencyDetailsScreen(reportId: state.pathParameters['id']!),
+      ),
       GoRoute(path: '/support/tickets', builder: (context, state) => const MyTicketsScreen()),
       GoRoute(
         path: '/chat/:orderId/:name',
@@ -328,6 +353,31 @@ final routerProvider = Provider<GoRouter>((ref) {
     ],
   );
 });
+
+class ProductRouteWidget extends StatelessWidget {
+  final String productId;
+
+  const ProductRouteWidget({super.key, required this.productId});
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder<DocumentSnapshot<Map<String, dynamic>>>(
+      future: FirebaseFirestore.instance.collection('products').doc(productId).get(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Scaffold(body: Center(child: CircularProgressIndicator()));
+        }
+        if (snapshot.hasData && snapshot.data != null && snapshot.data!.exists) {
+          final data = snapshot.data!.data();
+          if (data != null) {
+            return ProductDetailsScreen(product: ProductModel.fromFirestore(snapshot.data!));
+          }
+        }
+        return const Scaffold(body: Center(child: Text('Product not found')));
+      },
+    );
+  }
+}
 
 class RouterRefreshNotifier extends ChangeNotifier {
   final Ref _ref;

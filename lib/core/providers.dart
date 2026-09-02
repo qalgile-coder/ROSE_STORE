@@ -48,7 +48,9 @@ final emergencyServiceProvider = Provider((ref) => EmergencyService(ref.read(not
 final notificationServiceProvider = Provider((ref) => NotificationService());
 
 final connectivityProvider = StreamProvider<ConnectivityResult>((ref) {
-  return Connectivity().onConnectivityChanged.map((results) => results.first);
+  return Connectivity().onConnectivityChanged.map((results) => 
+    results.isNotEmpty ? results.first : ConnectivityResult.none
+  );
 });
 
 final splashDurationProvider = FutureProvider<void>((ref) async {
@@ -64,11 +66,11 @@ final authStateProvider = StreamProvider((ref) {
 final userModelProvider = StreamProvider<UserModel?>((ref) async* {
   final authState = ref.watch(authStateProvider);
   
-  if (authState.isLoading) {
-    return; // Keep current state while auth is loading
+  if (authState.isLoading && !authState.hasValue) {
+    return; // Keep current state while auth is loading initially
   }
 
-  final user = authState.asData?.value;
+  final user = authState.valueOrNull;
   
   if (user == null) {
     yield null;
@@ -91,68 +93,68 @@ final userModelProvider = StreamProvider<UserModel?>((ref) async* {
 
 // --- RIDER PROVIDERS ---
 final availableOrdersProvider = StreamProvider<List<OrderModel>>((ref) {
-  final user = ref.watch(userModelProvider).asData?.value;
+  final user = ref.watch(userModelProvider).valueOrNull;
   if (user == null || user.role != UserRole.rider) return Stream.value([]);
   return ref.watch(riderServiceProvider).getAvailableOrders(user.uid);
 });
 
 final activeRiderOrdersProvider = StreamProvider<List<OrderModel>>((ref) {
-  final user = ref.watch(userModelProvider).asData?.value;
+  final user = ref.watch(userModelProvider).valueOrNull;
   if (user == null || user.role != UserRole.rider) return Stream.value([]);
   return ref.watch(riderServiceProvider).getActiveRiderOrders(user.uid);
 });
 
 final riderHistoryProvider = StreamProvider<List<OrderModel>>((ref) {
-  final user = ref.watch(userModelProvider).asData?.value;
+  final user = ref.watch(userModelProvider).valueOrNull;
   if (user == null || user.role != UserRole.rider) return Stream.value([]);
   return ref.watch(riderServiceProvider).getRiderHistory(user.uid);
 });
 
 final todayRiderHistoryProvider = StreamProvider<List<OrderModel>>((ref) {
-  final user = ref.watch(userModelProvider).asData?.value;
+  final user = ref.watch(userModelProvider).valueOrNull;
   if (user == null || user.role != UserRole.rider) return Stream.value([]);
   return ref.watch(riderServiceProvider).getTodayRiderHistory(user.uid);
 });
 
 final riderNotificationsProvider = StreamProvider<List<RiderNotificationModel>>((ref) {
-  final user = ref.watch(userModelProvider).asData?.value;
+  final user = ref.watch(userModelProvider).valueOrNull;
   if (user == null || user.role != UserRole.rider) return Stream.value([]);
   return ref.watch(riderServiceProvider).getNotifications(user.uid);
 });
 
 final riderReviewsProvider = StreamProvider<List<ReviewModel>>((ref) {
-  final user = ref.watch(userModelProvider).asData?.value;
+  final user = ref.watch(userModelProvider).valueOrNull;
   if (user == null || user.role != UserRole.rider) return Stream.value([]);
   return ref.watch(riderServiceProvider).getRiderReviews(user.uid);
 });
 
 final riderPayoutHistoryProvider = StreamProvider<List<PayoutModel>>((ref) {
-  final user = ref.watch(userModelProvider).asData?.value;
+  final user = ref.watch(userModelProvider).valueOrNull;
   if (user == null || user.role != UserRole.rider) return Stream.value([]);
   return ref.watch(riderServiceProvider).getPayoutHistory(user.uid);
 });
 
 // --- VENDOR PROVIDERS ---
 final shopProductsProvider = StreamProvider<List<ProductModel>>((ref) {
-  final user = ref.watch(userModelProvider).asData?.value;
+  final user = ref.watch(userModelProvider).valueOrNull;
   if (user == null || user.role != UserRole.vendor || user.shopId == null) return Stream.value([]);
   return ref.watch(vendorServiceProvider).getShopProducts(user.shopId!);
 });
 
 final currentShopProvider = StreamProvider<ShopModel?>((ref) {
-  final user = ref.watch(userModelProvider).asData?.value;
+  final user = ref.watch(userModelProvider).valueOrNull;
   if (user == null || user.role != UserRole.vendor || user.shopId == null) return Stream.value(null);
   return ref.watch(vendorServiceProvider).getShopData(user.shopId!);
 });
 
 final lowStockProductsProvider = StreamProvider<List<ProductModel>>((ref) {
-  final user = ref.watch(userModelProvider).asData?.value;
+  final user = ref.watch(userModelProvider).valueOrNull;
   if (user == null || user.role != UserRole.vendor || user.shopId == null) return Stream.value([]);
   return ref.watch(vendorServiceProvider).getLowStockProducts(user.shopId!);
 });
 
 final shopReviewsProvider = StreamProvider<List<ReviewModel>>((ref) {
-  final user = ref.watch(userModelProvider).asData?.value;
+  final user = ref.watch(userModelProvider).valueOrNull;
   if (user == null || user.role != UserRole.vendor || user.shopId == null) return Stream.value([]);
   return ref.watch(vendorServiceProvider).getShopReviews(user.shopId!);
 });
@@ -166,25 +168,25 @@ final productReviewsProvider = StreamProvider.family<List<ReviewModel>, String>(
 });
 
 final incomingOrdersProvider = StreamProvider<List<OrderModel>>((ref) {
-  final user = ref.watch(userModelProvider).asData?.value;
+  final user = ref.watch(userModelProvider).valueOrNull;
   if (user == null || user.role != UserRole.vendor || user.shopId == null) return Stream.value([]);
   return ref.watch(vendorServiceProvider).getIncomingOrders(user.shopId!);
 });
 
 final allShopOrdersProvider = StreamProvider<List<OrderModel>>((ref) {
-  final user = ref.watch(userModelProvider).asData?.value;
+  final user = ref.watch(userModelProvider).valueOrNull;
   if (user == null || user.role != UserRole.vendor || user.shopId == null) return Stream.value([]);
   return ref.watch(vendorServiceProvider).getAllShopOrders(user.shopId!);
 });
 
 final shopCouponsProvider = StreamProvider<List<CouponModel>>((ref) {
-  final user = ref.watch(userModelProvider).asData?.value;
+  final user = ref.watch(userModelProvider).valueOrNull;
   if (user == null || user.role != UserRole.vendor || user.shopId == null) return Stream.value([]);
   return ref.watch(vendorServiceProvider).getShopCoupons(user.shopId!);
 });
 
 final vendorNotificationsProvider = StreamProvider<List<VendorNotificationModel>>((ref) {
-  final user = ref.watch(userModelProvider).asData?.value;
+  final user = ref.watch(userModelProvider).valueOrNull;
   if (user == null || user.role != UserRole.vendor) return Stream.value([]);
   return ref.watch(vendorServiceProvider).getNotifications(user.uid);
 });
@@ -193,13 +195,13 @@ final vendorActiveOrderTabProvider = StateProvider<int>((ref) => 0);
 
 // --- CUSTOMER PROVIDERS ---
 final customerAddressesProvider = StreamProvider<List<AddressModel>>((ref) {
-  final user = ref.watch(userModelProvider).asData?.value;
+  final user = ref.watch(userModelProvider).valueOrNull;
   if (user == null || user.role != UserRole.customer) return Stream.value([]);
   return ref.watch(customerServiceProvider).getSavedAddresses(user.uid);
 });
 
 final defaultAddressProvider = Provider<AddressModel?>((ref) {
-  final addresses = ref.watch(customerAddressesProvider).asData?.value ?? [];
+  final addresses = ref.watch(customerAddressesProvider).valueOrNull ?? [];
   try {
     return addresses.firstWhere((a) => a.isDefault);
   } catch (_) {
@@ -208,13 +210,13 @@ final defaultAddressProvider = Provider<AddressModel?>((ref) {
 });
 
 final customerOrdersProvider = StreamProvider<List<OrderModel>>((ref) {
-  final user = ref.watch(userModelProvider).asData?.value;
+  final user = ref.watch(userModelProvider).valueOrNull;
   if (user == null || user.role != UserRole.customer) return Stream.value([]);
   return ref.watch(customerServiceProvider).getCustomerOrders(user.uid);
 });
 
 final customerWishlistProvider = StreamProvider<List<ProductModel>>((ref) {
-  final user = ref.watch(userModelProvider).asData?.value;
+  final user = ref.watch(userModelProvider).valueOrNull;
   if (user == null || user.role != UserRole.customer) return Stream.value([]);
   return FirebaseFirestore.instance
       .collection('users')
@@ -230,12 +232,9 @@ final activeOffersProvider = StreamProvider<List<OfferModel>>((ref) {
 
 final featuredShopsProvider = StreamProvider<List<ShopModel>>((ref) {
   return ref.watch(customerServiceProvider).getNearbyShops().map((shops) {
-    // 1. First, try to get shops explicitly marked as featured
     final featured = shops.where((s) => s.isFeatured).toList();
     if (featured.isNotEmpty) return featured;
     
-    // 2. Fallback: Show top-rated shops if no featured shops are set
-    // This ensures the "Featured" section is never empty in a live app
     final sorted = List<ShopModel>.from(shops);
     sorted.sort((a, b) => b.rating.compareTo(a.rating));
     return sorted.take(5).toList();
@@ -243,7 +242,7 @@ final featuredShopsProvider = StreamProvider<List<ShopModel>>((ref) {
 });
 
 final nearbyShopsProvider = StreamProvider<List<ShopModel>>((ref) {
-  final connectivity = ref.watch(connectivityProvider).asData?.value;
+  final connectivity = ref.watch(connectivityProvider).valueOrNull;
   final isOffline = connectivity == ConnectivityResult.none;
 
   if (isOffline) {
@@ -257,7 +256,7 @@ final nearbyShopsProvider = StreamProvider<List<ShopModel>>((ref) {
 });
 
 final trendingProductsProvider = StreamProvider<List<ProductModel>>((ref) {
-  final connectivity = ref.watch(connectivityProvider).asData?.value;
+  final connectivity = ref.watch(connectivityProvider).valueOrNull;
   final isOffline = connectivity == ConnectivityResult.none;
 
   if (isOffline) {
@@ -270,7 +269,6 @@ final trendingProductsProvider = StreamProvider<List<ProductModel>>((ref) {
       .snapshots()
       .map((s) {
         final products = s.docs.map((doc) => ProductModel.fromFirestore(doc)).toList();
-        // Professional Trending: Sort by orderCount or rating in memory to avoid index errors for now
         products.sort((a, b) => b.orderCount.compareTo(a.orderCount));
         
         final topProducts = products.take(10).toList();
@@ -320,55 +318,55 @@ final offerProductsProvider = StreamProvider.family<List<ProductModel>, List<Str
 
 // --- ADMIN PROVIDERS ---
 final adminNotificationsProvider = StreamProvider<List<NotificationModel>>((ref) {
-  final user = ref.watch(userModelProvider).asData?.value;
+  final user = ref.watch(userModelProvider).valueOrNull;
   if (user == null || user.role != UserRole.superAdmin) return Stream.value([]);
   return ref.watch(adminServiceProvider).getNotifications();
 });
 
 final allShopsProvider = StreamProvider<List<ShopModel>>((ref) {
-  final user = ref.watch(userModelProvider).asData?.value;
+  final user = ref.watch(userModelProvider).valueOrNull;
   if (user == null || user.role != UserRole.superAdmin) return Stream.value([]);
   return ref.watch(adminServiceProvider).getAllShops();
 });
 
 final allRidersProvider = StreamProvider<List<UserModel>>((ref) {
-  final user = ref.watch(userModelProvider).asData?.value;
+  final user = ref.watch(userModelProvider).valueOrNull;
   if (user == null || user.role != UserRole.superAdmin) return Stream.value([]);
   return ref.watch(adminServiceProvider).getAllRiders();
 });
 
 final allPendingOrdersProvider = StreamProvider<List<OrderModel>>((ref) {
-  final user = ref.watch(userModelProvider).asData?.value;
+  final user = ref.watch(userModelProvider).valueOrNull;
   if (user == null || user.role != UserRole.superAdmin) return Stream.value([]);
   return ref.watch(adminServiceProvider).getPendingOrders();
 });
 
 final allOrdersProvider = StreamProvider<List<OrderModel>>((ref) {
-  final user = ref.watch(userModelProvider).asData?.value;
+  final user = ref.watch(userModelProvider).valueOrNull;
   if (user == null || user.role != UserRole.superAdmin) return Stream.value([]);
   return ref.watch(adminServiceProvider).getAllOrders();
 });
 
 final allCustomersProvider = StreamProvider<List<UserModel>>((ref) {
-  final user = ref.watch(userModelProvider).asData?.value;
+  final user = ref.watch(userModelProvider).valueOrNull;
   if (user == null || user.role != UserRole.superAdmin) return Stream.value([]);
   return ref.watch(adminServiceProvider).getAllCustomers();
 });
 
 final allVendorsProvider = StreamProvider<List<UserModel>>((ref) {
-  final user = ref.watch(userModelProvider).asData?.value;
+  final user = ref.watch(userModelProvider).valueOrNull;
   if (user == null || user.role != UserRole.superAdmin) return Stream.value([]);
   return ref.watch(adminServiceProvider).getAllVendors();
 });
 
 final pendingApprovalsProvider = StreamProvider<List<ApprovalModel>>((ref) {
-  final user = ref.watch(userModelProvider).asData?.value;
+  final user = ref.watch(userModelProvider).valueOrNull;
   if (user == null || user.role != UserRole.superAdmin) return Stream.value([]);
   return ref.watch(adminServiceProvider).getPendingApprovals();
 });
 
 final payoutRequestsProvider = StreamProvider<List<PayoutModel>>((ref) {
-  final user = ref.watch(userModelProvider).asData?.value;
+  final user = ref.watch(userModelProvider).valueOrNull;
   if (user == null || user.role != UserRole.superAdmin) return Stream.value([]);
   return ref.watch(adminServiceProvider).getPayoutRequests();
 });
@@ -378,13 +376,13 @@ final allCategoriesStreamProvider = StreamProvider<List<CategoryModel>>((ref) {
 });
 
 final allOffersProvider = StreamProvider<List<OfferModel>>((ref) {
-  final user = ref.watch(userModelProvider).asData?.value;
+  final user = ref.watch(userModelProvider).valueOrNull;
   if (user == null || user.role != UserRole.superAdmin) return Stream.value([]);
   return ref.watch(adminServiceProvider).getAllOffers();
 });
 
 final activityLogsProvider = StreamProvider.family<List<ActivityModel>, DateTime?>((ref, start) {
-  final user = ref.watch(userModelProvider).asData?.value;
+  final user = ref.watch(userModelProvider).valueOrNull;
   if (user == null || user.role != UserRole.superAdmin) return Stream.value([]);
   return ref.watch(adminServiceProvider).getActivityLogs(start: start);
 });
@@ -399,13 +397,13 @@ final globalCouponsProvider = StreamProvider<List<CouponModel>>((ref) {
 
 // Admin Stats Providers
 final totalShopsCountProvider = StreamProvider<int>((ref) {
-  final user = ref.watch(userModelProvider).asData?.value;
+  final user = ref.watch(userModelProvider).valueOrNull;
   if (user == null || user.role != UserRole.superAdmin) return Stream.value(0);
   return FirebaseFirestore.instance.collection('shops').snapshots().map((s) => s.docs.length);
 });
 
 final totalRidersCountProvider = StreamProvider<int>((ref) {
-  final user = ref.watch(userModelProvider).asData?.value;
+  final user = ref.watch(userModelProvider).valueOrNull;
   if (user == null || user.role != UserRole.superAdmin) return Stream.value(0);
   return FirebaseFirestore.instance.collection('users')
       .where('role', isEqualTo: 'rider')
@@ -413,7 +411,7 @@ final totalRidersCountProvider = StreamProvider<int>((ref) {
 });
 
 final totalCustomersCountProvider = StreamProvider<int>((ref) {
-  final user = ref.watch(userModelProvider).asData?.value;
+  final user = ref.watch(userModelProvider).valueOrNull;
   if (user == null || user.role != UserRole.superAdmin) return Stream.value(0);
   return FirebaseFirestore.instance.collection('users')
       .where('role', isEqualTo: 'customer')
@@ -421,7 +419,7 @@ final totalCustomersCountProvider = StreamProvider<int>((ref) {
 });
 
 final pendingOrdersCountProvider = StreamProvider<int>((ref) {
-  final user = ref.watch(userModelProvider).asData?.value;
+  final user = ref.watch(userModelProvider).valueOrNull;
   if (user == null || user.role != UserRole.superAdmin) return Stream.value(0);
   return FirebaseFirestore.instance.collection('orders')
       .where('status', isEqualTo: 'pending')
@@ -429,7 +427,7 @@ final pendingOrdersCountProvider = StreamProvider<int>((ref) {
 });
 
 final pendingPayoutsCountProvider = StreamProvider<int>((ref) {
-  final user = ref.watch(userModelProvider).asData?.value;
+  final user = ref.watch(userModelProvider).valueOrNull;
   if (user == null || user.role != UserRole.superAdmin) return Stream.value(0);
   return FirebaseFirestore.instance.collection('payouts')
       .where('status', isEqualTo: 'pending')
@@ -438,7 +436,7 @@ final pendingPayoutsCountProvider = StreamProvider<int>((ref) {
 
 // Revenue Providers
 final dailyRevenueProvider = StreamProvider<double>((ref) {
-  final user = ref.watch(userModelProvider).asData?.value;
+  final user = ref.watch(userModelProvider).valueOrNull;
   if (user == null || user.role != UserRole.superAdmin) return Stream.value(0.0);
   final now = DateTime.now();
   final start = DateTime(now.year, now.month, now.day);
@@ -447,7 +445,7 @@ final dailyRevenueProvider = StreamProvider<double>((ref) {
 });
 
 final weeklyRevenueProvider = StreamProvider<double>((ref) {
-  final user = ref.watch(userModelProvider).asData?.value;
+  final user = ref.watch(userModelProvider).valueOrNull;
   if (user == null || user.role != UserRole.superAdmin) return Stream.value(0.0);
   final now = DateTime.now();
   final start = now.subtract(Duration(days: now.weekday - 1));
@@ -456,7 +454,7 @@ final weeklyRevenueProvider = StreamProvider<double>((ref) {
 });
 
 final monthlyRevenueProvider = StreamProvider<double>((ref) {
-  final user = ref.watch(userModelProvider).asData?.value;
+  final user = ref.watch(userModelProvider).valueOrNull;
   if (user == null || user.role != UserRole.superAdmin) return Stream.value(0.0);
   final now = DateTime.now();
   final start = DateTime(now.year, now.month, 1);
@@ -470,13 +468,10 @@ final supportChatProvider = StreamProvider.family<SupportChatModel?, String>((re
 });
 
 final customerSupportChatProvider = StreamProvider<String?>((ref) async* {
-  final user = ref.watch(userModelProvider).asData?.value;
+  final user = ref.watch(userModelProvider).valueOrNull;
   if (user == null) {
     yield null;
   } else {
-    // This is a bit tricky for a pure StreamProvider if we want it to be auto-creating.
-    // For now, we'll assume the UI calls getOrCreateChat.
-    // We'll just return the chatId if it exists.
     final db = FirebaseFirestore.instance;
     final snapshots = db.collection('support_chats')
         .where('customerId', isEqualTo: user.uid)
@@ -498,7 +493,7 @@ final supportMessagesProvider = StreamProvider.family<List<SupportMessageModel>,
 });
 
 final customerEmergencyReportsProvider = StreamProvider<List<EmergencyReportModel>>((ref) {
-  final user = ref.watch(userModelProvider).asData?.value;
+  final user = ref.watch(userModelProvider).valueOrNull;
   if (user == null) return Stream.value([]);
   return ref.watch(emergencyServiceProvider).getCustomerReports(user.uid);
 });
@@ -596,7 +591,7 @@ final cartProvider = StateNotifierProvider<CartNotifier, CartModel>((ref) {
 
 // --- VENDOR ANALYTICS PROVIDERS ---
 final vendorSalesAnalyticsProvider = StreamProvider.family<Map<String, dynamic>, String>((ref, period) {
-  final user = ref.watch(userModelProvider).asData?.value;
+  final user = ref.watch(userModelProvider).valueOrNull;
   if (user == null || user.shopId == null) return Stream.value({});
   
   return ref.watch(vendorServiceProvider).getAllShopOrders(user.shopId!).map((orders) {
@@ -673,4 +668,3 @@ final vendorSalesAnalyticsProvider = StreamProvider.family<Map<String, dynamic>,
     };
   });
 });
-
