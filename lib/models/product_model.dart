@@ -10,7 +10,7 @@ class ProductModel {
   final double discount;
   final int stock;
   final int soldQuantity;
-  final String unit; // kg, liter, pcs, etc.
+  final String unit;
   final String imageUrl;
   final String category;
   final String brand;
@@ -61,7 +61,38 @@ class ProductModel {
       rating: (data['rating'] ?? 0.0).toDouble(),
       reviewCount: data['reviewCount'] ?? 0,
       orderCount: data['orderCount'] ?? 0,
-      createdAt: (data['createdAt'] as Timestamp).toDate(),
+      createdAt: data['createdAt'] != null 
+          ? (data['createdAt'] is Timestamp 
+              ? (data['createdAt'] as Timestamp).toDate() 
+              : DateTime.tryParse(data['createdAt'].toString()) ?? DateTime.now()) 
+          : DateTime.now(),
+    );
+  }
+
+  factory ProductModel.fromMap(Map<String, dynamic> map, String documentId) {
+    return ProductModel(
+      id: documentId,
+      vendorId: map['vendorId'] ?? '',
+      shopId: map['shopId'] ?? '',
+      name: map['name'] ?? '',
+      description: map['description'] ?? '',
+      price: (map['price'] ?? 0.0).toDouble(),
+      discount: (map['discount'] ?? 0.0).toDouble(),
+      stock: map['stock'] ?? 0,
+      soldQuantity: map['soldQuantity'] ?? 0,
+      unit: map['unit'] ?? 'pcs',
+      imageUrl: map['imageUrl'] ?? '',
+      category: map['category'] ?? 'General',
+      brand: map['brand'] ?? 'Generic',
+      isAvailable: map['isAvailable'] ?? true,
+      rating: (map['rating'] ?? 0.0).toDouble(),
+      reviewCount: map['reviewCount'] ?? 0,
+      orderCount: map['orderCount'] ?? 0,
+      createdAt: map['createdAt'] != null
+          ? (map['createdAt'] is Timestamp
+              ? (map['createdAt'] as Timestamp).toDate()
+              : DateTime.tryParse(map['createdAt'].toString()) ?? DateTime.now())
+          : DateTime.now(),
     );
   }
 
@@ -83,7 +114,7 @@ class ProductModel {
       'rating': rating,
       'reviewCount': reviewCount,
       'orderCount': orderCount,
-      'createdAt': FieldValue.serverTimestamp(),
+      'createdAt': createdAt,
     };
   }
 }

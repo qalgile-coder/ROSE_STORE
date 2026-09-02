@@ -16,7 +16,6 @@ class CacheService {
     await Hive.openBox(_userBoxName);
   }
 
-  // --- Products Caching ---
   static Future<void> cacheProducts(List<ProductModel> products) async {
     final box = Hive.box(_productsBoxName);
     final data = {for (var p in products) p.id: p.toMap()};
@@ -30,14 +29,13 @@ class CacheService {
       if (rawData == null) return [];
       
       final Map<String, dynamic> decoded = jsonDecode(rawData);
-      return decoded.entries.map((e) => ProductModel.fromMap(e.value, e.key)).toList();
+      return decoded.entries.map((e) => ProductModel.fromMap(e.value as Map<String, dynamic>, e.key)).toList().cast<ProductModel>();
     } catch (e) {
       debugPrint('Cache Read Error (Products): $e');
       return [];
     }
   }
 
-  // --- Shops Caching ---
   static Future<void> cacheShops(List<ShopModel> shops) async {
     final box = Hive.box(_shopsBoxName);
     final data = {for (var s in shops) s.id: s.toMap()};
@@ -51,7 +49,7 @@ class CacheService {
       if (rawData == null) return [];
       
       final Map<String, dynamic> decoded = jsonDecode(rawData);
-      return decoded.entries.map((e) => ShopModel.fromMap(e.value, e.key)).toList();
+      return decoded.entries.map((e) => ShopModel.fromMap(e.value as Map<String, dynamic>, e.key)).toList().cast<ShopModel>();
     } catch (e) {
       debugPrint('Cache Read Error (Shops): $e');
       return [];

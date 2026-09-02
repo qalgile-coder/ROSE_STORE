@@ -8,17 +8,17 @@ class ShopModel {
   final String address;
   final GeoPoint? location;
   final String category;
-  final String imageUrl; // Kept for backward compatibility or as banner
+  final String imageUrl;
   final String? bannerImage;
   final String? logoUrl;
   final String? openingHours;
   final double rating;
   final int reviewCount;
-  final String status; // active, disabled
+  final String status;
   final int activeOrders;
   final bool hasFreeDelivery;
   final bool isOpen;
-  final String deliveryTime; // e.g., '20-30 min'
+  final String deliveryTime;
   final double deliveryFee;
   final String phone;
   final String description;
@@ -77,7 +77,41 @@ class ShopModel {
       description: data['description'] ?? '',
       isFeatured: data['isFeatured'] ?? false,
       createdAt: data['createdAt'] != null 
-          ? (data['createdAt'] as Timestamp).toDate() 
+          ? (data['createdAt'] is Timestamp 
+              ? (data['createdAt'] as Timestamp).toDate() 
+              : DateTime.tryParse(data['createdAt'].toString()) ?? DateTime.now()) 
+          : DateTime.now(),
+    );
+  }
+
+  factory ShopModel.fromMap(Map<String, dynamic> map, String documentId) {
+    return ShopModel(
+      id: documentId,
+      name: map['name'] ?? '',
+      vendorId: map['vendorId'] ?? '',
+      vendorName: map['vendorName'] ?? 'Unknown Vendor',
+      address: map['address'] ?? 'No Address',
+      location: map['location'],
+      category: map['category'] ?? 'General',
+      imageUrl: map['imageUrl'] ?? map['bannerImage'] ?? '',
+      bannerImage: map['bannerImage'] ?? map['imageUrl'],
+      logoUrl: map['logoUrl'],
+      openingHours: map['openingHours'],
+      rating: (map['rating'] ?? 0.0).toDouble(),
+      reviewCount: map['reviewCount'] ?? 0,
+      status: map['status'] ?? 'active',
+      activeOrders: map['activeOrders'] ?? 0,
+      hasFreeDelivery: map['hasFreeDelivery'] ?? false,
+      isOpen: map['isOpen'] ?? true,
+      deliveryTime: map['deliveryTime'] ?? '25-35 min',
+      deliveryFee: (map['deliveryFee'] ?? 0.0).toDouble(),
+      phone: map['phone'] ?? '',
+      description: map['description'] ?? '',
+      isFeatured: map['isFeatured'] ?? false,
+      createdAt: map['createdAt'] != null
+          ? (map['createdAt'] is Timestamp
+              ? (map['createdAt'] as Timestamp).toDate()
+              : DateTime.tryParse(map['createdAt'].toString()) ?? DateTime.now())
           : DateTime.now(),
     );
   }
