@@ -1,0 +1,58 @@
+name: iOS Production Build
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build iOS Artifacts
+    runs-on: macos-latest
+    
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Install Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          cache: true
+
+      - name: Create Secrets File
+        run: |
+          mkdir -p lib/core
+          cat <<EOF > lib/core/secrets.dart
+          class AppSecrets {
+            static const String smtpEmail = "${{ secrets.SMTP_EMAIL }}";
+            static const String smtpPassword = "${{ secrets.SMTP_PASSWORD }}";
+            static const String cloudinaryCloudName = "${{ secrets.CLOUDINARY_CLOUD_NAME }}";
+            static const String cloudinaryUploadPreset = "${{ secrets.CLOUDINARY_UPLOAD_PRESET }}";
+          }
+          EOF
+
+      - name: Install Dependencies
+        run: flutter pub get
+
+      - name: Build iOS Physical (For IPA)
+        run: flutter build ios --release --no-codesign --no-tree-shake-icons
+
+      - name: Build iOS Simulator (For Appetize)
+        run: flutter build ios --simulator --debug --no-codesign --no-tree-shake-icons --dart-define=FLUTTER_ENABLE_SKIA=true
+
+      - name: Create Unsigned IPA
+        run: |
+          mkdir -p build/ios/ipa/Payload
+          cp -r build/ios/iphoneos/Runner.app build/ios/ipa/Payload/
+          cd build/ios/ipa && zip -r ZenMartPro.ipa Payload
+
+      - name: Upload IPA (For Distribution)
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-ipa
+          path: build/ios/ipa/ZenMartPro.ipa
+
+      - name: Upload Simulator App (FOR APPETIZE)
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-simulator-app
+          path: build/ios/iphonesimulator/Runner.app

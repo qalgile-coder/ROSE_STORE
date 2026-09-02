@@ -1,0 +1,17 @@
+workflows:
+  default-workflow:
+    name: ROOZ Store APK Build
+    max_build_duration: 30
+    instance_type: mac_mini_m2
+    environment:
+      flutter: stable
+      java: 17
+    scripts:
+      - name: Get dependencies
+        script: |
+          flutter pub get
+      - name: Build APK
+        script: |
+          flutter build apk --release --android-skip-build-dependency-validation
+    artifacts:
+      - build/app/outputs/flutter-apk/*.apk
