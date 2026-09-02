@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "262483790491",
+    "project_id": "rooz-stor",
+    "storage_bucket": "rooz-stor.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:262483790491:android:186249fcc38c612657d43e",
+        "android_client_info": {
+          "package_name": "com.rooz.store"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC1-2SUhVW-QsWYlo9Qcm2Olk8KOZY80q4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
