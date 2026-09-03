@@ -72,7 +72,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       }
     } catch (e) {
       if (mounted) {
-        _showErrorSnackBar('Authentication failed. Please try again.');
+        // طباعة الخطأ الحقيقي القادم من السيرفر أو Firebase لتسهيل اكتشاف المشكلة
+        _showErrorSnackBar('خطأ: ${e.toString()}');
       }
     } finally {
       if (mounted) setLoading(false);
@@ -103,8 +104,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   Future<void> _signInWithEmailSocial() async {
     if (_isEmailLoginLoading || _isLoading || _isGoogleLoading) return;
 
+    // تم تصحيح الدالة هنا لتناسب تسجيل الدخول عبر البريد الإلكتروني المخصص بدلاً من استدعاء جوجل بالخطأ
     await _handleAuthAction(
-      () => ref.read(authServiceProvider).signInWithGoogle(),
+      () async {
+        // ضع هنا دالة تسجيل الدخول البديلة الخاصة بك إذا وجدت، أو اتركها لخدمة الـ Auth
+        if (!_formKey.currentState!.validate()) throw Exception('الرجاء إدخال البريد الإلكتروني');
+        await ref.read(authServiceProvider).signIn(_emailController.text.trim(), _passwordController.text.trim());
+      },
       setLoading: (val) => setState(() => _isEmailLoginLoading = val),
     );
   }
@@ -182,7 +188,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 }
               } catch (e) {
                 if (mounted) {
-                  _showErrorSnackBar('Unable to process request. Please try again later.');
+                  _showErrorSnackBar('خطأ: ${e.toString()}');
                 }
               }
             },
