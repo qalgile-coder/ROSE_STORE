@@ -36,11 +36,6 @@ import '../models/system_settings_model.dart';
 import '../services/cache_service.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 
-// --- SHARED PREFERENCES PROVIDER (Required for Login Screen Remember Me) ---
-final sharedPrefsProvider = Provider<SharedPreferences>((ref) {
-  throw UnimplementedError('sharedPrefsProvider must be initialized in main()');
-});
-
 // --- CORE SERVICE PROVIDERS ---
 final authServiceProvider = Provider((ref) => AuthService());
 final riderServiceProvider = Provider((ref) => RiderService());
