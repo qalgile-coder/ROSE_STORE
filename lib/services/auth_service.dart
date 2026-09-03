@@ -18,48 +18,72 @@ class AuthService {
     return await _auth.signInWithEmailAndPassword(email: email, password: password);
   }
 
-  /// Google Sign-In with Account Picker
+  /// Google Sign-In with Account Picker & Robust Error Handling
   Future<UserCredential> signInWithGoogle() async {
-    // 1. Trigger the Google Authentication flow
-    final GoogleSignInAccount? googleUser = await GoogleSignIn().signIn();
-    if (googleUser == null) {
-      throw Exception('Google Sign-In was cancelled by the user.');
-    }
-
-    // 2. Obtain the auth details from the request
-    final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
-
-    // 3. Create a new credential for Firebase
-    final AuthCredential credential = GoogleAuthProvider.credential(
-      accessToken: googleAuth.accessToken,
-      idToken: googleAuth.idToken,
-    );
-
-    // 4. Sign in to Firebase with the credential
-    UserCredential userCredential = await _auth.signInWithCredential(credential);
-    User? user = userCredential.user;
-
-    if (user != null) {
-      // 5. Check if user already exists in Firestore
-      DocumentSnapshot userDoc = await _db.collection('users').doc(user.uid).get();
-
-      if (!userDoc.exists) {
-        // Create user document if it's their first time signing in via Google
-        await _db.collection('users').doc(user.uid).set({
-          'name': user.displayName ?? 'Google User',
-          'email': user.email ?? '',
-          'phone': user.phoneNumber ?? '',
-          'role': 'customer',
-          'shopId': null,
-          'status': 'active',
-          'createdAt': FieldValue.serverTimestamp(),
-          'referredBy': null,
-          'referralCode': user.uid.substring(0, 6).toUpperCase(),
-        });
+    try {
+      // 1. Trigger the Google Authentication flow
+      // استخدام احتيادي لمسح أي جلسة سابقة عالقة لضمان ظهور نافذة اختيار الحساب بسلاسة
+      final GoogleSignIn googleSignIn = GoogleSignIn();
+      
+      // محاولة تسجيل الخروج المحلي أولاً لتفادي تداخل الجلسات المعلقة
+      if (await googleSignIn.isSignedIn()) {
+        await googleSignIn.signOut();
       }
-    }
 
-    return userCredential;
+      final GoogleSignInAccount? googleUser = await googleSignIn.signIn();
+      if (googleUser == null) {
+        throw Exception('Google Sign-In was cancelled by the user.');
+      }
+
+      // 2. Obtain the auth details from the request
+      final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
+
+      // التأكد من توفر الـ tokens المطلوبة
+      if (googleAuth.accessToken == null && googleAuth.idToken == null) {
+        throw Exception('Failed to obtain Google authentication tokens.');
+      }
+
+      // 3. Create a new credential for Firebase
+      final AuthCredential credential = GoogleAuthProvider.credential(
+        accessToken: googleAuth.accessToken,
+        idToken: googleAuth.idToken,
+      );
+
+      // 4. Sign in to Firebase with the credential
+      UserCredential userCredential = await _auth.signInWithCredential(credential);
+      User? user = userCredential.user;
+
+      if (user != null) {
+        // 5. Check if user already exists in Firestore with timeout protection
+        DocumentReference userDocRef = _db.collection('users').doc(user.uid);
+        DocumentSnapshot userDoc = await userDocRef.get().timeout(
+          const Duration(seconds: 10),
+          onTimeout: () => throw Exception('Connection timeout while checking user profile.'),
+        );
+
+        if (!userDoc.exists) {
+          // Create user document if it's their first time signing in via Google
+          // استخدام set مع merge لتجنب الكتابة الفوقية الخاطئة إذا تم إنشاء المستند مسبقاً
+          await userDocRef.set({
+            'name': user.displayName ?? 'Google User',
+            'email': user.email ?? '',
+            'phone': user.phoneNumber ?? '',
+            'role': 'customer',
+            'shopId': null,
+            'status': 'active',
+            'createdAt': FieldValue.serverTimestamp(),
+            'referredBy': null,
+            'referralCode': user.uid.length >= 6 ? user.uid.substring(0, 6).toUpperCase() : user.uid.toUpperCase(),
+          }, SetOptions(merge: true));
+        }
+      }
+
+      return userCredential;
+    } catch (e) {
+      debugPrint('Error during Google Sign-In: $e');
+      // إعادة رمي الخطأ ليتم التقاطه بوضوح في واجهة المستخدم (UI) مع رسالة مفهومة
+      rethrow;
+    }
   }
 
   Future<void> signUpCustomer({
@@ -83,7 +107,7 @@ class AuthService {
       'status': 'active',
       'createdAt': FieldValue.serverTimestamp(),
       'referredBy': referredBy,
-      'referralCode': credential.user!.uid.substring(0, 6).toUpperCase(),
+      'referralCode': credential.user!.uid.length >= 6 ? credential.user!.uid.substring(0, 6).toUpperCase() : credential.user!.uid.toUpperCase(),
     });
   }
 
@@ -99,8 +123,6 @@ class AuthService {
     String? vehicleInfo,
     String? licenseNumber,
   }) async {
-    // 1. Initialize a secondary Firebase app instance
-    // This allows creating a user without affecting the current admin session
     FirebaseApp secondaryApp = await Firebase.initializeApp(
       name: 'secondaryAuthApp',
       options: Firebase.app().options,
@@ -109,7 +131,6 @@ class AuthService {
     try {
       FirebaseAuth secondaryAuth = FirebaseAuth.instanceFor(app: secondaryApp);
       
-      // 2. Create the user in Firebase Auth
       UserCredential credential = await secondaryAuth.createUserWithEmailAndPassword(
         email: email,
         password: password,
@@ -118,7 +139,6 @@ class AuthService {
       String uid = credential.user!.uid;
       String? shopId;
 
-      // 3. If it's a vendor, create a shop document first
       if (role == 'vendor' && shopName != null) {
         DocumentReference shopRef = _db.collection('shops').doc();
         shopId = shopRef.id;
@@ -131,7 +151,6 @@ class AuthService {
         });
       }
 
-      // 4. Create the User Profile in Firestore
       await _db.collection('users').doc(uid).set({
         'name': name,
         'email': email,
@@ -141,14 +160,13 @@ class AuthService {
         'vehicleInfo': vehicleInfo,
         'licenseNumber': licenseNumber,
         'isOnline': false,
-        'rating': 5.0, // Initial rating
+        'rating': 5.0,
         'totalDeliveries': 0,
         'totalEarnings': 0.0,
         'status': 'active',
         'createdAt': FieldValue.serverTimestamp(),
       });
       
-      // 5. Automatically Email Credentials to the User
       final smtpServer = gmail(AppSecrets.smtpEmail, AppSecrets.smtpPassword);
       final message = Message()
         ..from = const Address(AppSecrets.smtpEmail, 'Zen Mart Pro')
@@ -171,11 +189,8 @@ class AuthService {
         ''';
       
       await send(message, smtpServer);
-
-      // 6. Sign out from secondary instance
       await secondaryAuth.signOut();
     } finally {
-      // 6. Delete the secondary app instance to clean up
       await secondaryApp.delete();
     }
   }
@@ -207,6 +222,9 @@ class AuthService {
   }
 
   Future<void> signOut() async {
+    try {
+      await GoogleSignIn().signOut();
+    } catch (_) {}
     await _auth.signOut();
   }
 
@@ -224,7 +242,7 @@ class AuthService {
   }
 
   Future<void> generateReferralCode(String uid) async {
-    final code = uid.substring(0, 6).toUpperCase();
+    final code = uid.length >= 6 ? uid.substring(0, 6).toUpperCase() : uid.toUpperCase();
     await _db.collection('users').doc(uid).update({
       'referralCode': code,
     });
@@ -242,7 +260,6 @@ class AuthService {
         password: currentPassword,
       );
       
-      // Re-authenticate user before updating password
       await user.reauthenticateWithCredential(credential);
       await user.updatePassword(newPassword);
     } else {

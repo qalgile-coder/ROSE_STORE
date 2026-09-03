@@ -17,9 +17,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  
   bool _isLoading = false;
   bool _isGoogleLoading = false;
-  bool _isEmailLoginLoading = false; // حالة تحميل زر الإيميل
+  bool _isEmailLoginLoading = false;
   bool _obscurePassword = true;
   bool _rememberMe = false;
 
@@ -58,108 +59,69 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     super.dispose();
   }
 
-  Future<void> _login() async {
-    if (!_formKey.currentState!.validate()) return;
-
-    final email = _emailController.text.trim();
-    final password = _passwordController.text.trim();
-
-    setState(() => _isLoading = true);
+  Future<void> _handleAuthAction(Future<void> Function() action, {required void Function(bool) setLoading}) async {
+    setLoading(true);
     try {
-      await ref.read(authServiceProvider).signIn(email, password);
+      await action();
       _saveRememberedUser();
       
       ref.read(forcedSplashProvider.notifier).state = true;
-      Future.delayed(const Duration(seconds: 3), () {
-        if (mounted) {
-          ref.read(forcedSplashProvider.notifier).state = false;
-        }
-      });
+      await Future.delayed(const Duration(seconds: 3));
+      if (mounted) {
+        ref.read(forcedSplashProvider.notifier).state = false;
+      }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              'Invalid email or password. Please try again.',
-              style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w600, color: Colors.white),
-            ),
-            backgroundColor: AppColors.error,
-            behavior: SnackBarBehavior.floating,
-            margin: const EdgeInsets.all(20),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          ),
-        );
+        _showErrorSnackBar('Authentication failed. Please try again.');
       }
     } finally {
-      if (mounted) setState(() => _isLoading = false);
+      if (mounted) setLoading(false);
     }
+  }
+
+  Future<void> _login() async {
+    if (!_formKey.currentState!.validate()) return;
+    
+    final email = _emailController.text.trim();
+    final password = _passwordController.text.trim();
+
+    await _handleAuthAction(
+      () => ref.read(authServiceProvider).signIn(email, password),
+      setLoading: (val) => setState(() => _isLoading = val),
+    );
   }
 
   Future<void> _signInWithGoogle() async {
     if (_isGoogleLoading || _isLoading || _isEmailLoginLoading) return;
 
-    setState(() => _isGoogleLoading = true);
-    try {
-      await ref.read(authServiceProvider).signInWithGoogle();
-      
-      ref.read(forcedSplashProvider.notifier).state = true;
-      Future.delayed(const Duration(seconds: 3), () {
-        if (mounted) {
-          ref.read(forcedSplashProvider.notifier).state = false;
-        }
-      });
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              'Google sign-in was cancelled or failed. Please try again.',
-              style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w600, color: Colors.white),
-            ),
-            backgroundColor: AppColors.error,
-            behavior: SnackBarBehavior.floating,
-            margin: const EdgeInsets.all(20),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          ),
-        );
-      }
-    } finally {
-      if (mounted) setState(() => _isGoogleLoading = false);
-    }
+    await _handleAuthAction(
+      () => ref.read(authServiceProvider).signInWithGoogle(),
+      setLoading: (val) => setState(() => _isGoogleLoading = val),
+    );
   }
 
-  // دالة زر الإيميل السريع لفتح نافذة الحسابات والتسجيل الفوري
   Future<void> _signInWithEmailSocial() async {
     if (_isEmailLoginLoading || _isLoading || _isGoogleLoading) return;
 
-    setState(() => _isEmailLoginLoading = true);
-    try {
-      await ref.read(authServiceProvider).signInWithGoogle(); // تستخدم نفس خدمة اختيار الحسابات والإيميل
-      
-      ref.read(forcedSplashProvider.notifier).state = true;
-      Future.delayed(const Duration(seconds: 3), () {
-        if (mounted) {
-          ref.read(forcedSplashProvider.notifier).state = false;
-        }
-      });
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              'Email sign-in failed. Please try again.',
-              style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w600, color: Colors.white),
-            ),
-            backgroundColor: AppColors.error,
-            behavior: SnackBarBehavior.floating,
-            margin: const EdgeInsets.all(20),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          ),
-        );
-      }
-    } finally {
-      if (mounted) setState(() => _isEmailLoginLoading = false);
-    }
+    await _handleAuthAction(
+      () => ref.read(authServiceProvider).signInWithGoogle(),
+      setLoading: (val) => setState(() => _isEmailLoginLoading = val),
+    );
+  }
+
+  void _showErrorSnackBar(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          message,
+          style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w600, color: Colors.white),
+        ),
+        backgroundColor: AppColors.error,
+        behavior: SnackBarBehavior.floating,
+        margin: const EdgeInsets.all(20),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      ),
+    );
   }
 
   void _showForgotPasswordDialog() {
@@ -220,18 +182,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 }
               } catch (e) {
                 if (mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(
-                        'Unable to process request. Please try again later.',
-                        style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w600, color: Colors.white),
-                      ),
-                      backgroundColor: AppColors.error,
-                      behavior: SnackBarBehavior.floating,
-                      margin: const EdgeInsets.all(20),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                    ),
-                  );
+                  _showErrorSnackBar('Unable to process request. Please try again later.');
                 }
               }
             },
@@ -274,25 +225,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               ),
             ),
           ),
-          Positioned(
-            top: 20,
-            left: -40,
-            child: Opacity(
-              opacity: 0.4,
-              child: Container(
-                width: 200,
-                height: 200,
-                decoration: BoxDecoration(
-                  gradient: RadialGradient(
-                    colors: [
-                      accentColor.withValues(alpha: 0.2),
-                      Colors.transparent
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          ),
           SafeArea(
             child: SingleChildScrollView(
               padding: const EdgeInsets.symmetric(horizontal: 28),
@@ -303,25 +235,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     const SizedBox(height: 10),
                     Align(
                       alignment: Alignment.centerLeft,
-                      child: TweenAnimationBuilder<double>(
-                        tween: Tween(begin: 0.0, end: 1.0),
-                        duration: const Duration(milliseconds: 800),
-                        builder: (context, value, child) {
-                          return Transform.translate(
-                            offset: Offset(-20 * (1 - value), 0),
-                            child: Opacity(
-                              opacity: value,
-                              child: IconButton(
-                                onPressed: () => context.pop(),
-                                icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 20, color: Colors.white),
-                                style: IconButton.styleFrom(
-                                  backgroundColor: surfaceColor.withValues(alpha: 0.5),
-                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                                ),
-                              ),
-                            ),
-                          );
-                        },
+                      child: IconButton(
+                        onPressed: () => context.pop(),
+                        icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 20, color: Colors.white),
+                        style: IconButton.styleFrom(
+                          backgroundColor: surfaceColor.withValues(alpha: 0.5),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        ),
                       ),
                     ),
                     const SizedBox(height: 20),
@@ -411,7 +331,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           ),
                           const SizedBox(height: 20),
                           Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            mainAxisAlignment: MainAxisAlignment.between,
                             children: [
                               GestureDetector(
                                 onTap: () => setState(() => _rememberMe = !_rememberMe),
@@ -530,8 +450,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         _SocialTile(
-                          icon: 'assets/icons/google.png', 
-                          isIcon: true,
                           iconData: Icons.g_mobiledata_rounded,
                           iconColor: Colors.white,
                           isLoading: _isGoogleLoading,
@@ -539,114 +457,20 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         ),
                         const SizedBox(width: 20),
                         _SocialTile(
-                          icon: 'assets/icons/apple.png', 
-                          isIcon: true, 
-                          iconData: Icons.apple_rounded, 
-                          onTap: () {
-                            // Apple Sign-In
-                          },
+                          iconData: Icons.apple_rounded,
+                          onTap: () {},
                         ),
                         const SizedBox(width: 20),
                         _SocialTile(
-                          icon: 'assets/icons/email.png', 
-                          isIcon: true, 
-                          iconData: Icons.mail_rounded, 
-                          color: accentColor.withValues(alpha: 0.1), 
-                          iconColor: accentColor, 
-                          isLoading: _isEmailLoginLoading, // تم ربط حالة التحميل
-                          onTap: _signInWithEmailSocial,   // تم ربطه بفتح نافذة اختيار الإيميل والتسجيل الفوري
+                          iconData: Icons.mail_rounded,
+                          color: accentColor.withValues(alpha: 0.1),
+                          iconColor: accentColor,
+                          isLoading: _isEmailLoginLoading,
+                          onTap: _signInWithEmailSocial,
                         ),
                       ],
                     ),
                     const SizedBox(height: 48),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-                      decoration: BoxDecoration(
-                        color: surfaceColor.withValues(alpha: 0.3),
-                        borderRadius: BorderRadius.circular(20),
-                        border: Border.all(color: Colors.white.withValues(alpha: 0.03)),
-                      ),
-                      child: InkWell(
-                        onTap: () => context.push('/signup'),
-                        child: Row(
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.all(10),
-                              decoration: BoxDecoration(
-                                color: accentColor.withValues(alpha: 0.1),
-                                shape: BoxShape.circle,
-                              ),
-                              child: const Icon(Icons.person_outline_rounded, color: accentColor, size: 20),
-                            ),
-                            const SizedBox(width: 16),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    "Don't have an account?",
-                                    style: GoogleFonts.plusJakartaSans(
-                                      color: Colors.white.withValues(alpha: 0.5),
-                                      fontSize: 13,
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                                  ),
-                                  Text(
-                                    'Sign Up',
-                                    style: GoogleFonts.plusJakartaSans(
-                                      color: accentColor,
-                                      fontSize: 15,
-                                      fontWeight: FontWeight.w800,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            Icon(Icons.chevron_right_rounded, color: Colors.white.withValues(alpha: 0.3)),
-                          ],
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 60),
-                    Column(
-                      children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            const Icon(Icons.verified_user_outlined, color: accentColor, size: 16),
-                            const SizedBox(width: 8),
-                            Text(
-                              'Secure. Reliable. Premium.',
-                              style: GoogleFonts.plusJakartaSans(
-                                color: Colors.white.withValues(alpha: 0.3),
-                                fontSize: 11,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 12),
-                        Text(
-                          'POWERED BY',
-                          style: GoogleFonts.plusJakartaSans(
-                            color: Colors.white.withValues(alpha: 0.15),
-                            fontSize: 10,
-                            letterSpacing: 2,
-                            fontWeight: FontWeight.w900,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          'Zenvyro Labs X Awais',
-                          style: GoogleFonts.plusJakartaSans(
-                            color: Colors.white.withValues(alpha: 0.7),
-                            fontWeight: FontWeight.w800,
-                            fontSize: 15,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 40),
                   ],
                 ),
               ),
@@ -692,30 +516,16 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             : null,
         filled: true,
         fillColor: surfaceColor.withValues(alpha: 0.5),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
-          borderSide: BorderSide.none,
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
-          borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.05)),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
-          borderSide: const BorderSide(color: accentColor, width: 1.5),
-        ),
-        errorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
-          borderSide: const BorderSide(color: AppColors.error, width: 1.5),
-        ),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
+        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.05))),
+        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: const BorderSide(color: accentColor, width: 1.5)),
+        errorBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: const BorderSide(color: AppColors.error, width: 1.5)),
       ),
     );
   }
 }
 
 class _SocialTile extends StatelessWidget {
-  final String icon;
-  final bool isIcon;
   final IconData iconData;
   final Color? color;
   final Color? iconColor;
@@ -723,8 +533,6 @@ class _SocialTile extends StatelessWidget {
   final VoidCallback onTap;
 
   const _SocialTile({
-    required this.icon,
-    required this.isIcon,
     required this.iconData,
     this.color,
     this.iconColor,
