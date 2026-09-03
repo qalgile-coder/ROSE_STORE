@@ -181,8 +181,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   }
 
   void _showDevelopmentMessage(BuildContext context) {
-    // For social buttons, since they are "under development", we don't trigger a splash.
-    // But if they WERE working, we'd add the splash here.
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
@@ -207,7 +205,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       backgroundColor: bgColor,
       body: Stack(
         children: [
-          // Background Glows
           Positioned(
             top: -50,
             right: -50,
@@ -225,8 +222,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               ),
             ),
           ),
-          
-          // Subtle particle/wave effect simulation (top left)
           Positioned(
             top: 20,
             left: -40,
@@ -246,7 +241,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               ),
             ),
           ),
-
           SafeArea(
             child: SingleChildScrollView(
               padding: const EdgeInsets.symmetric(horizontal: 28),
@@ -255,7 +249,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 child: Column(
                   children: [
                     const SizedBox(height: 10),
-                    // Animated Back Button
                     Align(
                       alignment: Alignment.centerLeft,
                       child: TweenAnimationBuilder<double>(
@@ -280,7 +273,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       ),
                     ),
                     const SizedBox(height: 20),
-                    // Logo with glowing border
                     Center(
                       child: Container(
                         width: 130,
@@ -303,7 +295,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           child: Hero(
                             tag: 'app_logo',
                             child: Image.asset(
-                              'assets/images/rounded-image.png', // Updated logo
+                              'assets/images/rounded-image.png',
                               fit: BoxFit.contain,
                               errorBuilder: (c, e, s) => const Icon(Icons.auto_awesome_mosaic_rounded, color: accentColor, size: 48),
                             ),
@@ -311,9 +303,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         ),
                       ),
                     ),
-                    
                     const SizedBox(height: 32),
-                    
                     RichText(
                       text: TextSpan(
                         style: GoogleFonts.plusJakartaSans(
@@ -340,10 +330,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         fontWeight: FontWeight.w500,
                       ),
                     ),
-
                     const SizedBox(height: 48),
-
-                    // Main Card Container
                     Container(
                       padding: const EdgeInsets.all(24),
                       decoration: BoxDecoration(
@@ -420,7 +407,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                             ],
                           ),
                           const SizedBox(height: 24),
-                          // Sign In Button
                           InkWell(
                             onTap: _isLoading ? null : _login,
                             borderRadius: BorderRadius.circular(20),
@@ -468,10 +454,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         ],
                       ),
                     ),
-
                     const SizedBox(height: 36),
-
-                    // OR Continue With
                     Row(
                       children: [
                         const Expanded(child: Divider(color: Colors.white10)),
@@ -490,17 +473,14 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         const Expanded(child: Divider(color: Colors.white10)),
                       ],
                     ),
-
                     const SizedBox(height: 32),
-
-                    // Social Login Row
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         _SocialTile(
                           icon: 'assets/icons/google.png', 
                           isIcon: true,
-                          iconData: Icons.g_mobiledata_rounded, // Using built-in icon as fallback
+                          iconData: Icons.g_mobiledata_rounded,
                           iconColor: Colors.white,
                           onTap: () => _showDevelopmentMessage(context),
                         ),
@@ -522,10 +502,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         ),
                       ],
                     ),
-
                     const SizedBox(height: 48),
-
-                    // Sign Up Bar
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
                       decoration: BoxDecoration(
@@ -574,10 +551,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         ),
                       ),
                     ),
-
                     const SizedBox(height: 60),
-
-                    // Footer
                     Column(
                       children: [
                         Row(
@@ -638,6 +612,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     String? Function(String?)? validator,
   }) {
     const accentColor = Color(0xFF38BDF8);
+    const surfaceColor = Color(0xFF1E293B);
 
     return TextFormField(
       controller: controller,
@@ -649,43 +624,56 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         hintText: hint,
         hintStyle: GoogleFonts.plusJakartaSans(color: Colors.white.withValues(alpha: 0.2), fontSize: 15),
         prefixIcon: Icon(icon, size: 20, color: accentColor),
-        suffixIcon: isPassword ? IconButton(
-          icon: Icon(
-            isObscured ? Icons.visibility_outlined : Icons.visibility_off_outlined,
-            color: Colors.white.withValues(alpha: 0.3),
-            size: 20,
-          ),
-          onPressed: toggleObscure,
-        ) : null,
+        suffixIcon: isPassword
+            ? IconButton(
+                icon: Icon(
+                  isObscured ? Icons.visibility_off_rounded : Icons.visibility_rounded,
+                  size: 20,
+                  color: Colors.white.withValues(alpha: 0.4),
+                ),
+                onPressed: toggleObscure,
+              )
+            : null,
         filled: true,
-        fillColor: const Color(0xFF0B1120).withValues(alpha: 0.5),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+        fillColor: surfaceColor.withValues(alpha: 0.5),
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(20),
-          borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.05)),
+          borderRadius: BorderRadius.circular(16),
+          borderSide: BorderSide.none,
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(16),
           borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.05)),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(16),
           borderSide: const BorderSide(color: accentColor, width: 1.5),
+        ),
+        errorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(16),
+          borderSide: const BorderSide(color: AppColors.error, width: 1.5),
         ),
       ),
     );
   }
 }
 
+// Helper widget for Social Tiles if not declared elsewhere in your project
 class _SocialTile extends StatelessWidget {
   final String icon;
   final bool isIcon;
-  final IconData? iconData;
+  final IconData iconData;
   final Color? color;
   final Color? iconColor;
   final VoidCallback onTap;
 
-  const _SocialTile({required this.icon, this.isIcon = false, this.iconData, this.color, this.iconColor, required this.onTap});
+  const _SocialTile({
+    required this.icon,
+    required this.isIcon,
+    required this.iconData,
+    this.color,
+    this.iconColor,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -693,17 +681,19 @@ class _SocialTile extends StatelessWidget {
       onTap: onTap,
       borderRadius: BorderRadius.circular(16),
       child: Container(
-        width: 64,
-        height: 64,
+        width: 56,
+        height: 56,
         decoration: BoxDecoration(
-          color: color ?? const Color(0xFF1E293B).withValues(alpha: 0.5),
+          color: color ?? const Color(0xFF1E293B).withValues(alpha: 0.3),
           borderRadius: BorderRadius.circular(16),
           border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
         ),
         child: Center(
-          child: isIcon 
-            ? Icon(iconData, color: iconColor ?? Colors.white, size: 28)
-            : Image.asset(icon, width: 24, errorBuilder: (c,e,s) => const Icon(Icons.public, color: Colors.white24)),
+          child: Icon(
+            iconData,
+            color: iconColor ?? Colors.white,
+            size: 24,
+          ),
         ),
       ),
     );

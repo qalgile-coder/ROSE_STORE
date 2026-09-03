@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../services/auth_service.dart';
 import '../services/rider_service.dart';
 import '../services/cloudinary_service.dart';
@@ -35,6 +36,12 @@ import '../models/system_settings_model.dart';
 import '../services/cache_service.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 
+// --- SHARED PREFERENCES PROVIDER (Required for Login Screen Remember Me) ---
+final sharedPrefsProvider = Provider<SharedPreferences>((ref) {
+  throw UnimplementedError('sharedPrefsProvider must be initialized in main()');
+});
+
+// --- CORE SERVICE PROVIDERS ---
 final authServiceProvider = Provider((ref) => AuthService());
 final riderServiceProvider = Provider((ref) => RiderService());
 final cloudinaryServiceProvider = Provider((ref) => CloudinaryService());
@@ -603,7 +610,7 @@ final vendorSalesAnalyticsProvider = StreamProvider.family<Map<String, dynamic>,
       start = now.subtract(Duration(days: now.weekday - 1));
       start = DateTime(start.year, start.month, start.day);
     } else {
-      start = DateTime(now.year, now.month, 1);
+      start = DateTime(now.year, now.month, now.day); // أو بداية الشهر
     }
     
     final filtered = orders.where((o) => o.createdAt.isAfter(start)).toList();
@@ -618,7 +625,6 @@ final vendorSalesAnalyticsProvider = StreamProvider.family<Map<String, dynamic>,
         final amount = o.totalAmount - o.deliveryFee;
         revenue += amount;
         
-        // Items & Product Stats
         for (var item in o.items) {
           final pid = item['productId'] as String?;
           if (pid == null) continue;
@@ -635,7 +641,6 @@ final vendorSalesAnalyticsProvider = StreamProvider.family<Map<String, dynamic>,
           productStats[pid]!['revenue'] = (productStats[pid]!['revenue'] as double) + (price * qty);
         }
 
-        // Chart Logic
         int key;
         if (period == 'Daily') {
           key = o.createdAt.hour;
@@ -651,7 +656,6 @@ final vendorSalesAnalyticsProvider = StreamProvider.family<Map<String, dynamic>,
     final topProducts = productStats.values.toList();
     topProducts.sort((a, b) => (b['sales'] as int).compareTo(a['sales'] as int));
     
-    // Zero-fill the chart map for a continuous line
     int maxPoints = period == 'Daily' ? 23 : (period == 'Weekly' ? 7 : 31);
     int minPoint = period == 'Weekly' ? 1 : 0;
     for (int i = minPoint; i <= maxPoints; i++) {
