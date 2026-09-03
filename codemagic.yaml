@@ -11,6 +11,12 @@ workflows:
     scripts:
       - name: Set up keystore
         script: |
+          # نسخ ملف الـ Keystore تلقائياً إلى مجلد android/app بالاسم المطلوب
+          if [ -n "$CM_KEYSTORE_PATH" ]; then
+            cp "$CM_KEYSTORE_PATH" android/app/upload-keystore.jks
+          fi
+          
+          # كتابة بيانات الاعتماد في ملف key.properties
           echo "storePassword=009600" > android/key.properties
           echo "keyPassword=009600" >> android/key.properties
           echo "keyAlias=upload" >> android/key.properties
