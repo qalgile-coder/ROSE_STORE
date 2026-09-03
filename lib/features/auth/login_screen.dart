@@ -18,6 +18,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _isLoading = false;
+  bool _isGoogleLoading = false;
+  bool _isEmailLoginLoading = false; // حالة تحميل زر الإيميل
   bool _obscurePassword = true;
   bool _rememberMe = false;
 
@@ -64,11 +66,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
     setState(() => _isLoading = true);
     try {
-      // 1. Real Login
       await ref.read(authServiceProvider).signIn(email, password);
       _saveRememberedUser();
       
-      // On successful login, trigger a 3-second splash transition
       ref.read(forcedSplashProvider.notifier).state = true;
       Future.delayed(const Duration(seconds: 3), () {
         if (mounted) {
@@ -92,6 +92,73 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       }
     } finally {
       if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _signInWithGoogle() async {
+    if (_isGoogleLoading || _isLoading || _isEmailLoginLoading) return;
+
+    setState(() => _isGoogleLoading = true);
+    try {
+      await ref.read(authServiceProvider).signInWithGoogle();
+      
+      ref.read(forcedSplashProvider.notifier).state = true;
+      Future.delayed(const Duration(seconds: 3), () {
+        if (mounted) {
+          ref.read(forcedSplashProvider.notifier).state = false;
+        }
+      });
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Google sign-in was cancelled or failed. Please try again.',
+              style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w600, color: Colors.white),
+            ),
+            backgroundColor: AppColors.error,
+            behavior: SnackBarBehavior.floating,
+            margin: const EdgeInsets.all(20),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isGoogleLoading = false);
+    }
+  }
+
+  // دالة زر الإيميل السريع لفتح نافذة الحسابات والتسجيل الفوري
+  Future<void> _signInWithEmailSocial() async {
+    if (_isEmailLoginLoading || _isLoading || _isGoogleLoading) return;
+
+    setState(() => _isEmailLoginLoading = true);
+    try {
+      await ref.read(authServiceProvider).signInWithGoogle(); // تستخدم نفس خدمة اختيار الحسابات والإيميل
+      
+      ref.read(forcedSplashProvider.notifier).state = true;
+      Future.delayed(const Duration(seconds: 3), () {
+        if (mounted) {
+          ref.read(forcedSplashProvider.notifier).state = false;
+        }
+      });
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Email sign-in failed. Please try again.',
+              style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w600, color: Colors.white),
+            ),
+            backgroundColor: AppColors.error,
+            behavior: SnackBarBehavior.floating,
+            margin: const EdgeInsets.all(20),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isEmailLoginLoading = false);
     }
   }
 
@@ -176,21 +243,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             child: const Text('SEND'),
           ),
         ],
-      ),
-    );
-  }
-
-  void _showDevelopmentMessage(BuildContext context) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          'This feature is currently unavailable and under development.',
-          style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w600, color: Colors.white),
-        ),
-        backgroundColor: const Color(0xFF38BDF8),
-        behavior: SnackBarBehavior.floating,
-        margin: const EdgeInsets.all(20),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       ),
     );
   }
@@ -482,14 +534,17 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           isIcon: true,
                           iconData: Icons.g_mobiledata_rounded,
                           iconColor: Colors.white,
-                          onTap: () => _showDevelopmentMessage(context),
+                          isLoading: _isGoogleLoading,
+                          onTap: _signInWithGoogle,
                         ),
                         const SizedBox(width: 20),
                         _SocialTile(
                           icon: 'assets/icons/apple.png', 
                           isIcon: true, 
                           iconData: Icons.apple_rounded, 
-                          onTap: () => _showDevelopmentMessage(context),
+                          onTap: () {
+                            // Apple Sign-In
+                          },
                         ),
                         const SizedBox(width: 20),
                         _SocialTile(
@@ -498,7 +553,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           iconData: Icons.mail_rounded, 
                           color: accentColor.withValues(alpha: 0.1), 
                           iconColor: accentColor, 
-                          onTap: () => _showDevelopmentMessage(context),
+                          isLoading: _isEmailLoginLoading, // تم ربط حالة التحميل
+                          onTap: _signInWithEmailSocial,   // تم ربطه بفتح نافذة اختيار الإيميل والتسجيل الفوري
                         ),
                       ],
                     ),
@@ -657,13 +713,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   }
 }
 
-// Helper widget for Social Tiles if not declared elsewhere in your project
 class _SocialTile extends StatelessWidget {
   final String icon;
   final bool isIcon;
   final IconData iconData;
   final Color? color;
   final Color? iconColor;
+  final bool isLoading;
   final VoidCallback onTap;
 
   const _SocialTile({
@@ -672,13 +728,14 @@ class _SocialTile extends StatelessWidget {
     required this.iconData,
     this.color,
     this.iconColor,
+    this.isLoading = false,
     required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
     return InkWell(
-      onTap: onTap,
+      onTap: isLoading ? null : onTap,
       borderRadius: BorderRadius.circular(16),
       child: Container(
         width: 56,
@@ -689,11 +746,20 @@ class _SocialTile extends StatelessWidget {
           border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
         ),
         child: Center(
-          child: Icon(
-            iconData,
-            color: iconColor ?? Colors.white,
-            size: 24,
-          ),
+          child: isLoading
+              ? const SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: Colors.white,
+                  ),
+                )
+              : Icon(
+                  iconData,
+                  color: iconColor ?? Colors.white,
+                  size: 24,
+                ),
         ),
       ),
     );

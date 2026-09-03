@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 import 'package:mailer/mailer.dart';
 import 'package:mailer/smtp_server.dart';
 import '../core/secrets.dart';
@@ -15,6 +16,50 @@ class AuthService {
 
   Future<UserCredential> signIn(String email, String password) async {
     return await _auth.signInWithEmailAndPassword(email: email, password: password);
+  }
+
+  /// Google Sign-In with Account Picker
+  Future<UserCredential> signInWithGoogle() async {
+    // 1. Trigger the Google Authentication flow
+    final GoogleSignInAccount? googleUser = await GoogleSignIn().signIn();
+    if (googleUser == null) {
+      throw Exception('Google Sign-In was cancelled by the user.');
+    }
+
+    // 2. Obtain the auth details from the request
+    final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
+
+    // 3. Create a new credential for Firebase
+    final AuthCredential credential = GoogleAuthProvider.credential(
+      accessToken: googleAuth.accessToken,
+      idToken: googleAuth.idToken,
+    );
+
+    // 4. Sign in to Firebase with the credential
+    UserCredential userCredential = await _auth.signInWithCredential(credential);
+    User? user = userCredential.user;
+
+    if (user != null) {
+      // 5. Check if user already exists in Firestore
+      DocumentSnapshot userDoc = await _db.collection('users').doc(user.uid).get();
+
+      if (!userDoc.exists) {
+        // Create user document if it's their first time signing in via Google
+        await _db.collection('users').doc(user.uid).set({
+          'name': user.displayName ?? 'Google User',
+          'email': user.email ?? '',
+          'phone': user.phoneNumber ?? '',
+          'role': 'customer',
+          'shopId': null,
+          'status': 'active',
+          'createdAt': FieldValue.serverTimestamp(),
+          'referredBy': null,
+          'referralCode': user.uid.substring(0, 6).toUpperCase(),
+        });
+      }
+    }
+
+    return userCredential;
   }
 
   Future<void> signUpCustomer({
