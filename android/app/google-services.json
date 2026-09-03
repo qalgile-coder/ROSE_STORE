@@ -22,6 +22,14 @@
           }
         },
         {
+          "client_id": "262483790491-sl8gpc6lv1v9mna2it3gh4umln9rfk1c.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.rooz.store",
+            "certificate_hash": "e6115fc4faaee954870ea2874315929b3059d8a6"
+          }
+        },
+        {
           "client_id": "262483790491-g4jgftfeef2nhs3ovh25vmj0dak1enlr.apps.googleusercontent.com",
           "client_type": 3
         }
