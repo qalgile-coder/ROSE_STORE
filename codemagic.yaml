@@ -6,22 +6,15 @@ workflows:
     environment:
       flutter: stable
       java: 17
-      groups:
-        - keystore_credentials # إذا كنت قد وضعت متغيرات البيئة في مجموعة، أو يمكنك الاستغناء عنها وحقنها مباشرة عبر إعدادات Code Signing في المنصة
+      android_signing:
+        - rooz-store-key
     scripts:
       - name: Set up keystore
         script: |
-          # حقن بيانات التوقيع ليقوم ملف الـ Gradle بقراءتها تلقائياً
           echo "storePassword=009600" > android/key.properties
           echo "keyPassword=009600" >> android/key.properties
           echo "keyAlias=upload" >> android/key.properties
           echo "storeFile=upload-keystore.jks" >> android/key.properties
-          
-          # نقل ملف Keystore من مسار التخزين في Codemagic إلى مجلد android/app/
-          # (في حال طلبت المنصة تحديد مسار الملف في إعدادات الـ Code Signing)
-          if [ -n "$CM_KEYSTORE_PATH" ]; then
-            cp $CM_KEYSTORE_PATH android/app/upload-keystore.jks
-          fi
       - name: Get dependencies
         script: |
           flutter clean
