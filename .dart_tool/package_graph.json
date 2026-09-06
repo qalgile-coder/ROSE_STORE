@@ -95,15 +95,6 @@
       ]
     },
     {
-      "name": "intl",
-      "version": "0.20.2",
-      "dependencies": [
-        "clock",
-        "meta",
-        "path"
-      ]
-    },
-    {
       "name": "google_sign_in",
       "version": "6.3.0",
       "dependencies": [
@@ -493,6 +484,15 @@
         "flutter",
         "http",
         "path_provider"
+      ]
+    },
+    {
+      "name": "intl",
+      "version": "0.20.2",
+      "dependencies": [
+        "clock",
+        "meta",
+        "path"
       ]
     },
     {

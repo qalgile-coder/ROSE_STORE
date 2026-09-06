@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 import '../core/providers.dart';
 import '../models/user_model.dart';
@@ -109,8 +110,8 @@ final routerProvider = Provider<GoRouter>((ref) {
 
       if (settings?.maintenanceMode == true) {
         final isSuperAdmin = userModel.valueOrNull?.role == UserRole.superAdmin;
-        if (!isSuperAdmin && state.matchedLocation != '/maintenance') {
-          return '/maintenance';
+        if (!isSuperAdmin) {
+          return state.matchedLocation == '/maintenance' ? null : '/maintenance';
         }
       }
 
@@ -170,17 +171,17 @@ final routerProvider = Provider<GoRouter>((ref) {
           body: Center(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
-              children: const [
-                Icon(Icons.settings_suggest_rounded, size: 80, color: Color(0xFFC9A27E)),
-                SizedBox(height: 24),
-                Text('ROOZ Store', style: TextStyle(fontSize: 24, fontWeight: FontWeight.w900)),
-                SizedBox(height: 12),
+              children: [
+                const Icon(Icons.settings_suggest_rounded, size: 80, color: Color(0xFFC9A27E)),
+                const SizedBox(height: 24),
+                const Text('ROOZ Store', style: TextStyle(fontSize: 24, fontWeight: FontWeight.w900)),
+                const SizedBox(height: 12),
                 Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 48),
+                  padding: const EdgeInsets.symmetric(horizontal: 48),
                   child: Text(
-                    'We are currently performing scheduled maintenance to improve your experience. Please check back shortly.',
+                    AppLocalizations.of(context)?.welcomeTitle ?? 'We are currently performing scheduled maintenance to improve your experience. Please check back shortly.',
                     textAlign: TextAlign.center,
-                    style: TextStyle(color: Colors.grey, height: 1.5),
+                    style: const TextStyle(color: Colors.grey, height: 1.5),
                   ),
                 ),
               ],
