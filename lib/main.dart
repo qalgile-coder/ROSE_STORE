@@ -3,8 +3,8 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
-// استيراد ملف الترجمة المولّد تلقائياً
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+// تم تعديل سطر الاستيراد هنا ليكون مباشراً من مجلد l10n المحلي
+import 'l10n/app_localizations.dart';
 import 'theme/app_theme.dart';
 import 'routes/app_router.dart';
 import 'core/settings_provider.dart';

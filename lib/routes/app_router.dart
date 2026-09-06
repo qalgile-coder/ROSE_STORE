@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+// تم تعديل الاستيراد هنا ليكون مباشراً من مجلد l10n المحلي
+import 'l10n/app_localizations.dart';
 
 import '../core/providers.dart';
 import '../models/user_model.dart';
