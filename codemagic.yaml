@@ -25,6 +25,9 @@ workflows:
         script: |
           flutter clean
           flutter pub get
+      - name: Generate localization files
+        script: |
+          flutter gen-l10n
       - name: Build APK
         script: |
           flutter build apk --release --android-skip-build-dependency-validation
