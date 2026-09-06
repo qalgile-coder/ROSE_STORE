@@ -149,7 +149,14 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
                     color: colorScheme.surface,
                     borderRadius: BorderRadius.circular(32),
                     border: Border.all(color: colorScheme.outline.withOpacity(isLight ? 0.5 : 0.1)),
-                    image: _uploadedImageUrl != null ? DecorationImage(image: NetworkImage(_uploadedImageUrl!), fit: BoxFit.cover) : null,
+                    image: _uploadedImageUrl != null 
+                        ? DecorationImage(
+                            image: _uploadedImageUrl!.startsWith('http')
+                                ? NetworkImage(_uploadedImageUrl!) as ImageProvider
+                                : FileImage(File(_uploadedImageUrl!)),
+                            fit: BoxFit.cover,
+                          ) 
+                        : null,
                     boxShadow: isLight ? [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 20)] : null,
                   ),
                   child: _uploadedImageUrl == null
