@@ -169,12 +169,12 @@ class AuthService {
       
       final smtpServer = gmail(AppSecrets.smtpEmail, AppSecrets.smtpPassword);
       final message = Message()
-        ..from = const Address(AppSecrets.smtpEmail, 'Zen Mart Pro')
+        ..from = const Address(AppSecrets.smtpEmail, 'ROOZ Store')
         ..recipients.add(email)
-        ..subject = 'Welcome to Zen Mart Pro - Your Account Credentials'
+        ..subject = 'Welcome to ROOZ Store - Your Account Credentials'
         ..html = '''
           <div style="font-family: sans-serif; padding: 20px; color: #1E293B;">
-            <h2 style="color: #4F46E5;">Welcome to Zen Mart Pro!</h2>
+            <h2 style="color: #4F46E5;">Welcome to ROOZ Store!</h2>
             <p>Hello $name,</p>
             <p>Your account has been created as a <b>${role.toUpperCase()}</b>.</p>
             <p>You can now log in to the app using the following credentials:</p>

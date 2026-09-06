@@ -7,7 +7,7 @@
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>
-	<string>Zen Mart Pro</string>
+	<string>ROOZ Store</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
@@ -69,15 +69,15 @@
 
 	<!-- Permissions for Marketplace Features -->
 	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>Zen Mart Pro needs your location to show nearby shops and calculate delivery times.</string>
+	<string>ROOZ Store needs your location to show nearby shops and calculate delivery times.</string>
 	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
-	<string>Zen Mart Pro needs your location to provide accurate delivery tracking.</string>
+	<string>ROOZ Store needs your location to provide accurate delivery tracking.</string>
 	<key>NSCameraUsageDescription</key>
-	<string>Zen Mart Pro needs camera access to allow vendors to take product photos.</string>
+	<string>ROOZ Store needs camera access to allow vendors to take product photos.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
-	<string>Zen Mart Pro needs library access to upload product and profile images.</string>
+	<string>ROOZ Store needs library access to upload product and profile images.</string>
 	<key>NSMicrophoneUsageDescription</key>
-	<string>Zen Mart Pro needs microphone access to record voice messages for support.</string>
+	<string>ROOZ Store needs microphone access to record voice messages for support.</string>
 	<key>CFBundleURLTypes</key>
 	<array>
 		<dict>

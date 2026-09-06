@@ -176,7 +176,7 @@ class RiderProfileScreen extends ConsumerWidget {
                 ),
                 const SizedBox(height: 16),
                 Text(
-                  'Zen Mart Pro • Rider v1.0.2',
+                  'ROOZ Store • Rider v1.0.2',
                   style: TextStyle(color: colorScheme.onSurface.withValues(alpha: 0.3), fontSize: 11, fontWeight: FontWeight.w700, letterSpacing: 1),
                 ),
                 const SizedBox(height: 40),

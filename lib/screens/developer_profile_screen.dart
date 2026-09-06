@@ -68,7 +68,7 @@ class DeveloperProfileScreen extends StatelessWidget {
             const SizedBox(height: 60),
             
             Text(
-              'Zen Mart Pro • Built with ❤️ by Awais',
+              'ROOZ Store • Built with ❤️ by Awais',
               style: GoogleFonts.plusJakartaSans(
                 fontSize: 11,
                 fontWeight: FontWeight.w700,

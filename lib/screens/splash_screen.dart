@@ -93,7 +93,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                   const SizedBox(height: 48),
 
                   const Text(
-                    'Zen Mart Pro',
+                    'ROOZ Store',
                     style: TextStyle(
                       color: Colors.white,
                       fontSize: 34,

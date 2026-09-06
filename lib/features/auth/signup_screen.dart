@@ -63,13 +63,13 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
 
     final smtpServer = gmail(AppSecrets.smtpEmail, AppSecrets.smtpPassword);
     final message = Message()
-      ..from = const Address(AppSecrets.smtpEmail, 'Zen Mart Pro')
+      ..from = const Address(AppSecrets.smtpEmail, 'ROOZ Store')
       ..recipients.add(email)
-      ..subject = 'Verify Your Account - Zen Mart Pro'
+      ..subject = 'Verify Your Account - ROOZ Store'
       ..html = '''
         <div style="font-family: sans-serif; background-color: #0B1120; padding: 40px; color: #FFFFFF; text-align: center;">
           <div style="max-width: 500px; margin: auto; background: #1E293B; border-radius: 24px; padding: 40px; border: 1px solid rgba(255,255,255,0.05);">
-            <h1 style="margin: 0; font-size: 24px; color: #38BDF8;">Zen Mart Pro</h1>
+            <h1 style="margin: 0; font-size: 24px; color: #38BDF8;">ROOZ Store</h1>
             <p style="color: #C5CBD8; font-size: 16px; margin: 20px 0;">Use the code below to verify your account</p>
             <div style="background: #0B1120; padding: 20px; border-radius: 12px; display: inline-block;">
               <span style="font-size: 32px; font-weight: 800; letter-spacing: 5px; color: #FFFFFF;">$_generatedOtp</span>
@@ -258,7 +258,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                         children: [
                           const TextSpan(text: 'Join '),
                           TextSpan(
-                            text: 'Zen Mart Pro',
+                            text: 'ROOZ Store',
                             style: TextStyle(color: accentColor),
                           ),
                         ],

@@ -33,7 +33,7 @@ class PdfService {
                     crossAxisAlignment: pw.CrossAxisAlignment.end,
                     children: [
                       pw.Text(order.shopName, style: pw.TextStyle(fontSize: 18, fontWeight: pw.FontWeight.bold)),
-                      pw.Text('Zen Mart Pro Platform'),
+                      pw.Text('ROOZ Store Platform'),
                     ],
                   ),
                 ],
@@ -99,7 +99,7 @@ class PdfService {
               ),
               
               pw.Spacer(),
-              pw.Center(child: pw.Text('Thank you for shopping with Zen Mart Pro!')),
+              pw.Center(child: pw.Text('Thank you for shopping with ROOZ Store!')),
               pw.Center(child: pw.Text('Powered by Zenvyro Labs', style: pw.TextStyle(fontSize: 10, color: PdfColors.grey))),
             ],
           );
@@ -134,7 +134,7 @@ class PdfService {
                 child: pw.Row(
                   mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
                   children: [
-                    pw.Text('Zen Mart Pro Financial Audit', style: pw.TextStyle(fontSize: 24, fontWeight: pw.FontWeight.bold)),
+                    pw.Text('ROOZ Store Financial Audit', style: pw.TextStyle(fontSize: 24, fontWeight: pw.FontWeight.bold)),
                     pw.Text(DateFormat('MMMM yyyy').format(DateTime.now())),
                   ],
                 ),
@@ -172,7 +172,7 @@ class PdfService {
 
               pw.Spacer(),
               pw.Divider(),
-              pw.Center(child: pw.Text('Confidential Financial Document - Zen Mart Pro', style: pw.TextStyle(fontSize: 10, color: PdfColors.grey))),
+              pw.Center(child: pw.Text('Confidential Financial Document - ROOZ Store', style: pw.TextStyle(fontSize: 10, color: PdfColors.grey))),
             ],
           );
         },
@@ -202,7 +202,7 @@ class PdfService {
             children: [
               pw.Header(
                 level: 0,
-                child: pw.Text('Zen Mart Pro - User Growth Analysis', style: pw.TextStyle(fontSize: 24, fontWeight: pw.FontWeight.bold)),
+                child: pw.Text('ROOZ Store - User Growth Analysis', style: pw.TextStyle(fontSize: 24, fontWeight: pw.FontWeight.bold)),
               ),
               pw.SizedBox(height: 20),
 
@@ -273,7 +273,7 @@ class PdfService {
                 child: pw.Row(
                   mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
                   children: [
-                    pw.Text('Zen Mart Pro Platform Report', style: pw.TextStyle(fontSize: 24, fontWeight: pw.FontWeight.bold)),
+                    pw.Text('ROOZ Store Platform Report', style: pw.TextStyle(fontSize: 24, fontWeight: pw.FontWeight.bold)),
                     pw.Text(DateFormat('dd MMM yyyy').format(DateTime.now())),
                   ],
                 ),

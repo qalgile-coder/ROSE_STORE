@@ -508,7 +508,7 @@ class _CategoryCard extends StatelessWidget {
             ),
             const SizedBox(height: 4),
             Text(
-              'Zen Mart Pro Support',
+              'ROOZ Store Support',
               style: TextStyle(fontSize: 11, color: secondaryTextColor, fontWeight: FontWeight.w500),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,

@@ -21,11 +21,12 @@ workflows:
           echo "keyPassword=009600" >> android/key.properties
           echo "keyAlias=upload" >> android/key.properties
           echo "storeFile=upload-keystore.jks" >> android/key.properties
-      - name: Get dependencies
+      - name: Get dependencies & Generate Icons
         script: |
           flutter clean
           flutter pub get
-      - name: Build APK with Localization
+          flutter pub run flutter_launcher_icons:main
+      - name: Build APK with Localization & Custom Icon
         script: |
           flutter gen-l10n
           flutter build apk --release --android-skip-build-dependency-validation

@@ -161,7 +161,7 @@ class CustomerProfileScreen extends ConsumerWidget {
                 ),
                 const SizedBox(height: 16),
                 const Text(
-                  'Zen Mart Pro • v1.0.2',
+                  'ROOZ Store • v1.0.2',
                   style: TextStyle(color: AppColors.textDisabled, fontSize: 11, fontWeight: FontWeight.w600, letterSpacing: 1),
                 ),
                 const SizedBox(height: 40),

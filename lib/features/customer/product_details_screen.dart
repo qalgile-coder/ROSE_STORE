@@ -147,8 +147,8 @@ class ProductDetailsScreen extends ConsumerWidget {
   void _shareProduct() {
     final link = 'https://zenmartpro.app/product/${product.id}';
     Share.share(
-      'Check out this ${product.name} on Zen Mart Pro!\n\nBuy it here: $link',
-      subject: 'Great deal on Zen Mart Pro!',
+      'Check out this ${product.name} on ROOZ Store!\n\nBuy it here: $link',
+      subject: 'Great deal on ROOZ Store!',
     );
   }
 

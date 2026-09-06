@@ -57,7 +57,8 @@ class RoozStoreApp extends ConsumerWidget {
       theme: AppTheme.light,
       darkTheme: AppTheme.dark,
       themeMode: activeThemeMode,
-      locale: const Locale('ar', 'SA'),
+      // تم تثبيت اللغة الافتراضية والأساسية لتكون العربية بشكل دائم
+      locale: const Locale('ar'),
       supportedLocales: AppLocalizations.supportedLocales,
       localizationsDelegates: const [
         AppLocalizations.delegate, // مندوب الترجمة الخاص بالتطبيق
@@ -65,6 +66,15 @@ class RoozStoreApp extends ConsumerWidget {
         GlobalWidgetsLocalizations.delegate,
         GlobalCupertinoLocalizations.delegate,
       ],
+      localeResolutionCallback: (deviceLocale, supportedLocales) {
+        // التحقق من دعم لغة الجهاز أو الرجوع حصراً للغة العربية كافتراضي
+        for (var locale in supportedLocales) {
+          if (locale.languageCode == deviceLocale?.languageCode) {
+            return locale;
+          }
+        }
+        return const Locale('ar');
+      },
       routerConfig: router,
     );
   }

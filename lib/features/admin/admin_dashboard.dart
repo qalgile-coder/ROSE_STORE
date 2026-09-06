@@ -103,7 +103,7 @@ class _ModernHeader extends StatelessWidget {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    'Zen Mart Pro',
+                    'ROOZ Store',
                     style: TextStyle(
                       color: colorScheme.onSurface,
                       fontSize: 34,

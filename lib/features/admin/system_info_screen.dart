@@ -40,7 +40,7 @@ class SystemInfoScreen extends ConsumerWidget {
           ]),
           const SizedBox(height: 32),
           _buildInfoGroup(context, 'APPLICATION DETAILS', [
-            _InfoRow(label: 'App Name', value: 'Zen Mart Pro'),
+            _InfoRow(label: 'App Name', value: 'ROOZ Store'),
             _InfoRow(label: 'Environment', value: 'Production'),
             _InfoRow(label: 'Version', value: '1.2.0'),
             _InfoRow(label: 'Build ID', value: 'ZN-124-PRD'),
