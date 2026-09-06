@@ -21,12 +21,10 @@ workflows:
           echo "keyPassword=009600" >> android/key.properties
           echo "keyAlias=upload" >> android/key.properties
           echo "storeFile=upload-keystore.jks" >> android/key.properties
-      - name: Get dependencies
+      - name: Get dependencies and generate localization
         script: |
           flutter clean
           flutter pub get
-      - name: Generate localization files
-        script: |
           flutter gen-l10n
       - name: Build APK
         script: |
