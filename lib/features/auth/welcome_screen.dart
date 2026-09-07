@@ -39,17 +39,18 @@ class WelcomeScreen extends StatelessWidget {
                 children: [
                   const SizedBox(height: 20),
                   
-                  // Top Illustration (The 3D image provided)
+                  // Top Logo (Updated to image.png)
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 20),
                     child: Image.asset(
-                      'assets/images/welcome.jpeg',
+                      'assets/images/image.png',
                       width: double.infinity,
+                      height: 200,
                       fit: BoxFit.contain,
                     ),
                   ),
 
-                  const SizedBox(height: 40),
+                  const SizedBox(height: 20),
 
                   // Brand Title
                   RichText(
@@ -61,9 +62,9 @@ class WelcomeScreen extends StatelessWidget {
                         letterSpacing: -1,
                       ),
                       children: [
-                        const TextSpan(text: 'Zen Mart '),
+                        const TextSpan(text: 'ROSE '),
                         TextSpan(
-                          text: 'Pro',
+                          text: 'STORE',
                           style: TextStyle(color: AppColors.premiumDarkPrimary),
                         ),
                       ],
@@ -177,7 +178,7 @@ class WelcomeScreen extends StatelessWidget {
                     child: Column(
                       children: [
                         Text(
-                          'DESIGNED BY',
+                          'DEVELOPED BY',
                           style: GoogleFonts.plusJakartaSans(
                             color: Colors.white.withValues(alpha: 0.2),
                             fontSize: 10,
@@ -187,7 +188,7 @@ class WelcomeScreen extends StatelessWidget {
                         ),
                         const SizedBox(height: 6),
                         Text(
-                          'Zenvyro Labs X Awais',
+                          'Qusay Algile',
                           style: GoogleFonts.plusJakartaSans(
                             color: Colors.white,
                             fontWeight: FontWeight.w800,
