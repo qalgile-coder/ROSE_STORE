@@ -26,7 +26,7 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
   
   bool _isLoading = false;
   bool _isAvailable = true;
-  String? _uploadedImageUrl;
+  File? _pickedImageFile; // لتخزين وعرض الصورة محلياً فوراً
 
   @override
   void dispose() {
@@ -41,23 +41,21 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
   }
 
   Future<void> _pickImage() async {
-    final url = await ref.read(uploadServiceProvider).pickAndUploadImage(
-      context: context,
-      folder: 'products',
-    );
+    final picker = ImagePicker();
+    final pickedImage = await picker.pickImage(source: ImageSource.gallery, imageQuality: 80);
     
-    if (url != null) {
+    if (pickedImage != null) {
       setState(() {
-        _uploadedImageUrl = url;
+        _pickedImageFile = File(pickedImage.path);
       });
     }
   }
 
   Future<void> _saveProduct() async {
-    if (!_formKey.currentState!.validate() || _uploadedImageUrl == null) {
+    if (!_formKey.currentState!.validate() || _pickedImageFile == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Please fill all fields and upload an image'),
+          content: Text('Please fill all fields and select an image'),
           backgroundColor: AppColors.warning,
           behavior: SnackBarBehavior.floating,
         ),
@@ -71,6 +69,16 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
       final user = ref.read(userModelProvider).value;
       if (user == null || user.shopId == null) throw Exception('Session error. Please log in again.');
 
+      // رفع الصورة المحفوظة محلياً للحصول على رابط سحابي
+      final uploadedImageUrl = await ref.read(uploadServiceProvider).uploadFile(
+            file: _pickedImageFile!,
+            folder: 'products',
+          );
+
+      if (uploadedImageUrl == null || uploadedImageUrl.isEmpty) {
+        throw Exception('Failed to upload image. Please try again.');
+      }
+
       final product = ProductModel(
         id: '', 
         vendorId: user.uid,
@@ -81,7 +89,7 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
         discount: double.parse(_discountController.text.trim()),
         stock: int.parse(_stockController.text.trim()),
         unit: _unitController.text.trim(),
-        imageUrl: _uploadedImageUrl!,
+        imageUrl: uploadedImageUrl,
         category: _categoryController.text.trim().isEmpty ? 'General' : _categoryController.text.trim(),
         isAvailable: _isAvailable,
         createdAt: DateTime.now(),
@@ -149,17 +157,15 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
                     color: colorScheme.surface,
                     borderRadius: BorderRadius.circular(32),
                     border: Border.all(color: colorScheme.outline.withOpacity(isLight ? 0.5 : 0.1)),
-                    image: _uploadedImageUrl != null 
+                    image: _pickedImageFile != null 
                         ? DecorationImage(
-                            image: _uploadedImageUrl!.startsWith('http')
-                                ? NetworkImage(_uploadedImageUrl!) as ImageProvider
-                                : FileImage(File(_uploadedImageUrl!)),
+                            image: FileImage(_pickedImageFile!),
                             fit: BoxFit.cover,
                           ) 
                         : null,
                     boxShadow: isLight ? [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 20)] : null,
                   ),
-                  child: _uploadedImageUrl == null
+                  child: _pickedImageFile == null
                       ? Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
