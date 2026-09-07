@@ -1,22 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:url_launcher/url_launcher.dart';
 import 'package:go_router/go_router.dart';
 
 class DeveloperProfileScreen extends StatelessWidget {
   const DeveloperProfileScreen({super.key});
 
-  Future<void> _launchUrl(String url) async {
-    if (!await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication)) {
-      throw Exception('Could not launch $url');
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-    final isDark = theme.brightness == Brightness.dark;
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
@@ -24,7 +16,7 @@ class DeveloperProfileScreen extends StatelessWidget {
         backgroundColor: Colors.transparent,
         elevation: 0,
         centerTitle: true,
-        title: Text('Developer Profile', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w800, fontSize: 18)),
+        title: Text('About ROOZ Store', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w800, fontSize: 18)),
         leading: IconButton(
           icon: Icon(Icons.arrow_back_ios_new_rounded, size: 20, color: colorScheme.onSurface),
           onPressed: () => context.pop(),
@@ -39,36 +31,31 @@ class DeveloperProfileScreen extends StatelessWidget {
             _buildHeroHeader(colorScheme),
             const SizedBox(height: 32),
 
-            // Bio Section
+            // Platform Overview
             _buildSection(
-              title: 'ABOUT ME',
-              content: 'I am a Computer Science student and Flutter developer from Pakistan, passionate about creating modern, user-friendly, and high-performance mobile applications.\n\nI specializes in developing Android and iOS apps using Flutter, with experience integrating Firebase, authentication systems, cloud storage, push notifications, and responsive UI/UX design. My projects focus on clean architecture, scalability, and delivering smooth user experiences.',
+              title: 'PLATFORM OVERVIEW',
+              content: 'ROOZ Store is a premier multi-vendor marketplace platform designed for seamless shopping, efficient logistics, and comprehensive business management.\n\nOur system provides robust architecture, secure transactions, modern UI/UX design, and powerful administrative control panels to ensure a smooth, high-performance experience for both customers and vendors.',
               colorScheme: colorScheme,
             ),
             
             const SizedBox(height: 32),
 
-            // Skills Section
-            _buildSkillsGrid(colorScheme),
+            // Core Features
+            _buildFeaturesGrid(colorScheme),
 
             const SizedBox(height: 32),
 
-            // Interests & Mission
+            // Mission
             _buildSection(
-              title: 'MISSION',
-              content: 'To build reliable, innovative, and visually appealing applications that solve real-world problems while continuously learning new technologies and following industry best practices.',
+              title: 'MISSION & VISION',
+              content: 'To deliver a reliable, secure, and world-class e-commerce ecosystem that empowers businesses and provides users with an exceptional digital shopping experience.',
               colorScheme: colorScheme,
             ),
 
-            const SizedBox(height: 32),
-
-            // Social Links
-            _buildSocialLinks(colorScheme),
-            
             const SizedBox(height: 60),
             
             Text(
-              'ROOZ Store • Built with ❤️ by Awais',
+              'ROOZ Store • Enterprise Edition v1.0.2',
               style: GoogleFonts.plusJakartaSans(
                 fontSize: 11,
                 fontWeight: FontWeight.w700,
@@ -109,15 +96,12 @@ class DeveloperProfileScreen extends StatelessWidget {
               border: Border.all(color: Colors.white, width: 3),
             ),
             child: const Center(
-              child: Text(
-                'AT',
-                style: TextStyle(color: Colors.white, fontSize: 36, fontWeight: FontWeight.w900),
-              ),
+              child: Icon(Icons.storefront_rounded, color: Colors.white, size: 44),
             ),
           ),
           const SizedBox(height: 20),
           Text(
-            'Awais Tariq',
+            'ROOZ Store',
             style: GoogleFonts.plusJakartaSans(
               color: Colors.white,
               fontSize: 26,
@@ -127,7 +111,7 @@ class DeveloperProfileScreen extends StatelessWidget {
           ),
           const SizedBox(height: 6),
           Text(
-            'Computer Science Student • Flutter Expert',
+            'Multi-Vendor Marketplace & Logistics Platform',
             textAlign: TextAlign.center,
             style: GoogleFonts.plusJakartaSans(
               color: Colors.white.withValues(alpha: 0.8),
@@ -179,10 +163,10 @@ class DeveloperProfileScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildSkillsGrid(ColorScheme colorScheme) {
-    final skills = [
-      'Flutter & Dart', 'Firebase', 'REST APIs', 'UI/UX Design', 
-      'Git & GitHub', 'Java', 'Python', 'C++', 'Node.js'
+  Widget _buildFeaturesGrid(ColorScheme colorScheme) {
+    final features = [
+      'Multi-Vendor Support', 'Secure Payments', 'Real-time Tracking', 
+      'Advanced Logistics', 'Cloud Infrastructure', '24/7 Availability'
     ];
 
     return Column(
@@ -191,7 +175,7 @@ class DeveloperProfileScreen extends StatelessWidget {
         Padding(
           padding: const EdgeInsets.only(left: 4),
           child: Text(
-            'TECHNICAL SKILLS',
+            'CORE CAPABILITIES',
             style: GoogleFonts.plusJakartaSans(
               fontSize: 12,
               fontWeight: FontWeight.w900,
@@ -204,7 +188,7 @@ class DeveloperProfileScreen extends StatelessWidget {
         Wrap(
           spacing: 10,
           runSpacing: 10,
-          children: skills.map((skill) => Container(
+          children: features.map((feature) => Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
             decoration: BoxDecoration(
               color: colorScheme.surface,
@@ -212,7 +196,7 @@ class DeveloperProfileScreen extends StatelessWidget {
               border: Border.all(color: colorScheme.outline.withValues(alpha: 0.1)),
             ),
             child: Text(
-              skill,
+              feature,
               style: GoogleFonts.plusJakartaSans(
                 fontSize: 13,
                 fontWeight: FontWeight.w700,
@@ -222,64 +206,6 @@ class DeveloperProfileScreen extends StatelessWidget {
           )).toList(),
         ),
       ],
-    );
-  }
-
-  Widget _buildSocialLinks(ColorScheme colorScheme) {
-    return Row(
-      children: [
-        Expanded(
-          child: _SocialTile(
-            label: 'LinkedIn',
-            icon: Icons.link_rounded,
-            color: const Color(0xFF0077B5),
-            onTap: () => _launchUrl('https://www.linkedin.com/in/awais-tariq-87b64a28a/'),
-          ),
-        ),
-        const SizedBox(width: 16),
-        Expanded(
-          child: _SocialTile(
-            label: 'GitHub',
-            icon: Icons.terminal_rounded,
-            color: const Color(0xFF181717),
-            onTap: () => _launchUrl('https://github.com/awaist618'),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _SocialTile extends StatelessWidget {
-  final String label;
-  final IconData icon;
-  final Color color;
-  final VoidCallback onTap;
-  const _SocialTile({required this.label, required this.icon, required this.color, required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(20),
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 20),
-        decoration: BoxDecoration(
-          color: color,
-          borderRadius: BorderRadius.circular(20),
-          boxShadow: [
-            BoxShadow(color: color.withValues(alpha: 0.2), blurRadius: 15, offset: const Offset(0, 8))
-          ],
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(icon, color: Colors.white, size: 20),
-            const SizedBox(width: 10),
-            Text(label, style: GoogleFonts.plusJakartaSans(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 15)),
-          ],
-        ),
-      ),
     );
   }
 }
