@@ -7,7 +7,7 @@ import '../core/providers.dart';
 class UploadService {
   final Ref ref;
   final ImagePicker _picker = ImagePicker();
-  bool _isPicking = false; // Add a global picking state
+  bool _isPicking = false;
 
   UploadService(this.ref);
 
@@ -16,7 +16,7 @@ class UploadService {
     required String folder,
     ImageSource source = ImageSource.gallery,
   }) async {
-    if (_isPicking) return null; // Prevent multiple pickers
+    if (_isPicking) return null;
 
     _isPicking = true;
     try {
@@ -31,7 +31,7 @@ class UploadService {
         return null;
       }
 
-      final url = await uploadImage(File(image.path), folder: folder);
+      final url = await uploadFile(file: File(image.path), folder: folder);
       _isPicking = false;
       return url;
     } catch (e) {
@@ -45,14 +45,20 @@ class UploadService {
     }
   }
 
-  Future<String?> uploadImage(File file, {required String folder}) async {
+  // الدالة المطلوبة لمنع خطأ البناء في AddProductScreen
+  Future<String?> uploadFile({required File file, required String folder}) async {
     try {
       final cloudinary = ref.read(cloudinaryServiceProvider);
       return await cloudinary.uploadImage(file, folder: folder);
     } catch (e) {
-      debugPrint('Error uploading image: $e');
+      debugPrint('Error uploading file: $e');
       return null;
     }
+  }
+
+  // للإبقاء على التوافقية مع أي استدعاء قديم لـ uploadImage
+  Future<String?> uploadImage(File file, {required String folder}) async {
+    return uploadFile(file: file, folder: folder);
   }
 }
 
