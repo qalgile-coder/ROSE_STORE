@@ -57,7 +57,7 @@ class RoozStoreApp extends ConsumerWidget {
       theme: AppTheme.light,
       darkTheme: AppTheme.dark,
       themeMode: activeThemeMode,
-      // تم تثبيت اللغة الافتراضية والأساسية لتكون العربية بشكل دائم
+      // تثبيت اللغة العربية لتكون اللغة الأم والأساسية للتطبيق بالكامل
       locale: const Locale('ar'),
       supportedLocales: AppLocalizations.supportedLocales,
       localizationsDelegates: const [
@@ -67,13 +67,15 @@ class RoozStoreApp extends ConsumerWidget {
         GlobalCupertinoLocalizations.delegate,
       ],
       localeResolutionCallback: (deviceLocale, supportedLocales) {
-        // التحقق من دعم لغة الجهاز أو الرجوع حصراً للغة العربية كافتراضي
-        for (var locale in supportedLocales) {
-          if (locale.languageCode == deviceLocale?.languageCode) {
-            return locale;
-          }
-        }
+        // إجبار النظام دائماً على اعتماد العربية كافتراضي بغض النظر عن لغة الجهاز
         return const Locale('ar');
+      },
+      // إجبار كافة الشاشات والعناصر على اتجاه اليمين لليسار (RTL) للغة العربية
+      builder: (context, child) {
+        return Directionality(
+          textDirection: TextDirection.rtl,
+          child: child ?? const SizedBox.shrink(),
+        );
       },
       routerConfig: router,
     );

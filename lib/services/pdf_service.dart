@@ -144,7 +144,7 @@ class PdfService {
               pw.Text('Revenue Overview', style: pw.TextStyle(fontSize: 18, fontWeight: pw.FontWeight.bold)),
               pw.SizedBox(height: 10),
               pw.TableHelper.fromTextArray(
-                headers: ['Period', 'Revenue (Rs)'],
+                headers: ['Period', 'Revenue ج.س'],
                 data: [
                   ['Daily Revenue', NumberFormat('#,###').format(daily)],
                   ['Weekly Revenue', NumberFormat('#,###').format(weekly)],
@@ -156,7 +156,7 @@ class PdfService {
               pw.Text('Platform Earnings Distribution', style: pw.TextStyle(fontSize: 18, fontWeight: pw.FontWeight.bold)),
               pw.SizedBox(height: 10),
               pw.TableHelper.fromTextArray(
-                headers: ['Stream', 'Amount (Rs)', 'Percentage'],
+                headers: ['Stream', 'Amount ج.س', 'Percentage'],
                 data: [
                   ['Vendor Net Sales', NumberFormat('#,###').format(monthly - commission - deliveryFees), '70%'],
                   ['Platform Commission', NumberFormat('#,###').format(commission), '20%'],

@@ -205,7 +205,7 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
               const SizedBox(height: 16),
               Row(
                 children: [
-                  Expanded(child: _buildModernField(_priceController, 'Price (Rs)', Icons.payments_rounded, colorScheme, isLight, keyboardType: TextInputType.number)),
+                  Expanded(child: _buildModernField(_priceController, 'Price ج.س', Icons.payments_rounded, colorScheme, isLight, keyboardType: TextInputType.number)),
                   const SizedBox(width: 16),
                   Expanded(child: _buildModernField(_discountController, 'Discount %', Icons.percent_rounded, colorScheme, isLight, keyboardType: TextInputType.number)),
                 ],
