@@ -75,11 +75,11 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                       ],
                       border: Border.all(color: Colors.white.withValues(alpha: 0.05), width: 2),
                     ),
-                    padding: const EdgeInsets.all(32),
+                    padding: const EdgeInsets.all(24),
                     child: Hero(
                       tag: 'app_logo',
                       child: Image.asset(
-                        'assets/images/rounded-image.png',
+                        'assets/images/image.png', // تم التحديث لاستخدام اللوجو الأساسي image.png
                         fit: BoxFit.contain,
                         errorBuilder: (context, error, stackTrace) => Icon(
                           Icons.auto_awesome_mosaic_rounded,

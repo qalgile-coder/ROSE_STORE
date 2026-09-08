@@ -8,13 +8,11 @@ class WelcomeScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
     return Scaffold(
-      backgroundColor: const Color(0xFF0B1120), // Deep Navy from image
+      backgroundColor: const Color(0xFF0B1120), // Deep Navy
       body: Stack(
         children: [
-          // Background subtle glows to match the futuristic feel
+          // Background subtle glows
           Positioned(
             top: 100,
             right: -100,
@@ -39,14 +37,30 @@ class WelcomeScreen extends StatelessWidget {
                 children: [
                   const SizedBox(height: 20),
                   
-                  // Top Logo (Updated to image.png)
+                  // Top Main Logo (image.png)
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 20),
                     child: Image.asset(
                       'assets/images/image.png',
                       width: double.infinity,
-                      height: 200,
+                      height: 150,
                       fit: BoxFit.contain,
+                    ),
+                  ),
+
+                  const SizedBox(height: 10),
+
+                  // Welcome Image Graphic (welcome.jpeg)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 24),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(24),
+                      child: Image.asset(
+                        'assets/images/welcome.jpeg',
+                        width: double.infinity,
+                        height: 180,
+                        fit: BoxFit.cover,
+                      ),
                     ),
                   ),
 
@@ -90,7 +104,7 @@ class WelcomeScreen extends StatelessWidget {
 
                   const SizedBox(height: 40),
 
-                  // Feature Chips
+                  // Feature Chips (يمكنك استخدام rounded-image.png هنا كأيقونة مصغرة إذا أردت)
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 24),
                     child: Row(
@@ -171,33 +185,6 @@ class WelcomeScreen extends StatelessWidget {
                       ),
                     ),
                   ),
-
-                  // Designer Footer
-                  Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 24),
-                    child: Column(
-                      children: [
-                        Text(
-                          'DEVELOPED BY',
-                          style: GoogleFonts.plusJakartaSans(
-                            color: Colors.white.withValues(alpha: 0.2),
-                            fontSize: 10,
-                            letterSpacing: 2,
-                            fontWeight: FontWeight.w900,
-                          ),
-                        ),
-                        const SizedBox(height: 6),
-                        Text(
-                          'Qusay Algile',
-                          style: GoogleFonts.plusJakartaSans(
-                            color: Colors.white,
-                            fontWeight: FontWeight.w800,
-                            fontSize: 15,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
                 ],
               ),
             ),
@@ -225,6 +212,7 @@ class _FeatureChip extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
+          // يمكنك استبدال الأيقونة بـ Image.asset('assets/images/rounded-image.png') إذا أردت استخدام الصورة المصغرة هنا
           Icon(icon, color: AppColors.premiumDarkPrimary, size: 20),
           const SizedBox(width: 10),
           Expanded(
