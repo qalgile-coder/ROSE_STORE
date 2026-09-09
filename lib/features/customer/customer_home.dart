@@ -93,11 +93,32 @@ class CustomerHome extends ConsumerWidget {
                     children: [
                       const SizedBox(height: 10),
                       const _PromoBanner(),
-                      const SizedBox(height: 40),
+                      const SizedBox(height: 32),
                       _SectionHeader(title: 'Quick Categories', showSeeAll: false, textColor: textColor, primaryColor: primaryColor),
-                      const SizedBox(height: 20),
+                      const SizedBox(height: 16),
                       const _CategoryGrid(),
-                      const SizedBox(height: 40),
+                      const SizedBox(height: 32),
+                      _SectionHeader(
+                        title: 'All Products', 
+                        showSeeAll: true, 
+                        onSeeAll: '/customer/all-products',
+                        textColor: textColor, 
+                        primaryColor: primaryColor
+                      ),
+                      const SizedBox(height: 16),
+                    ],
+                  ),
+                ),
+              ),
+              // شبكة عرض المنتجات العامة (عمودين بتصميم احترافي متناسق)
+              const _AllMerchantProductsGridList(),
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const SizedBox(height: 32),
                       _SectionHeader(
                         title: 'featured_stores'.tr(ref), 
                         showSeeAll: true,
@@ -105,9 +126,9 @@ class CustomerHome extends ConsumerWidget {
                         textColor: textColor,
                         primaryColor: primaryColor,
                       ),
-                      const SizedBox(height: 20),
+                      const SizedBox(height: 16),
                       const _FeaturedShops(),
-                      const SizedBox(height: 40),
+                      const SizedBox(height: 32),
                       _SectionHeader(
                         title: 'Trending Now', 
                         showSeeAll: true, 
@@ -115,24 +136,12 @@ class CustomerHome extends ConsumerWidget {
                         textColor: textColor, 
                         primaryColor: primaryColor
                       ),
-                      const SizedBox(height: 20),
+                      const SizedBox(height: 16),
                       const _TrendingProducts(),
-                      const SizedBox(height: 40),
-                      // تم تغيير العنوان ليعبر عن قسم عرض جميع المنتجات التي يضيفها التجار
-                      _SectionHeader(
-                        title: 'All Merchant Products', 
-                        showSeeAll: true, 
-                        onSeeAll: '/customer/all-products',
-                        textColor: textColor, 
-                        primaryColor: primaryColor
-                      ),
-                      const SizedBox(height: 20),
                     ],
                   ),
                 ),
               ),
-              // قسم عرض جميع منتجات التجار بشكل رأسي طويل يملأ الشاشة
-              const _AllMerchantProductsVerticalList(),
               const SliverToBoxAdapter(child: SizedBox(height: 120)),
             ],
           ),
@@ -303,33 +312,33 @@ class _SearchBar extends ConsumerWidget {
     return GestureDetector(
       onTap: () => context.push('/customer/search'),
       child: Container(
-        height: 56,
+        height: 54,
         padding: const EdgeInsets.symmetric(horizontal: 20),
         decoration: BoxDecoration(
           color: cardColor,
-          borderRadius: BorderRadius.circular(24),
+          borderRadius: BorderRadius.circular(20),
           boxShadow: [
             BoxShadow(
-              color: isLight ? Colors.black.withOpacity(0.05) : Colors.black.withOpacity(0.15), 
-              blurRadius: 30, 
-              offset: const Offset(0, 10)
+              color: isLight ? Colors.black.withOpacity(0.04) : Colors.black.withOpacity(0.12), 
+              blurRadius: 20, 
+              offset: const Offset(0, 8)
             ),
           ],
           border: Border.all(color: isLight ? AppColors.lightBorder : AppColors.premiumDarkDivider.withOpacity(0.3)),
         ),
         child: Row(
           children: [
-            Icon(Icons.search_rounded, color: primaryColor, size: 24),
+            Icon(Icons.search_rounded, color: primaryColor, size: 22),
             const SizedBox(width: 14),
             Text(
               'search_hint'.tr(ref),
-              style: TextStyle(color: secondaryTextColor.withOpacity(0.5), fontSize: 15, fontWeight: FontWeight.w500),
+              style: TextStyle(color: secondaryTextColor.withOpacity(0.6), fontSize: 14, fontWeight: FontWeight.w500),
             ),
             const Spacer(),
             Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(color: primaryColor.withOpacity(0.1), borderRadius: BorderRadius.circular(10)),
-              child: Icon(Icons.tune_rounded, color: primaryColor, size: 18),
+              child: Icon(Icons.tune_rounded, color: primaryColor, size: 16),
             ),
           ],
         ),
@@ -354,19 +363,19 @@ class _PromoBanner extends ConsumerWidget {
 
         return Container(
           width: double.infinity,
-          height: 190,
+          height: 180,
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(36),
+            borderRadius: BorderRadius.circular(28),
             boxShadow: [
               BoxShadow(
-                color: isLight ? primaryColor.withOpacity(0.1) : Colors.black.withOpacity(0.3), 
-                blurRadius: 40, 
-                offset: const Offset(0, 20)
+                color: isLight ? primaryColor.withOpacity(0.12) : Colors.black.withOpacity(0.3), 
+                blurRadius: 30, 
+                offset: const Offset(0, 15)
               ),
             ],
           ),
           child: ClipRRect(
-            borderRadius: BorderRadius.circular(36),
+            borderRadius: BorderRadius.circular(28),
             child: Stack(
               children: [
                 Positioned.fill(
@@ -379,7 +388,7 @@ class _PromoBanner extends ConsumerWidget {
                   child: Container(
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
-                        colors: [Colors.black.withOpacity(0.9), Colors.transparent],
+                        colors: [Colors.black.withOpacity(0.85), Colors.transparent],
                         begin: Alignment.centerLeft,
                         end: Alignment.centerRight,
                       ),
@@ -387,34 +396,34 @@ class _PromoBanner extends ConsumerWidget {
                   ),
                 ),
                 Padding(
-                  padding: const EdgeInsets.all(32),
+                  padding: const EdgeInsets.all(28),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                         decoration: BoxDecoration(color: primaryColor, borderRadius: BorderRadius.circular(8)),
                         child: Text(
                           offer.offerType == 'percentage' ? '${offer.value.round()}% OFF' : 'VIP DEAL',
                           style: TextStyle(color: isLight ? Colors.white : AppColors.premiumDarkBackground, fontSize: 10, fontWeight: FontWeight.w900, letterSpacing: 1),
                         ),
                       ),
-                      const SizedBox(height: 16),
+                      const SizedBox(height: 12),
                       Text(
                         offer.title,
-                        style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.w800, letterSpacing: -0.5),
+                        style: const TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.w800, letterSpacing: -0.5),
                       ),
-                      const SizedBox(height: 20),
+                      const SizedBox(height: 16),
                       ElevatedButton(
                         onPressed: () => context.push('/customer/offer', extra: offer),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.white,
                           foregroundColor: Colors.black,
-                          minimumSize: const Size(110, 44),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          minimumSize: const Size(100, 40),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                         ),
-                        child: const Text('SHOP NOW'),
+                        child: const Text('SHOP NOW', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 12)),
                       ),
                     ],
                   ),
@@ -424,7 +433,7 @@ class _PromoBanner extends ConsumerWidget {
           ),
         );
       },
-      loading: () => _Skeleton(height: 190, radius: 36),
+      loading: () => const _Skeleton(height: 180, radius: 28),
       error: (e, s) => const SizedBox.shrink(),
     );
   }
@@ -447,7 +456,7 @@ class _SectionHeader extends StatelessWidget {
           child: Text(
             title,
             style: TextStyle(
-              fontSize: 22, 
+              fontSize: 20, 
               fontWeight: FontWeight.w900, 
               color: textColor, 
               letterSpacing: -0.5
@@ -465,15 +474,15 @@ class _SectionHeader extends StatelessWidget {
                 }
               },
               style: TextButton.styleFrom(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Text('view_all'.tr(ref), style: TextStyle(color: primaryColor, fontWeight: FontWeight.w900, fontSize: 13, letterSpacing: 0.5)),
-                  const SizedBox(width: 6),
-                  Icon(Icons.arrow_forward_ios_rounded, size: 12, color: primaryColor),
+                  Text('view_all'.tr(ref), style: TextStyle(color: primaryColor, fontWeight: FontWeight.w900, fontSize: 12, letterSpacing: 0.5)),
+                  const SizedBox(width: 4),
+                  Icon(Icons.arrow_forward_ios_rounded, size: 10, color: primaryColor),
                 ],
               ),
             ),
@@ -505,28 +514,27 @@ class _CategoryGrid extends StatelessWidget {
           scrollDirection: Axis.horizontal,
           physics: const BouncingScrollPhysics(),
           child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: categories.map((cat) {
               final color = cat['color'] as Color;
               return Padding(
-                padding: const EdgeInsets.only(right: 16),
+                padding: const EdgeInsets.only(right: 14),
                 child: InkWell(
                   onTap: () => context.push('/customer/category/${cat['key']}'),
-                  borderRadius: BorderRadius.circular(24),
+                  borderRadius: BorderRadius.circular(22),
                   child: Column(
                     children: [
                       Container(
-                        width: 78,
-                        height: 78,
+                        width: 72,
+                        height: 72,
                         decoration: BoxDecoration(
                           color: cardColor,
-                          borderRadius: BorderRadius.circular(26),
+                          borderRadius: BorderRadius.circular(22),
                           border: Border.all(color: isLight ? color.withOpacity(0.15) : AppColors.premiumDarkDivider.withOpacity(0.5), width: 1),
-                          boxShadow: isLight ? [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 15)] : null,
+                          boxShadow: isLight ? [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10)] : null,
                         ),
-                        child: Center(child: Icon(cat['icon'] as IconData, color: color, size: 30)),
+                        child: Center(child: Icon(cat['icon'] as IconData, color: color, size: 28)),
                       ),
-                      const SizedBox(height: 12),
+                      const SizedBox(height: 8),
                       Text(cat['name'] as String, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: secondaryTextColor)),
                     ],
                   ),
@@ -536,6 +544,140 @@ class _CategoryGrid extends StatelessWidget {
           ),
         );
       },
+    );
+  }
+}
+
+// شبكة المنتجات العامة (تستخدم مزود مستقل ومنظم)
+class _AllMerchantProductsGridList extends ConsumerWidget {
+  const _AllMerchantProductsGridList();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    // تم استخدام trendingProductsProvider هنا كمثال، ويمكن استبداله بمزود عام للمنتجات إن وجد
+    final allProductsAsync = ref.watch(trendingProductsProvider); 
+    final isLight = Theme.of(context).brightness == Brightness.light;
+    final primaryColor = isLight ? AppColors.lightPrimary : AppColors.premiumDarkPrimary;
+
+    return allProductsAsync.when(
+      data: (products) {
+        if (products.isEmpty) return const SliverToBoxAdapter(child: SizedBox.shrink());
+        return SliverPadding(
+          padding: const EdgeInsets.symmetric(horizontal: 20),
+          sliver: SliverGrid(
+            delegate: SliverChildBuilderDelegate(
+              (context, index) {
+                return _GridProductCard(product: products[index]);
+              },
+              childCount: products.length,
+            ),
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 2,
+              mainAxisSpacing: 14,
+              crossAxisSpacing: 14,
+              childAspectRatio: 0.72,
+            ),
+          ),
+        );
+      },
+      loading: () => SliverToBoxAdapter(
+        child: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(20),
+            child: CircularProgressIndicator(color: primaryColor),
+          ),
+        ),
+      ),
+      error: (e, s) => const SliverToBoxAdapter(child: SizedBox.shrink()),
+    );
+  }
+}
+
+class _GridProductCard extends StatelessWidget {
+  final ProductModel product;
+  const _GridProductCard({required this.product});
+
+  @override
+  Widget build(BuildContext context) {
+    final isLight = Theme.of(context).brightness == Brightness.light;
+    final primaryColor = isLight ? AppColors.lightPrimary : AppColors.premiumDarkPrimary;
+    final cardColor = isLight ? AppColors.lightSurface : AppColors.premiumDarkSurface;
+    final textColor = isLight ? AppColors.lightTextPrimary : AppColors.premiumDarkTextPrimary;
+    final secondaryTextColor = isLight ? AppColors.lightTextSecondary : AppColors.premiumDarkTextSecondary;
+
+    return InkWell(
+      onTap: () => context.push('/customer/product', extra: product),
+      borderRadius: BorderRadius.circular(22),
+      child: Container(
+        padding: const EdgeInsets.all(10),
+        decoration: BoxDecoration(
+          color: cardColor, 
+          borderRadius: BorderRadius.circular(22),
+          boxShadow: isLight ? [BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 10, offset: const Offset(0, 4))] : null,
+          border: isLight ? Border.all(color: AppColors.lightBorder) : Border.all(color: AppColors.premiumDarkDivider.withOpacity(0.4)),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(16),
+                child: product.imageUrl.isNotEmpty 
+                    ? Image.network(product.imageUrl, fit: BoxFit.cover, width: double.infinity)
+                    : Container(
+                        width: double.infinity, 
+                        color: isLight ? AppColors.lightSecondaryBackground : AppColors.premiumDarkSecondaryBackground, 
+                        child: Center(child: Icon(Icons.image, color: textColor.withOpacity(0.1)))
+                      ),
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              product.name, 
+              style: TextStyle(
+                fontWeight: FontWeight.w900, 
+                fontSize: 13, 
+                color: textColor
+              ), 
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+            const SizedBox(height: 2),
+            Text(
+              product.description.isNotEmpty ? product.description : 'Merchant Product', 
+              style: TextStyle(
+                color: secondaryTextColor.withOpacity(0.7), 
+                fontSize: 11, 
+                fontWeight: FontWeight.w600
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+            const SizedBox(height: 6),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Rs ${product.price.round()}', 
+                  style: TextStyle(
+                    color: primaryColor, 
+                    fontWeight: FontWeight.w900, 
+                    fontSize: 13
+                  )
+                ),
+                Container(
+                  padding: const EdgeInsets.all(5),
+                  decoration: BoxDecoration(
+                    color: primaryColor.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Icon(Icons.add_rounded, color: primaryColor, size: 14),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
@@ -551,18 +693,18 @@ class _FeaturedShops extends ConsumerWidget {
       data: (shops) {
         if (shops.isEmpty) return const SizedBox.shrink();
         return SizedBox(
-          height: 260,
+          height: 250,
           child: ListView.separated(
             scrollDirection: Axis.horizontal,
             physics: const BouncingScrollPhysics(),
             itemCount: shops.length,
             padding: const EdgeInsets.only(right: 20),
-            separatorBuilder: (_, __) => const SizedBox(width: 20),
+            separatorBuilder: (_, __) => const SizedBox(width: 16),
             itemBuilder: (context, index) => _FeaturedShopCard(shop: shops[index]),
           ),
         );
       },
-      loading: () => SizedBox(height: 260, child: ListView(scrollDirection: Axis.horizontal, children: List.generate(2, (_) => Padding(padding: const EdgeInsets.only(right: 20), child: _Skeleton(width: 280, height: 260, radius: 32))))),
+      loading: () => SizedBox(height: 250, child: ListView(scrollDirection: Axis.horizontal, children: List.generate(2, (_) => const Padding(padding: EdgeInsets.only(right: 16), child: _Skeleton(width: 270, height: 250, radius: 28))))),
       error: (e, s) => const SizedBox.shrink(),
     );
   }
@@ -582,20 +724,20 @@ class _FeaturedShopCard extends StatelessWidget {
 
     return InkWell(
       onTap: () => context.push('/customer/shop/${shop.id}'),
-      borderRadius: BorderRadius.circular(32),
+      borderRadius: BorderRadius.circular(28),
       child: Container(
-        width: 290,
+        width: 280,
         decoration: BoxDecoration(
           color: cardColor,
-          borderRadius: BorderRadius.circular(32),
+          borderRadius: BorderRadius.circular(28),
           boxShadow: [
             BoxShadow(
-              color: isLight ? Colors.black.withValues(alpha: 0.05) : Colors.black.withValues(alpha: 0.2), 
-              blurRadius: 30, 
-              offset: const Offset(0, 10)
+              color: isLight ? Colors.black.withOpacity(0.04) : Colors.black.withOpacity(0.2), 
+              blurRadius: 24, 
+              offset: const Offset(0, 8)
             )
           ],
-          border: Border.all(color: isLight ? AppColors.lightBorder : AppColors.premiumDarkDivider.withValues(alpha: 0.5)),
+          border: Border.all(color: isLight ? AppColors.lightBorder : AppColors.premiumDarkDivider.withOpacity(0.4)),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -603,29 +745,29 @@ class _FeaturedShopCard extends StatelessWidget {
             Stack(
               children: [
                 ClipRRect(
-                  borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
+                  borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
                   child: Hero(
                     tag: 'shop_home_${shop.id}',
                     child: shop.imageUrl.isNotEmpty 
-                        ? Image.network(shop.imageUrl, height: 155, width: double.infinity, fit: BoxFit.cover)
-                        : Container(height: 155, color: isLight ? AppColors.lightSecondaryBackground : AppColors.premiumDarkSecondaryBackground, child: Center(child: Icon(Icons.storefront, color: textColor.withValues(alpha: 0.1), size: 50))),
+                        ? Image.network(shop.imageUrl, height: 145, width: double.infinity, fit: BoxFit.cover)
+                        : Container(height: 145, color: isLight ? AppColors.lightSecondaryBackground : AppColors.premiumDarkSecondaryBackground, child: Center(child: Icon(Icons.storefront, color: textColor.withOpacity(0.1), size: 40))),
                   ),
                 ),
                 Positioned(
-                  top: 16,
-                  left: 16,
+                  top: 12,
+                  left: 12,
                   child: _GlassBadge(label: '${shop.rating}', icon: Icons.star_rounded, color: AppColors.warning),
                 ),
                 if (shop.hasFreeDelivery)
                   Positioned(
-                    top: 16,
-                    right: 16,
+                    top: 12,
+                    right: 12,
                     child: _GlassBadge(label: 'FREE', icon: Icons.bolt_rounded, color: AppColors.success),
                   ),
               ],
             ),
             Padding(
-              padding: const EdgeInsets.all(20),
+              padding: const EdgeInsets.all(16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -637,7 +779,7 @@ class _FeaturedShopCard extends StatelessWidget {
                           shop.name, 
                           style: TextStyle(
                             fontWeight: FontWeight.w900, 
-                            fontSize: 17, 
+                            fontSize: 16, 
                             color: textColor, 
                             letterSpacing: -0.2
                           ), 
@@ -652,12 +794,12 @@ class _FeaturedShopCard extends StatelessWidget {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 6),
+                  const SizedBox(height: 4),
                   Text(
                     '${shop.category} • ${shop.address}', 
                     style: TextStyle(
-                      color: secondaryTextColor.withValues(alpha: 0.7), 
-                      fontSize: 12, 
+                      color: secondaryTextColor.withOpacity(0.7), 
+                      fontSize: 11, 
                       fontWeight: FontWeight.w600
                     ),
                     maxLines: 1,
@@ -685,17 +827,17 @@ class _TrendingProducts extends ConsumerWidget {
         if (products.isEmpty) return const SizedBox.shrink();
         
         return SizedBox(
-          height: 120,
+          height: 110,
           child: ListView.separated(
             scrollDirection: Axis.horizontal,
             physics: const BouncingScrollPhysics(),
             itemCount: products.length,
-            separatorBuilder: (_, __) => const SizedBox(width: 16),
+            separatorBuilder: (_, __) => const SizedBox(width: 14),
             itemBuilder: (context, index) => _SmallProductCard(product: products[index]),
           ),
         );
       },
-      loading: () => SizedBox(height: 120, child: ListView(scrollDirection: Axis.horizontal, children: List.generate(2, (_) => Padding(padding: const EdgeInsets.only(right: 16), child: _Skeleton(width: 240, height: 120, radius: 20))))),
+      loading: () => SizedBox(height: 110, child: ListView(scrollDirection: Axis.horizontal, children: List.generate(2, (_) => const Padding(padding: EdgeInsets.only(right: 14), child: _Skeleton(width: 230, height: 110, radius: 20))))),
       error: (e, s) => const SizedBox.shrink(),
     );
   }
@@ -716,21 +858,21 @@ class _SmallProductCard extends StatelessWidget {
       onTap: () => context.push('/customer/product', extra: product),
       borderRadius: BorderRadius.circular(20),
       child: Container(
-        width: 240,
-        padding: const EdgeInsets.all(12),
+        width: 230,
+        padding: const EdgeInsets.all(10),
         decoration: BoxDecoration(
           color: cardColor, 
           borderRadius: BorderRadius.circular(20),
-          boxShadow: isLight ? [BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 10)] : null,
-          border: isLight ? Border.all(color: AppColors.lightBorder) : Border.all(color: AppColors.premiumDarkDivider.withOpacity(0.5)),
+          boxShadow: isLight ? [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 8)] : null,
+          border: isLight ? Border.all(color: AppColors.lightBorder) : Border.all(color: AppColors.premiumDarkDivider.withOpacity(0.4)),
         ),
         child: Row(
           children: [
             ClipRRect(
               borderRadius: BorderRadius.circular(14),
-              child: Image.network(product.imageUrl, width: 64, height: 64, fit: BoxFit.cover),
+              child: Image.network(product.imageUrl, width: 60, height: 60, fit: BoxFit.cover),
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: 10),
             Expanded(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -740,7 +882,7 @@ class _SmallProductCard extends StatelessWidget {
                     product.name, 
                     style: TextStyle(
                       fontWeight: FontWeight.w800, 
-                      fontSize: 14, 
+                      fontSize: 13, 
                       color: textColor
                     ), 
                     maxLines: 1,
@@ -752,150 +894,8 @@ class _SmallProductCard extends StatelessWidget {
                     style: TextStyle(
                       color: primaryColor, 
                       fontWeight: FontWeight.w900, 
-                      fontSize: 15
+                      fontSize: 14
                     )
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-// قسم جديد كلياً لعرض كل منتجات التجار بشكل رأسي طويل ومتتابع يملأ الشاشة
-class _AllMerchantProductsVerticalList extends ConsumerWidget {
-  const _AllMerchantProductsVerticalList();
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    // يمكنك استبدال أو ربط هذا المزود (Provider) بالمزود الخاص بجلب كل المنتجات في تطبيقك (مثل allProductsProvider أو ما شابه)
-    final allProductsAsync = ref.watch(trendingProductsProvider); 
-    final isLight = Theme.of(context).brightness == Brightness.light;
-    final primaryColor = isLight ? AppColors.lightPrimary : AppColors.premiumDarkPrimary;
-
-    return allProductsAsync.when(
-      data: (products) {
-        if (products.isEmpty) return const SliverToBoxAdapter(child: SizedBox.shrink());
-        return SliverPadding(
-          padding: const EdgeInsets.symmetric(horizontal: 20),
-          sliver: SliverList(
-            delegate: SliverChildBuilderDelegate(
-              (context, index) {
-                return Padding(
-                  padding: const EdgeInsets.only(bottom: 16),
-                  child: _VerticalProductCard(product: products[index]),
-                );
-              },
-              childCount: products.length,
-            ),
-          ),
-        );
-      },
-      loading: () => SliverToBoxAdapter(
-        child: Center(
-          child: Padding(
-            padding: const EdgeInsets.all(20),
-            child: CircularProgressIndicator(color: primaryColor),
-          ),
-        ),
-      ),
-      error: (e, s) => const SliverToBoxAdapter(child: SizedBox.shrink()),
-    );
-  }
-}
-
-// تصميم بطاقة المنتج الرأسية الكبيرة التي تعرض تفاصيل منتج التاجر بانسيابية كاملة
-class _VerticalProductCard extends StatelessWidget {
-  final ProductModel product;
-  const _VerticalProductCard({required this.product});
-
-  @override
-  Widget build(BuildContext context) {
-    final isLight = Theme.of(context).brightness == Brightness.light;
-    final primaryColor = isLight ? AppColors.lightPrimary : AppColors.premiumDarkPrimary;
-    final cardColor = isLight ? AppColors.lightSurface : AppColors.premiumDarkSurface;
-    final textColor = isLight ? AppColors.lightTextPrimary : AppColors.premiumDarkTextPrimary;
-    final secondaryTextColor = isLight ? AppColors.lightTextSecondary : AppColors.premiumDarkTextSecondary;
-
-    return InkWell(
-      onTap: () => context.push('/customer/product', extra: product),
-      borderRadius: BorderRadius.circular(24),
-      child: Container(
-        height: 120,
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: cardColor, 
-          borderRadius: BorderRadius.circular(24),
-          boxShadow: isLight ? [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 15, offset: const Offset(0, 5))] : null,
-          border: isLight ? Border.all(color: AppColors.lightBorder) : Border.all(color: AppColors.premiumDarkDivider.withOpacity(0.5)),
-        ),
-        child: Row(
-          children: [
-            ClipRRect(
-              borderRadius: BorderRadius.circular(16),
-              child: product.imageUrl.isNotEmpty 
-                  ? Image.network(product.imageUrl, fit: BoxFit.cover, width: 96, height: double.infinity)
-                  : Container(
-                      width: 96, 
-                      height: double.infinity, 
-                      color: isLight ? AppColors.lightSecondaryBackground : AppColors.premiumDarkSecondaryBackground, 
-                      child: Center(child: Icon(Icons.image, color: textColor.withOpacity(0.1)))
-                    ),
-            ),
-            const SizedBox(width: 14),
-            Expanded(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    product.name, 
-                    style: TextStyle(
-                      fontWeight: FontWeight.w900, 
-                      fontSize: 16, 
-                      color: textColor
-                    ), 
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    product.description.isNotEmpty ? product.description : 'Added by merchant', 
-                    style: TextStyle(
-                      color: secondaryTextColor.withOpacity(0.8), 
-                      fontSize: 12, 
-                      fontWeight: FontWeight.w600
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: 12),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        'Rs ${product.price.round()}', 
-                        style: TextStyle(
-                          color: primaryColor, 
-                          fontWeight: FontWeight.w900, 
-                          fontSize: 16
-                        )
-                      ),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                        decoration: BoxDecoration(
-                          color: primaryColor.withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: Text(
-                          'View Details',
-                          style: TextStyle(color: primaryColor, fontSize: 11, fontWeight: FontWeight.w800),
-                        ),
-                      ),
-                    ],
                   ),
                 ],
               ),
@@ -916,22 +916,22 @@ class _GlassBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ClipRRect(
-      borderRadius: BorderRadius.circular(12),
+      borderRadius: BorderRadius.circular(10),
       child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+        filter: ImageFilter.blur(sigmaX: 6, sigmaY: 6),
         child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
           decoration: BoxDecoration(
-            color: Colors.black.withOpacity(0.3),
-            borderRadius: BorderRadius.circular(12),
+            color: Colors.black.withOpacity(0.35),
+            borderRadius: BorderRadius.circular(10),
             border: Border.all(color: Colors.white.withOpacity(0.1)),
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(icon, color: color, size: 14),
-              const SizedBox(width: 4),
-              Text(label, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 11)),
+              Icon(icon, color: color, size: 12),
+              const SizedBox(width: 3),
+              Text(label, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 10)),
             ],
           ),
         ),

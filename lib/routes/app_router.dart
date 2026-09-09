@@ -64,6 +64,7 @@ import '../features/customer/category_shops_screen.dart';
 import '../features/customer/featured_shops_screen.dart';
 import '../features/customer/nearby_shops_screen.dart';
 import '../features/customer/trending_products_screen.dart';
+import '../features/customer/customer_all_products_screen.dart'; // <--- تم إضافة استيراد شاشة عرض كل المنتجات الجديدة
 import '../features/customer/product_reviews_screen.dart';
 import '../features/customer/offer_details_screen.dart';
 import '../features/customer/product_details_screen.dart';
@@ -291,6 +292,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(path: '/customer/featured-shops', builder: (context, state) => const FeaturedShopsScreen()),
       GoRoute(path: '/customer/nearby-shops', builder: (context, state) => const NearbyShopsScreen()),
       GoRoute(path: '/customer/trending-products', builder: (context, state) => const TrendingProductsScreen()),
+      GoRoute(
+        path: '/customer/all-products',
+        builder: (context, state) => const CustomerAllProductsScreen(),
+      ), // <--- تم إضافة مسار الـ Route الخاص بجميع المنتجات هنا بنجاح
       GoRoute(
         path: '/customer/category/:name',
         builder: (context, state) => CategoryShopsScreen(category: state.pathParameters['name']!),
