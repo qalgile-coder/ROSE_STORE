@@ -118,10 +118,11 @@ class CustomerHome extends ConsumerWidget {
                       const SizedBox(height: 20),
                       const _TrendingProducts(),
                       const SizedBox(height: 40),
+                      // تم تغيير العنوان ليعبر عن قسم عرض جميع المنتجات التي يضيفها التجار
                       _SectionHeader(
-                        title: 'popular_near'.tr(ref), 
+                        title: 'All Merchant Products', 
                         showSeeAll: true, 
-                        onSeeAll: '/customer/nearby-shops',
+                        onSeeAll: '/customer/all-products',
                         textColor: textColor, 
                         primaryColor: primaryColor
                       ),
@@ -130,7 +131,8 @@ class CustomerHome extends ConsumerWidget {
                   ),
                 ),
               ),
-              const _NearbyShopsGrid(),
+              // قسم عرض جميع منتجات التجار بشكل رأسي طويل يملأ الشاشة
+              const _AllMerchantProductsVerticalList(),
               const SliverToBoxAdapter(child: SizedBox(height: 120)),
             ],
           ),
@@ -763,40 +765,52 @@ class _SmallProductCard extends StatelessWidget {
   }
 }
 
-class _NearbyShopsGrid extends ConsumerWidget {
-  const _NearbyShopsGrid();
+// قسم جديد كلياً لعرض كل منتجات التجار بشكل رأسي طويل ومتتابع يملأ الشاشة
+class _AllMerchantProductsVerticalList extends ConsumerWidget {
+  const _AllMerchantProductsVerticalList();
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final nearbyAsync = ref.watch(nearbyShopsProvider);
+    // يمكنك استبدال أو ربط هذا المزود (Provider) بالمزود الخاص بجلب كل المنتجات في تطبيقك (مثل allProductsProvider أو ما شابه)
+    final allProductsAsync = ref.watch(trendingProductsProvider); 
     final isLight = Theme.of(context).brightness == Brightness.light;
     final primaryColor = isLight ? AppColors.lightPrimary : AppColors.premiumDarkPrimary;
 
-    return nearbyAsync.when(
-      data: (shops) => SliverPadding(
-        padding: const EdgeInsets.symmetric(horizontal: 20),
-        sliver: SliverGrid(
-          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 2,
-            mainAxisSpacing: 16,
-            crossAxisSpacing: 16,
-            childAspectRatio: 0.85,
+    return allProductsAsync.when(
+      data: (products) {
+        if (products.isEmpty) return const SliverToBoxAdapter(child: SizedBox.shrink());
+        return SliverPadding(
+          padding: const EdgeInsets.symmetric(horizontal: 20),
+          sliver: SliverList(
+            delegate: SliverChildBuilderDelegate(
+              (context, index) {
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 16),
+                  child: _VerticalProductCard(product: products[index]),
+                );
+              },
+              childCount: products.length,
+            ),
           ),
-          delegate: SliverChildBuilderDelegate(
-            (context, index) => _ShopCard(shop: shops[index]),
-            childCount: shops.length,
+        );
+      },
+      loading: () => SliverToBoxAdapter(
+        child: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(20),
+            child: CircularProgressIndicator(color: primaryColor),
           ),
         ),
       ),
-      loading: () => SliverToBoxAdapter(child: Center(child: CircularProgressIndicator(color: primaryColor))),
       error: (e, s) => const SliverToBoxAdapter(child: SizedBox.shrink()),
     );
   }
 }
 
-class _ShopCard extends StatelessWidget {
-  final ShopModel shop;
-  const _ShopCard({required this.shop});
+// تصميم بطاقة المنتج الرأسية الكبيرة التي تعرض تفاصيل منتج التاجر بانسيابية كاملة
+class _VerticalProductCard extends StatelessWidget {
+  final ProductModel product;
+  const _VerticalProductCard({required this.product});
 
   @override
   Widget build(BuildContext context) {
@@ -807,54 +821,80 @@ class _ShopCard extends StatelessWidget {
     final secondaryTextColor = isLight ? AppColors.lightTextSecondary : AppColors.premiumDarkTextSecondary;
 
     return InkWell(
-      onTap: () => context.push('/customer/shop/${shop.id}'),
-      borderRadius: BorderRadius.circular(22),
+      onTap: () => context.push('/customer/product', extra: product),
+      borderRadius: BorderRadius.circular(24),
       child: Container(
+        height: 120,
+        padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
           color: cardColor, 
-          borderRadius: BorderRadius.circular(22),
-          boxShadow: isLight ? [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 15)] : null,
+          borderRadius: BorderRadius.circular(24),
+          boxShadow: isLight ? [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 15, offset: const Offset(0, 5))] : null,
           border: isLight ? Border.all(color: AppColors.lightBorder) : Border.all(color: AppColors.premiumDarkDivider.withOpacity(0.5)),
         ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        child: Row(
           children: [
-            Expanded(
-              child: ClipRRect(
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(22)),
-                child: shop.imageUrl.isNotEmpty 
-                    ? Image.network(shop.imageUrl, fit: BoxFit.cover, width: double.infinity)
-                    : Container(color: isLight ? AppColors.lightSecondaryBackground : AppColors.premiumDarkSecondaryBackground, child: Center(child: Icon(Icons.storefront, color: textColor.withOpacity(0.1)))),
-              ),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(16),
+              child: product.imageUrl.isNotEmpty 
+                  ? Image.network(product.imageUrl, fit: BoxFit.cover, width: 96, height: double.infinity)
+                  : Container(
+                      width: 96, 
+                      height: double.infinity, 
+                      color: isLight ? AppColors.lightSecondaryBackground : AppColors.premiumDarkSecondaryBackground, 
+                      child: Center(child: Icon(Icons.image, color: textColor.withOpacity(0.1)))
+                    ),
             ),
-            Padding(
-              padding: const EdgeInsets.all(14),
+            const SizedBox(width: 14),
+            Expanded(
               child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    shop.name, 
+                    product.name, 
                     style: TextStyle(
-                      fontWeight: FontWeight.w800, 
-                      fontSize: 13, 
+                      fontWeight: FontWeight.w900, 
+                      fontSize: 16, 
                       color: textColor
                     ), 
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
                   const SizedBox(height: 6),
+                  Text(
+                    product.description.isNotEmpty ? product.description : 'Added by merchant', 
+                    style: TextStyle(
+                      color: secondaryTextColor.withOpacity(0.8), 
+                      fontSize: 12, 
+                      fontWeight: FontWeight.w600
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 12),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
-                        shop.hasFreeDelivery ? 'FREE' : 'Rs ${shop.deliveryFee.round()}', 
+                        'Rs ${product.price.round()}', 
                         style: TextStyle(
                           color: primaryColor, 
-                          fontSize: 10, 
-                          fontWeight: FontWeight.w900
+                          fontWeight: FontWeight.w900, 
+                          fontSize: 16
                         )
                       ),
-                      Icon(Icons.arrow_forward_rounded, size: 12, color: secondaryTextColor.withOpacity(0.3)),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: primaryColor.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Text(
+                          'View Details',
+                          style: TextStyle(color: primaryColor, fontSize: 11, fontWeight: FontWeight.w800),
+                        ),
+                      ),
                     ],
                   ),
                 ],
