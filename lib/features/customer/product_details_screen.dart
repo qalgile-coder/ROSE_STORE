@@ -63,7 +63,8 @@ class ProductDetailsScreen extends ConsumerWidget {
                         style: TextStyle(fontSize: 16, color: colorScheme.onSurface.withValues(alpha: 0.5), fontWeight: FontWeight.w600),
                       ),
                       const SizedBox(height: 32),
-                      _PriceSection(price: liveProduct.price, discount: liveProduct.discount),
+                      // تمرير المنتج بالكامل ليعرض السعر والعملة كما رفعها التاجر تماماً
+                      _PriceSection(product: liveProduct),
                       Padding(
                         padding: const EdgeInsets.symmetric(vertical: 32),
                         child: Divider(color: colorScheme.outline.withValues(alpha: 0.1)),
@@ -366,24 +367,33 @@ class _StatItem extends StatelessWidget {
 }
 
 class _PriceSection extends StatelessWidget {
-  final double price;
-  final double discount;
-  const _PriceSection({required this.price, required this.discount});
+  final ProductModel product;
+  const _PriceSection({required this.product});
+
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
+    // جلب العملة الديناميكية التي قام التاجر بتحديدها عند رفع المنتج، وإذا لم تتوفر يتم استخدام 'ج.س' كقيمة افتراضية
+    final currencySymbol = product.currency.isNotEmpty ? product.currency : 'ج.س';
+
     return Row(
       crossAxisAlignment: CrossAxisAlignment.end, 
       children: [
-        Text('Rs ${price.toStringAsFixed(0)}', style: TextStyle(fontSize: 36, fontWeight: FontWeight.w800, color: colorScheme.primary, letterSpacing: -1)), 
-        if (discount > 0) ...[
+        Text(
+          '${product.price.toStringAsFixed(0)} $currencySymbol', 
+          style: TextStyle(fontSize: 36, fontWeight: FontWeight.w800, color: colorScheme.primary, letterSpacing: -1)
+        ), 
+        if (product.discount > 0) ...[
           const SizedBox(width: 14), 
           Padding(
             padding: const EdgeInsets.only(bottom: 6), 
-            child: Text('Rs ${(price + discount).round()}', style: TextStyle(fontSize: 18, color: colorScheme.onSurface.withOpacity(0.3), decoration: TextDecoration.lineThrough, fontWeight: FontWeight.w600))
-          )
-        ]
-      ]
+            child: Text(
+              '${(product.price + product.discount).round()} $currencySymbol', 
+              style: TextStyle(fontSize: 18, color: colorScheme.onSurface.withOpacity(0.3), decoration: TextDecoration.lineThrough, fontWeight: FontWeight.w600)
+            ),
+          ),
+        ],
+      ],
     );
   }
 }
@@ -394,7 +404,6 @@ class _StockCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    final ref = Consumer(builder: (context, ref, _) => const SizedBox()); // Dummy to get access to localization context if needed
     bool isLow = stock < 10;
     return Consumer(
       builder: (context, ref, _) {

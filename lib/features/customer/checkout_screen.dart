@@ -47,7 +47,8 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
         ? ref.watch(shopDetailProvider(shopId))
         : const AsyncData<ShopModel?>(null);
 
-    final platformDeliveryFee = settings?.deliveryCharge ?? 150.0;
+    // تم تعديل رسوم التوصيل الأساسية لتصبح 0.0
+    final platformDeliveryFee = 0.0;
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
@@ -83,7 +84,8 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
             const SizedBox(height: 16),
             shopAsync.when(
               data: (shop) {
-                final deliveryFee = (shop?.hasFreeDelivery ?? false) ? 0.0 : (shop?.deliveryFee ?? platformDeliveryFee);
+                // فرض أن رسوم التوصيل دائماً 0 بغض النظر عن إعدادات المتجر
+                const deliveryFee = 0.0;
                 return _buildOrderSummary(cart, colorScheme, isLight, deliveryFee);
               },
               loading: () => Center(child: CircularProgressIndicator(color: colorScheme.primary)),
@@ -100,7 +102,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
         user, 
         colorScheme, 
         isLight, 
-        shopAsync.value?.deliveryFee ?? platformDeliveryFee,
+        0.0, // فرض أن رسوم التوصيل في أزرار التنقل السفلي هي 0 أيضاً
       ),
     );
   }
@@ -204,7 +206,6 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
 
   Widget _buildCouponSelector(dynamic cart, ColorScheme colorScheme, bool isLight) {
     if (cart.items.isEmpty) return const SizedBox.shrink();
-    final shopId = cart.shopId;
     final couponsAsync = ref.watch(shopCouponsProvider);
 
     return couponsAsync.when(
@@ -498,9 +499,9 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
           : '';
       final shopPhone = shopData?['phone'] ?? '03001234567';
       final shopAddress = shopData?['address'] ?? 'Shop Address, Main Market';
-      final double shopDeliveryFee = (shopData?['deliveryFee'] ?? 100.0).toDouble();
-      final bool hasFreeDelivery = shopData?['hasFreeDelivery'] ?? false;
-      final actualDeliveryFee = hasFreeDelivery ? 0.0 : shopDeliveryFee;
+      
+      // تعيين رسوم التوصيل عند إرسال الطلب لقاعدة البيانات لتصبح 0.0 فوراً
+      const double actualDeliveryFee = 0.0;
 
       final discount = _calculateDiscount(cart.totalAmount);
       final finalAmount = cart.totalAmount + actualDeliveryFee - discount;

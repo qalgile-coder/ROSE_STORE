@@ -155,7 +155,7 @@ class CartScreen extends ConsumerWidget {
     final theme = Theme.of(context);
     final isLight = theme.brightness == Brightness.light;
     final colorScheme = theme.colorScheme;
-    const double deliveryFee = 100.0;
+    const double deliveryFee = 0.0;
     double total = cart.totalAmount + deliveryFee;
 
     return ClipRRect(
