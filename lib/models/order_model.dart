@@ -26,6 +26,8 @@ class OrderModel {
   final String? riderId;
   final OrderStatus status;
   final double totalAmount;
+  final double subtotal;
+  final double discount;
   final double deliveryFee;
   final String pickupAddress;
   final String deliveryAddress;
@@ -52,6 +54,8 @@ class OrderModel {
     this.riderId,
     required this.status,
     required this.totalAmount,
+    required this.subtotal,
+    this.discount = 0.0,
     required this.deliveryFee,
     required this.pickupAddress,
     required this.deliveryAddress,
@@ -66,8 +70,15 @@ class OrderModel {
     this.deliveredAt,
   });
 
+  // توفير getter لاسم total للتوافق مع شاشة تفاصيل الطلب
+  double get total => totalAmount;
+
   factory OrderModel.fromFirestore(DocumentSnapshot doc) {
     Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
+    final totalAmt = (data['totalAmount'] ?? 0.0).toDouble();
+    final sub = (data['subtotal'] ?? totalAmt).toDouble();
+    final disc = (data['discount'] ?? 0.0).toDouble();
+    
     return OrderModel(
       id: doc.id,
       customerId: data['customerId'] ?? '',
@@ -80,7 +91,9 @@ class OrderModel {
       vendorPhone: data['vendorPhone'] ?? '',
       riderId: data['riderId'],
       status: _parseStatus(data['status']),
-      totalAmount: (data['totalAmount'] ?? 0.0).toDouble(),
+      totalAmount: totalAmt,
+      subtotal: sub,
+      discount: disc,
       deliveryFee: (data['deliveryFee'] ?? 0.0).toDouble(),
       pickupAddress: data['pickupAddress'] ?? '',
       deliveryAddress: data['deliveryAddress'] ?? '',
@@ -116,6 +129,8 @@ class OrderModel {
       'riderId': riderId,
       'status': status.name,
       'totalAmount': totalAmount,
+      'subtotal': subtotal,
+      'discount': discount,
       'deliveryFee': deliveryFee,
       'pickupAddress': pickupAddress,
       'deliveryAddress': deliveryAddress,
