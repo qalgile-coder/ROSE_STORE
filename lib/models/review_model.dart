@@ -6,6 +6,9 @@ class ReviewModel {
   final double rating;
   final String review;
   final String orderId;
+  final String shopId;
+  final String? riderId;
+  final List<Map<String, dynamic>> productRatings;
   final DateTime createdAt;
   final String? reply;
 
@@ -15,6 +18,9 @@ class ReviewModel {
     required this.rating,
     required this.review,
     required this.orderId,
+    this.shopId = '',
+    this.riderId,
+    this.productRatings = const [],
     required this.createdAt,
     this.reply,
   });
@@ -27,7 +33,14 @@ class ReviewModel {
       rating: (data['rating'] ?? 0.0).toDouble(),
       review: data['review'] ?? '',
       orderId: data['orderId'] ?? '',
-      createdAt: (data['createdAt'] as Timestamp).toDate(),
+      shopId: data['shopId'] ?? '',
+      riderId: data['riderId'],
+      productRatings: data['productRatings'] != null
+          ? List<Map<String, dynamic>>.from(data['productRatings'])
+          : [],
+      createdAt: data['createdAt'] != null 
+          ? (data['createdAt'] as Timestamp).toDate() 
+          : DateTime.now(),
       reply: data['reply'],
     );
   }
@@ -38,6 +51,9 @@ class ReviewModel {
       'rating': rating,
       'review': review,
       'orderId': orderId,
+      'shopId': shopId,
+      'riderId': riderId,
+      'productRatings': productRatings,
       'createdAt': FieldValue.serverTimestamp(),
       'reply': reply,
     };
