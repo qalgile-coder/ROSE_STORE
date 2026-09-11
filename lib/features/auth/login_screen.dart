@@ -24,12 +24,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   bool _obscurePassword = true;
   bool _rememberMe = false;
 
-  // تعريف درجات اللون الوردي الغامض (Mysterious Pink Palette)
-  static const Color _mysteriousPinkPrimary = Color(0xFFC2185B); // اللون الأساسي للوردي الغامض
-  static const Color _mysteriousPinkDark = Color(0xFF880E4F); // درجة أغمق للتدرجات
-  static const Color _socialButtonColor = Color(0xFF2A1529); // لون خلفية أيقونات السوشيال ميديا
-  static const Color _surfaceColor = Color(0xFF1E111C); // لون خلفية الحاويات (مشابه للسبلاش)
-  static const Color _bgColor = Color(0xFF0F0810); // لون الخلفية العامة (مشابه للسبلاش)
+  static const Color _mysteriousPinkPrimary = Color(0xFFC2185B);
+  static const Color _mysteriousPinkDark = Color(0xFF880E4F);
+  static const Color _surfaceColor = Color(0xFF1E111C);
+  static const Color _bgColor = Color(0xFF0F0810);
 
   @override
   void initState() {
@@ -98,27 +96,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     );
   }
 
-  Future<void> _signInWithGoogle() async {
-    if (_isGoogleLoading || _isLoading || _isEmailLoginLoading) return;
-
-    await _handleAuthAction(
-      () => ref.read(authServiceProvider).signInWithGoogle(),
-      setLoading: (val) => setState(() => _isGoogleLoading = val),
-    );
-  }
-
-  Future<void> _signInWithEmailSocial() async {
-    if (_isEmailLoginLoading || _isLoading || _isGoogleLoading) return;
-
-    await _handleAuthAction(
-      () async {
-        if (!_formKey.currentState!.validate()) throw Exception('الرجاء إدخال البريد الإلكتروني');
-        await ref.read(authServiceProvider).signIn(_emailController.text.trim(), _passwordController.text.trim());
-      },
-      setLoading: (val) => setState(() => _isEmailLoginLoading = val),
-    );
-  }
-
   void _showErrorSnackBar(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -139,7 +116,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: _surfaceColor, // تم التحديث للون الوردي الغامض
+        backgroundColor: _surfaceColor,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
         title: Text('Reset Password', style: GoogleFonts.plusJakartaSans(color: Colors.white, fontWeight: FontWeight.w800)),
         content: Column(
@@ -157,8 +134,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               decoration: InputDecoration(
                 hintText: 'Recovery Email',
                 hintStyle: TextStyle(color: Colors.white.withOpacity(0.3)),
-                prefixIcon: const Icon(Icons.mail_rounded, size: 20, color: _mysteriousPinkPrimary), // تم التحديث للون الوردي الغامض
-                fillColor: _bgColor.withOpacity(0.5), // تم التحديث للون الوردي الغامض
+                prefixIcon: const Icon(Icons.mail_rounded, size: 20, color: _mysteriousPinkPrimary),
+                fillColor: _bgColor.withOpacity(0.5),
                 filled: true,
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
               ),
@@ -197,7 +174,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               }
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: _mysteriousPinkPrimary, // تم التحديث للون الوردي الغامض
+              backgroundColor: _mysteriousPinkPrimary,
               minimumSize: const Size(100, 48),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
             ),
@@ -208,13 +185,49 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     );
   }
 
+  Widget _buildTextField({
+    required TextEditingController controller,
+    required String hint,
+    required IconData icon,
+    TextInputType keyboardType = TextInputType.text,
+    bool isPassword = false,
+    bool isObscured = false,
+    VoidCallback? toggleObscure,
+    String? Function(String?)? validator,
+  }) {
+    return TextFormField(
+      controller: controller,
+      obscureText: isPassword && isObscured,
+      keyboardType: keyboardType,
+      style: const TextStyle(color: Colors.white),
+      validator: validator,
+      decoration: InputDecoration(
+        hintText: hint,
+        hintStyle: TextStyle(color: Colors.white.withOpacity(0.3)),
+        prefixIcon: Icon(icon, size: 20, color: _mysteriousPinkPrimary),
+        suffixIcon: isPassword
+            ? IconButton(
+                icon: Icon(
+                  isObscured ? Icons.visibility_off_rounded : Icons.visibility_rounded,
+                  color: Colors.white.withOpacity(0.5),
+                  size: 20,
+                ),
+                onPressed: toggleObscure,
+              )
+            : null,
+        fillColor: _bgColor.withOpacity(0.5),
+        filled: true,
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: _bgColor, // تم التحديث للخلفية العامة
+      backgroundColor: _bgColor,
       body: Stack(
         children: [
-          // Background Aesthetic Glow بالوردي الغامض
           Positioned(
             top: -50,
             right: -50,
@@ -225,7 +238,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 shape: BoxShape.circle,
                 gradient: RadialGradient(
                   colors: [
-                    _mysteriousPinkPrimary.withOpacity(0.15), // تم التحديث للوردي الغامض
+                    _mysteriousPinkPrimary.withOpacity(0.15),
                     Colors.transparent
                   ],
                 ),
@@ -246,7 +259,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         onPressed: () => context.pop(),
                         icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 20, color: Colors.white),
                         style: IconButton.styleFrom(
-                          backgroundColor: _surfaceColor.withOpacity(0.5), // تم التحديث للخلفية
+                          backgroundColor: _surfaceColor.withOpacity(0.5),
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                         ),
                       ),
@@ -260,14 +273,14 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(40),
                           gradient: const LinearGradient(
-                            colors: [_mysteriousPinkPrimary, _mysteriousPinkDark, Color(0xFF6366F1)], // تم التحديث بتدرج الوردي
+                            colors: [_mysteriousPinkPrimary, _mysteriousPinkDark, Color(0xFF6366F1)],
                             begin: Alignment.topLeft,
                             end: Alignment.bottomRight,
                           ),
                         ),
                         child: Container(
                           decoration: BoxDecoration(
-                            color: _bgColor, // تم التحديث للخلفية
+                            color: _bgColor,
                             borderRadius: BorderRadius.circular(36),
                           ),
                           padding: const EdgeInsets.all(16),
@@ -295,7 +308,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           const TextSpan(text: 'Welcome '),
                           TextSpan(
                             text: 'Back',
-                            style: TextStyle(color: _mysteriousPinkPrimary), // تم التحديث للوردي الغامض
+                            style: TextStyle(color: _mysteriousPinkPrimary),
                           ),
                         ],
                       ),
@@ -313,7 +326,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     Container(
                       padding: const EdgeInsets.all(24),
                       decoration: BoxDecoration(
-                        color: _surfaceColor.withOpacity(0.3), // تم التحديث للخلفية
+                        color: _surfaceColor.withOpacity(0.3),
                         borderRadius: BorderRadius.circular(32),
                         border: Border.all(color: Colors.white.withOpacity(0.05)),
                       ),
@@ -338,7 +351,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           ),
                           const SizedBox(height: 20),
                           Row(
-                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
                               GestureDetector(
                                 onTap: () => setState(() => _rememberMe = !_rememberMe),
@@ -350,10 +363,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                       decoration: BoxDecoration(
                                         borderRadius: BorderRadius.circular(6),
                                         border: Border.all(
-                                          color: _rememberMe ? _mysteriousPinkPrimary : Colors.white24, // تم التحديث للوردي الغامض
+                                          color: _rememberMe ? _mysteriousPinkPrimary : Colors.white24,
                                           width: 1.5,
                                         ),
-                                        color: _rememberMe ? _mysteriousPinkPrimary : Colors.transparent, // تم التحديث للوردي الغامض
+                                        color: _rememberMe ? _mysteriousPinkPrimary : Colors.transparent,
                                       ),
                                       child: _rememberMe 
                                           ? const Icon(Icons.check, size: 14, color: Colors.white) 
@@ -377,7 +390,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                 child: Text(
                                   'Forgot Password?',
                                   style: GoogleFonts.plusJakartaSans(
-                                    color: _mysteriousPinkPrimary, // تم التحديث للوردي الغامض
+                                    color: _mysteriousPinkPrimary,
                                     fontWeight: FontWeight.w700,
                                     fontSize: 13,
                                   ),
@@ -393,14 +406,14 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                               height: 64,
                               decoration: BoxDecoration(
                                 gradient: const LinearGradient(
-                                  colors: [_mysteriousPinkPrimary, _mysteriousPinkDark], // تم التحديث لتدرج الوردي
+                                  colors: [_mysteriousPinkPrimary, _mysteriousPinkDark],
                                   begin: Alignment.centerLeft,
                                   end: Alignment.centerRight,
                                 ),
                                 borderRadius: BorderRadius.circular(20),
                                 boxShadow: [
                                   BoxShadow(
-                                    color: _mysteriousPinkPrimary.withOpacity(0.3), // تم التحديث للوردي الغامض
+                                    color: _mysteriousPinkPrimary.withOpacity(0.3),
                                     blurRadius: 12,
                                     offset: const Offset(0, 4),
                                   ),
@@ -426,3 +439,20 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                     const Icon(Icons.arrow_forward_rounded, color: Colors.white, size: 20),
                                     const SizedBox(width: 16),
                                   ],
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
