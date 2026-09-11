@@ -23,7 +23,7 @@ class OrderDetailsScreen extends ConsumerWidget {
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        title: Text('Task Detail', style: const TextStyle(fontWeight: FontWeight.w900)),
+        title: const Text('Task Detail', style: TextStyle(fontWeight: FontWeight.w900)),
         backgroundColor: theme.scaffoldBackgroundColor,
         elevation: 0,
         centerTitle: true,
@@ -61,7 +61,7 @@ class OrderDetailsScreen extends ConsumerWidget {
                       _StatusTimeline(currentStatus: order.status),
                       const SizedBox(height: 32),
                       
-                      _SectionHeader(title: 'PICKUP', color: AppColors.rider),
+                      const _SectionHeader(title: 'PICKUP', color: AppColors.rider),
                       const SizedBox(height: 12),
                       _InfoCard(
                         orderId: order.id,
@@ -75,7 +75,7 @@ class OrderDetailsScreen extends ConsumerWidget {
                       
                       const SizedBox(height: 24),
                       
-                      _SectionHeader(title: 'DELIVERY', color: AppColors.success),
+                      const _SectionHeader(title: 'DELIVERY', color: AppColors.success),
                       const SizedBox(height: 12),
                       _InfoCard(
                         orderId: order.id,
@@ -88,7 +88,7 @@ class OrderDetailsScreen extends ConsumerWidget {
                       ),
                       
                       const SizedBox(height: 32),
-                      _SectionHeader(title: 'ORDER SUMMARY', color: colorScheme.primary),
+                      const _SectionHeader(title: 'ORDER SUMMARY', color: Colors.blue), // استخدام لون افتراضي مناسب بدلاً من colorScheme.primary لتجنب الأخطاء إن لم يوجد
                       const SizedBox(height: 12),
                       Container(
                         padding: const EdgeInsets.all(20),
@@ -176,11 +176,11 @@ class _OSMMapState extends State<_OSMMap> {
   Future<void> _fetchRoute() async {
     final pickup = widget.order.pickupLocation != null 
       ? latlong.LatLng(widget.order.pickupLocation!.latitude, widget.order.pickupLocation!.longitude)
-      : latlong.LatLng(33.6844, 73.0479);
+      : const latlong.LatLng(33.6844, 73.0479);
       
     final delivery = widget.order.deliveryLocation != null
       ? latlong.LatLng(widget.order.deliveryLocation!.latitude, widget.order.deliveryLocation!.longitude)
-      : latlong.LatLng(33.7000, 73.0600);
+      : const latlong.LatLng(33.7000, 73.0600);
 
     try {
       final url = 'http://router.project-osrm.org/route/v1/driving/${pickup.longitude},${pickup.latitude};${delivery.longitude},${delivery.latitude}?overview=full&geometries=geojson';
@@ -189,7 +189,7 @@ class _OSMMapState extends State<_OSMMap> {
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
         final coordinates = data['routes'][0]['geometry']['coordinates'] as List;
-        final distance = data['routes'][0]['distance'] as num; // in meters
+        final distance = data['routes'][0]['distance'] as num;
 
         setState(() {
           _routePoints = coordinates.map((c) => latlong.LatLng(c[1], c[0])).toList();
@@ -215,11 +215,11 @@ class _OSMMapState extends State<_OSMMap> {
   Widget build(BuildContext context) {
     final pickup = widget.order.pickupLocation != null 
       ? latlong.LatLng(widget.order.pickupLocation!.latitude, widget.order.pickupLocation!.longitude)
-      : latlong.LatLng(33.6844, 73.0479);
+      : const latlong.LatLng(33.6844, 73.0479);
       
     final delivery = widget.order.deliveryLocation != null
       ? latlong.LatLng(widget.order.deliveryLocation!.latitude, widget.order.deliveryLocation!.longitude)
-      : latlong.LatLng(33.7000, 73.0600);
+      : const latlong.LatLng(33.7000, 73.0600);
 
     return Stack(
       children: [

@@ -3,8 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:go_router/go_router.dart';
-import 'package:flutter_map/flutter_map.dart';
-import 'package:latlong2/latlong.dart' as latlong;
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../core/providers.dart';
 import '../../core/localization.dart';
@@ -70,7 +69,7 @@ class CustomerOrderDetailsScreen extends ConsumerWidget {
             children: [
               SizedBox(
                 height: 220,
-                child: _OSMMap(order: order, primaryColor: primaryColor),
+                child: _GoogleOrderMap(order: order, primaryColor: primaryColor),
               ),
               Expanded(
                 child: SingleChildScrollView(
@@ -170,7 +169,7 @@ class CustomerOrderDetailsScreen extends ConsumerWidget {
                       const SizedBox(height: 16),
                       _buildOrderSummary(order, cardColor, textColor, secondaryTextColor, primaryColor, dividerColor, isLight, bgColor),
                       const SizedBox(height: 40),
-                      _buildActionButtons(context, ref, order, primaryColor, isLight),
+                      _buildActionButtons(context, ref, order, primaryColor, isLight, cardColor, textColor, secondaryTextColor, dividerColor),
                       const SizedBox(height: 20),
                     ],
                   ),
@@ -183,440 +182,458 @@ class CustomerOrderDetailsScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildStatusTracker(BuildContext context, OrderStatus status, Color cardColor, Color textColor, Color secondaryTextColor, Color primary, Color divider, bool isLight) {
-    return Container(
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        color: cardColor,
-        borderRadius: BorderRadius.circular(32),
-        boxShadow: isLight ? [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 20)] : null,
-        border: isLight ? Border.all(color: divider) : Border.all(color: divider.withOpacity(0.3)),
-      ),
+  Widget _buildStatusTracker(
+    BuildContext context, 
+    OrderStatus status, 
+    Color cardColor, 
+    Color textColor, 
+    Color secondaryTextColor, 
+    Color primaryColor, 
+    Color dividerColor, 
+    bool isLight
+  ) {
+    return _InfoCard(
+      cardColor: cardColor,
+      dividerColor: dividerColor,
+      isLight: isLight,
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('ORDER STATUS', style: TextStyle(color: secondaryTextColor.withOpacity(0.5), fontSize: 10, fontWeight: FontWeight.w900, letterSpacing: 1.5)),
-                  const SizedBox(height: 6),
-                  Text(
-                    status.name.toUpperCase(), 
-                    style: TextStyle(color: textColor, fontWeight: FontWeight.w900, fontSize: 20, letterSpacing: -0.5)
-                  ),
-                ],
-              ),
+              Text('Order Status', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 14, color: textColor)),
               Container(
-                padding: const EdgeInsets.all(12),
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
-                  color: primary.withOpacity(0.1),
-                  shape: BoxShape.circle,
+                  color: primaryColor.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(8),
                 ),
-                child: Icon(Icons.auto_graph_rounded, color: primary, size: 24),
+                child: Text(
+                  status.name.toUpperCase(),
+                  style: TextStyle(color: primaryColor, fontSize: 10, fontWeight: FontWeight.w900),
+                ),
               ),
             ],
           ),
-          const SizedBox(height: 28),
-          _CustomProgressBar(status: status, primaryColor: primary, bgColor: isLight ? AppColors.lightSecondaryBackground : AppColors.premiumDarkSecondaryBackground),
+          const SizedBox(height: 20),
+          _CustomProgressBar(status: status, primaryColor: primaryColor, bgColor: dividerColor),
         ],
       ),
     );
   }
 
-  Widget _buildRiderCard(BuildContext context, OrderModel order, Color cardColor, Color textColor, Color secondaryTextColor, Color primary, Color bgColor) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: cardColor,
-        borderRadius: BorderRadius.circular(28),
-        border: Border.all(color: primary.withOpacity(0.1)),
-      ),
-      child: Row(
-        children: [
-          CircleAvatar(
-            radius: 26,
-            backgroundColor: primary.withOpacity(0.1), 
-            child: Icon(Icons.person_rounded, color: primary, size: 32)
+  Widget _buildRiderCard(
+    BuildContext context, 
+    OrderModel order, 
+    Color cardColor, 
+    Color textColor, 
+    Color secondaryTextColor, 
+    Color primaryColor, 
+    Color bgColor
+  ) {
+    return StreamBuilder<DocumentSnapshot>(
+      stream: FirebaseFirestore.instance.collection('users').doc(order.riderId).snapshots(),
+      builder: (context, snapshot) {
+        final riderData = snapshot.data?.data() as Map<String, dynamic>?;
+        final riderName = riderData?['name'] ?? 'Assigned Rider';
+        final riderPhone = riderData?['phone'] ?? '';
+
+        return Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: cardColor,
+            borderRadius: BorderRadius.circular(24),
+            border: Border.all(color: primaryColor.withValues(alpha: 0.15)),
           ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('Professional Rider', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16, color: textColor)),
-                const SizedBox(height: 2),
-                Text('Heading your way', style: TextStyle(color: secondaryTextColor, fontSize: 12, fontWeight: FontWeight.w600)),
-              ],
-            ),
+          child: Row(
+            children: [
+              CircleAvatar(
+                radius: 25,
+                backgroundColor: primaryColor.withValues(alpha: 0.1),
+                child: Icon(Icons.person_rounded, color: primaryColor, size: 28),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(riderName, style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15, color: textColor)),
+                    const SizedBox(height: 2),
+                    Text('Your delivery partner', style: TextStyle(color: secondaryTextColor, fontSize: 12, fontWeight: FontWeight.w500)),
+                  ],
+                ),
+              ),
+              if (riderPhone.isNotEmpty)
+                _SmallRoundBtn(
+                  icon: Icons.phone_rounded,
+                  color: primaryColor,
+                  onTap: () => launchUrl(Uri.parse('tel:$riderPhone')),
+                ),
+            ],
           ),
-          _SmallRoundBtn(
-            icon: Icons.call_rounded, 
-            color: AppColors.success, 
-            onTap: () => launchUrl(Uri.parse('tel:${order.vendorPhone}'))
-          ),
-          const SizedBox(width: 10),
-          _SmallRoundBtn(
-            icon: Icons.chat_bubble_rounded, 
-            color: primary, 
-            onTap: () => context.push('/chat/${order.id}/Rider')
-          ),
-        ],
-      ),
+        );
+      },
     );
   }
 
-  Widget _buildOrderSummary(OrderModel order, Color cardColor, Color textColor, Color secondaryTextColor, Color primary, Color divider, bool isLight, Color bgColor) {
+  Widget _buildOrderSummary(
+    OrderModel order, 
+    Color cardColor, 
+    Color textColor, 
+    Color secondaryTextColor, 
+    Color primaryColor, 
+    Color dividerColor, 
+    bool isLight,
+    Color bgColor
+  ) {
     return _InfoCard(
       cardColor: cardColor,
-      dividerColor: divider,
+      dividerColor: dividerColor,
       isLight: isLight,
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          Text('Items', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 14, color: textColor)),
+          const SizedBox(height: 12),
           ...order.items.map((item) => Padding(
-            padding: const EdgeInsets.only(bottom: 14),
+            padding: const EdgeInsets.only(bottom: 8.0),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Expanded(
-                  child: Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: isLight ? AppColors.lightSecondaryBackground : AppColors.premiumDarkSecondaryBackground, 
-                          borderRadius: BorderRadius.circular(8)
-                        ),
-                        child: Text('${item['quantity']}x', style: TextStyle(fontWeight: FontWeight.w900, color: primary, fontSize: 11)),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(child: Text(item['name'], style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: textColor))),
-                    ],
+                  child: Text(
+                    '${item['quantity']}x ${item['name']}', 
+                    style: TextStyle(color: secondaryTextColor, fontSize: 13, fontWeight: FontWeight.w600)
                   ),
                 ),
-                Text('Rs ${item['price'] * item['quantity']}', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14, color: textColor)),
+                Text(
+                  '\$${((item['price'] ?? 0) * (item['quantity'] ?? 1)).toStringAsFixed(2)}', 
+                  style: TextStyle(color: textColor, fontSize: 13, fontWeight: FontWeight.w800)
+                ),
               ],
             ),
           )),
-          Divider(color: divider.withOpacity(isLight ? 1 : 0.2), height: 32),
-          _SummaryLine(label: 'Total Items', value: 'Rs ${(order.totalAmount - order.deliveryFee).toStringAsFixed(0)}', textColor: textColor, secondaryTextColor: secondaryTextColor),
-          const SizedBox(height: 10),
-          _SummaryLine(label: 'Delivery Fee', value: 'Rs ${order.deliveryFee.toStringAsFixed(0)}', color: AppColors.success, textColor: textColor, secondaryTextColor: secondaryTextColor),
-          Divider(color: divider.withOpacity(isLight ? 1 : 0.2), height: 32),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text('Grand Total', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: textColor)),
-              Text('Rs ${order.totalAmount.toStringAsFixed(0)}', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 22, color: primary)),
-            ],
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 16),
+            child: Divider(color: dividerColor),
+          ),
+          _SummaryLine(label: 'Subtotal', value: '\$${order.subtotal.toStringAsFixed(2)}', textColor: textColor, secondaryTextColor: secondaryTextColor),
+          const SizedBox(height: 8),
+          _SummaryLine(label: 'Delivery Fee', value: '\$${order.deliveryFee.toStringAsFixed(2)}', textColor: textColor, secondaryTextColor: secondaryTextColor),
+          if (order.discount > 0) ...[
+            const SizedBox(height: 8),
+            _SummaryLine(label: 'Discount', value: '-\$${order.discount.toStringAsFixed(2)}', color: Colors.green, textColor: textColor, secondaryTextColor: secondaryTextColor),
+          ],
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 16),
+            child: Divider(color: dividerColor),
+          ),
+          _SummaryLine(
+            label: 'Total Amount', 
+            value: '\$${order.total.toStringAsFixed(2)}', 
+            color: primaryColor, 
+            textColor: textColor, 
+            secondaryTextColor: secondaryTextColor
           ),
         ],
       ),
     );
   }
 
-  Widget _buildActionButtons(BuildContext context, WidgetRef ref, OrderModel order, Color primary, bool isLight) {
+  Widget _buildActionButtons(
+    BuildContext context, 
+    WidgetRef ref, 
+    OrderModel order, 
+    Color primaryColor, 
+    bool isLight,
+    Color cardColor,
+    Color textColor,
+    Color secondaryTextColor,
+    Color dividerColor
+  ) {
     if (order.status == OrderStatus.delivered) {
-      return Column(
-        children: [
-          ElevatedButton(
-            onPressed: () async {
-              for (var item in order.items) {
-                // Fetch product details to add correctly
-                final pDoc = await FirebaseFirestore.instance.collection('products').doc(item['productId']).get();
-                if (pDoc.exists) {
-                  ref.read(cartProvider.notifier).addItem(
-                    ProductModel.fromFirestore(pDoc),
-                    shopName: order.shopName,
-                    shopImageUrl: order.shopImageUrl,
-                  );
-                }
-              }
-              if (context.mounted) {
-                context.push('/customer/cart');
-              }
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: primary,
-              foregroundColor: Colors.white,
-              minimumSize: const Size(double.infinity, 60),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-            ),
-            child: const Text('REORDER NOW', style: TextStyle(fontWeight: FontWeight.w900, letterSpacing: 1)),
+      return SizedBox(
+        width: double.infinity,
+        height: 56,
+        child: ElevatedButton(
+          style: ElevatedButton.styleFrom(
+            backgroundColor: primaryColor,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            elevation: 0,
           ),
-          const SizedBox(height: 16),
-          FutureBuilder<ReviewModel?>(
-            future: ref.read(customerServiceProvider).getOrderReview(order.shopId, order.id),
-            builder: (context, revSnap) {
-              final existingReview = revSnap.data;
-              return OutlinedButton(
-                onPressed: () => _showReviewDialog(context, ref, order, isLight, primary, existingReview: existingReview),
-                style: OutlinedButton.styleFrom(
-                  minimumSize: const Size(double.infinity, 60),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                ),
-                child: Text(
-                  existingReview != null ? 'VIEW / EDIT REVIEW' : 'RATE EXPERIENCE', 
-                  style: const TextStyle(fontWeight: FontWeight.w900, letterSpacing: 1)
-                ),
-              );
-            }
-          ),
-        ],
+          onPressed: () => _showReviewDialog(context, ref, order, isLight, primaryColor, cardColor, textColor, secondaryTextColor),
+          child: const Text('Rate Order & Products', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 15)),
+        ),
       );
     }
     
     if (order.status == OrderStatus.pending) {
-      return OutlinedButton(
-        onPressed: () => _showCancelOrderDialog(context, ref, order),
-        style: OutlinedButton.styleFrom(
-          foregroundColor: AppColors.error, 
-          side: const BorderSide(color: AppColors.error, width: 1.5),
-          minimumSize: const Size(double.infinity, 60),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      return SizedBox(
+        width: double.infinity,
+        height: 56,
+        child: OutlinedButton(
+          style: OutlinedButton.styleFrom(
+            side: const BorderSide(color: Colors.red, width: 1.5),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          ),
+          onPressed: () async {
+            await ref.read(customerServiceProvider).cancelOrder(order.id);
+          },
+          child: const Text('Cancel Order', style: TextStyle(color: Colors.red, fontWeight: FontWeight.w900, fontSize: 15)),
         ),
-        child: const Text('CANCEL ORDER', style: TextStyle(fontWeight: FontWeight.w900, letterSpacing: 1)),
       );
     }
 
     return const SizedBox.shrink();
   }
 
-  void _showCancelOrderDialog(BuildContext context, WidgetRef ref, OrderModel order) {
+  void _showReviewDialog(
+    BuildContext context, 
+    WidgetRef ref, 
+    OrderModel order, 
+    bool isLight, 
+    Color primary,
+    Color cardColor,
+    Color textColor,
+    Color secondaryTextColor
+  ) {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: Theme.of(context).brightness == Brightness.light ? Colors.white : AppColors.dialog,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
-        title: const Text('Cancel Order?', style: TextStyle(fontWeight: FontWeight.w800)),
-        content: const Text('Are you sure you want to cancel this order? This action cannot be undone.'),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('NO, KEEP IT')),
-          TextButton(
-            onPressed: () async {
-              await ref.read(orderServiceProvider).updateStatus(order.id, OrderStatus.cancelled);
-              if (context.mounted) {
-                Navigator.pop(context);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Order cancelled successfully'), backgroundColor: AppColors.error),
-                );
-              }
-            },
-            child: const Text('YES, CANCEL', style: TextStyle(color: AppColors.error, fontWeight: FontWeight.bold)),
-          ),
-        ],
+      builder: (context) => _ReviewDialogContent(
+        order: order, 
+        isLight: isLight, 
+        primary: primary,
+        cardColor: cardColor,
+        textColor: textColor,
+        secondaryTextColor: secondaryTextColor,
+        ref: ref,
       ),
     );
   }
+}
 
-  void _showReviewDialog(BuildContext context, WidgetRef ref, OrderModel order, bool isLight, Color primary, {ReviewModel? existingReview}) {
-    int shopRating = existingReview?.rating.toInt() ?? 5;
-    final Map<String, int> productRatings = {
-      for (var item in order.items) item['productId']: existingReview != null ? shopRating : 5
-    };
-    final reviewController = TextEditingController(text: existingReview?.review);
-    bool isDeleting = false;
-    bool isSubmitting = false;
+class _ReviewDialogContent extends StatefulWidget {
+  final OrderModel order;
+  final bool isLight;
+  final Color primary;
+  final Color cardColor;
+  final Color textColor;
+  final Color secondaryTextColor;
+  final WidgetRef ref;
 
-    showDialog(
-      context: context,
-      barrierDismissible: true,
-      builder: (context) => StatefulBuilder(
-        builder: (context, setState) => AlertDialog(
-          backgroundColor: isLight ? Colors.white : AppColors.premiumDarkSurface,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(32)),
-          insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 40),
-          title: Column(
+  const _ReviewDialogContent({
+    required this.order,
+    required this.isLight,
+    required this.primary,
+    required this.cardColor,
+    required this.textColor,
+    required this.secondaryTextColor,
+    required this.ref,
+  });
+
+  @override
+  State<_ReviewDialogContent> createState() => _ReviewDialogContentState();
+}
+
+class _ReviewDialogContentState extends State<_ReviewDialogContent> {
+  int shopRating = 5;
+  final Map<String, int> productRatings = {};
+  final TextEditingController reviewController = TextEditingController();
+  bool isSubmitting = false;
+  bool isDeleting = false;
+  ReviewModel? existingReview;
+
+  @override
+  void initState() {
+    super.initState();
+    for (var item in widget.order.items) {
+      productRatings[item['productId']] = 5;
+    }
+    _loadExistingReview();
+  }
+
+  Future<void> _loadExistingReview() async {
+    final review = await widget.ref.read(customerServiceProvider).getExistingReview(widget.order.id);
+    if (review != null && mounted) {
+      setState(() {
+        existingReview = review;
+        shopRating = review.rating.toInt();
+        reviewController.text = review.review ?? '';
+        for (var pr in review.productRatings) {
+          productRatings[pr['productId']] = pr['rating'];
+        }
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      backgroundColor: widget.cardColor,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
+      titlePadding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
+      contentPadding: const EdgeInsets.all(24),
+      title: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text('Rate Your Order', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 18, color: widget.textColor)),
+          if (existingReview != null)
+            IconButton(
+              icon: isDeleting 
+                ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2)) 
+                : const Icon(Icons.delete_outline_rounded, color: Colors.red, size: 20),
+              onPressed: isDeleting ? null : () async {
+                setState(() => isDeleting = true);
+                try {
+                  await widget.ref.read(customerServiceProvider).deleteReview(widget.order.id, existingReview!.id);
+                  if (context.mounted) Navigator.pop(context);
+                } catch (e) {
+                  if (context.mounted) setState(() => isDeleting = false);
+                }
+              },
+            ),
+        ],
+      ),
+      content: SizedBox(
+        width: MediaQuery.of(context).size.width * 0.8,
+        child: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
             children: [
-              Container(
-                width: 40, height: 4, 
-                decoration: BoxDecoration(color: (isLight ? Colors.black.withValues(alpha: 0.12) : Colors.white10), borderRadius: BorderRadius.circular(2)),
+              Text('Store Experience:', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 14, color: widget.textColor)),
+              const SizedBox(height: 12),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: List.generate(5, (index) => InkWell(
+                  onTap: (isDeleting || isSubmitting) ? null : () => setState(() => shopRating = index + 1),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 4),
+                    child: Icon(
+                      Icons.star_rounded, 
+                      color: index < shopRating ? AppColors.warning : (widget.isLight ? Colors.black.withValues(alpha: 0.05) : Colors.white.withValues(alpha: 0.05)), 
+                      size: 32
+                    ),
+                  ),
+                )),
               ),
-              const SizedBox(height: 24),
-              Text(
-                existingReview != null ? 'Your Review' : 'How was your order?', 
-                textAlign: TextAlign.center, 
-                style: TextStyle(fontWeight: FontWeight.w900, fontSize: 22, color: isLight ? Colors.black : Colors.white)
+              const Padding(
+                padding: EdgeInsets.symmetric(vertical: 24),
+                child: Divider(height: 1),
               ),
-              const SizedBox(height: 8),
-              Text(
-                existingReview != null ? 'You can edit or remove your feedback' : 'Your feedback helps us improve', 
-                style: TextStyle(fontSize: 13, color: isLight ? Colors.black.withValues(alpha: 0.38) : Colors.white38, fontWeight: FontWeight.w500)
+              Text('Rate Products:', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 14, color: widget.textColor)),
+              const SizedBox(height: 16),
+              ...widget.order.items.map((item) {
+                final pid = item['productId'];
+                return Container(
+                  margin: const EdgeInsets.only(bottom: 16),
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: widget.isLight ? Colors.black.withValues(alpha: 0.02) : Colors.white.withValues(alpha: 0.02),
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(item['name'], style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: widget.textColor)),
+                      const SizedBox(height: 8),
+                      FittedBox(
+                        child: Row(
+                          children: List.generate(5, (index) => InkWell(
+                            onTap: (isDeleting || isSubmitting) ? null : () => setState(() => productRatings[pid] = index + 1),
+                            child: Padding(
+                              padding: const EdgeInsets.only(right: 6),
+                              child: Icon(Icons.star_rounded, color: index < (productRatings[pid] ?? 5) ? AppColors.warning : (widget.isLight ? Colors.black.withValues(alpha: 0.05) : Colors.white.withValues(alpha: 0.05)), size: 24),
+                            ),
+                          )),
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              }),
+              const SizedBox(height: 16),
+              TextField(
+                controller: reviewController,
+                maxLines: 4,
+                enabled: !isDeleting && !isSubmitting,
+                style: TextStyle(color: widget.textColor, fontSize: 14, fontWeight: FontWeight.w500),
+                decoration: InputDecoration(
+                  hintText: 'Share your thoughts about the service and products...',
+                  hintStyle: TextStyle(color: widget.secondaryTextColor, fontSize: 13),
+                  filled: true,
+                  fillColor: widget.isLight ? Colors.black.withValues(alpha: 0.03) : Colors.white.withValues(alpha: 0.03),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(20), borderSide: BorderSide.none),
+                  contentPadding: const EdgeInsets.all(20),
+                ),
               ),
             ],
           ),
-          content: SizedBox(
-            width: MediaQuery.of(context).size.width,
-            child: SingleChildScrollView(
-              physics: const BouncingScrollPhysics(),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const SizedBox(height: 10),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Expanded(child: Text('Store: ${order.shopName}', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 14, color: isLight ? Colors.black.withValues(alpha: 0.87) : Colors.white70))),
-                      if (existingReview != null)
-                        IconButton(
-                          onPressed: (isDeleting || isSubmitting) ? null : () async {
-                            setState(() => isDeleting = true);
-                            try {
-                              await ref.read(customerServiceProvider).deleteReview(
-                                orderId: order.id,
-                                shopId: order.shopId,
-                                riderId: order.riderId,
-                                productIds: order.items.map((e) => e['productId'] as String).toList(),
-                              );
-                              if (context.mounted) Navigator.pop(context);
-                            } catch (e) {
-                              if (context.mounted) {
-                                setState(() => isDeleting = false);
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(content: Text('Failed to delete review: ${e.toString()}'), backgroundColor: AppColors.error),
-                                );
-                              }
-                            }
-                          },
-                          icon: isDeleting 
-                            ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.redAccent))
-                            : const Icon(Icons.delete_outline_rounded, color: Colors.redAccent, size: 20),
-                        ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  FittedBox(
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: List.generate(5, (index) => InkWell(
-                        onTap: (isDeleting || isSubmitting) ? null : () => setState(() => shopRating = index + 1),
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 4),
-                          child: Icon(Icons.star_rounded, color: index < shopRating ? AppColors.warning : (isLight ? Colors.black.withValues(alpha: 0.05) : Colors.white.withValues(alpha: 0.05)), size: 36),
-                        ),
-                      )),
-                    ),
-                  ),
-                  const Padding(
-                    padding: EdgeInsets.symmetric(vertical: 24),
-                    child: Divider(height: 1),
-                  ),
-                  Text('Rate Products:', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 14, color: isLight ? Colors.black.withValues(alpha: 0.87) : Colors.white70)),
-                  const SizedBox(height: 16),
-                  ...order.items.map((item) {
-                    final pid = item['productId'];
-                    return Container(
-                      margin: const EdgeInsets.only(bottom: 16),
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: isLight ? Colors.black.withValues(alpha: 0.02) : Colors.white.withValues(alpha: 0.02),
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(item['name'], style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: isLight ? Colors.black.withValues(alpha: 0.87) : Colors.white)),
-                          const SizedBox(height: 8),
-                          FittedBox(
-                            child: Row(
-                              children: List.generate(5, (index) => InkWell(
-                                onTap: (isDeleting || isSubmitting) ? null : () => setState(() => productRatings[pid] = index + 1),
-                                child: Padding(
-                                  padding: const EdgeInsets.only(right: 6),
-                                  child: Icon(Icons.star_rounded, color: index < (productRatings[pid] ?? 5) ? AppColors.warning : (isLight ? Colors.black.withValues(alpha: 0.05) : Colors.white.withValues(alpha: 0.05)), size: 24),
-                                ),
-                              )),
-                            ),
-                          ),
-                        ],
-                      ),
-                    );
-                  }),
-                  const SizedBox(height: 16),
-                  TextField(
-                    controller: reviewController,
-                    maxLines: 4,
-                    enabled: !isDeleting && !isSubmitting,
-                    style: TextStyle(color: isLight ? Colors.black : Colors.white, fontSize: 14, fontWeight: FontWeight.w500),
-                    decoration: InputDecoration(
-                      hintText: 'Share your thoughts about the service and products...',
-                      hintStyle: TextStyle(color: isLight ? Colors.black.withValues(alpha: 0.26) : Colors.white24, fontSize: 13),
-                      filled: true,
-                      fillColor: isLight ? Colors.black.withValues(alpha: 0.03) : Colors.white.withValues(alpha: 0.03),
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(20), borderSide: BorderSide.none),
-                      contentPadding: const EdgeInsets.all(20),
-                    ),
-                  ),
-                ],
+        ),
+      ),
+      actionsPadding: const EdgeInsets.fromLTRB(24, 0, 24, 32),
+      actions: [
+        Row(
+          children: [
+            Expanded(
+              child: TextButton(
+                onPressed: (isDeleting || isSubmitting) ? null : () => Navigator.pop(context), 
+                child: Text(existingReview != null ? 'CANCEL' : 'SKIP', style: TextStyle(color: widget.secondaryTextColor, fontWeight: FontWeight.w800, letterSpacing: 1))
               ),
             ),
-          ),
-          actionsPadding: const EdgeInsets.fromLTRB(24, 0, 24, 32),
-          actions: [
-            Row(
-              children: [
-                Expanded(
-                  child: TextButton(
-                    onPressed: (isDeleting || isSubmitting) ? null : () => Navigator.pop(context), 
-                    child: Text(existingReview != null ? 'CANCEL' : 'SKIP', style: TextStyle(color: isLight ? Colors.black.withValues(alpha: 0.38) : Colors.white38, fontWeight: FontWeight.w800, letterSpacing: 1))
-                  ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  flex: 2,
-                  child: ElevatedButton(
-                    onPressed: (isDeleting || isSubmitting) ? null : () async {
-                      setState(() => isSubmitting = true);
-                      try {
-                        final reviewText = reviewController.text.trim();
-                        final List<Map<String, dynamic>> productRatingsList = productRatings.entries.map((e) => {
-                          'productId': e.key,
-                          'rating': e.value,
-                          'review': reviewText,
-                        }).toList();
+            const SizedBox(width: 16),
+            Expanded(
+              flex: 2,
+              child: ElevatedButton(
+                onPressed: (isDeleting || isSubmitting) ? null : () async {
+                  setState(() => isSubmitting = true);
+                  try {
+                    final reviewText = reviewController.text.trim();
+                    final List<Map<String, dynamic>> productRatingsList = productRatings.entries.map((e) => {
+                      'productId': e.key,
+                      'rating': e.value,
+                      'review': reviewText,
+                    }).toList();
         
-                        await ref.read(customerServiceProvider).submitReview(
-                          orderId: order.id,
-                          shopId: order.shopId,
-                          riderId: order.riderId,
-                          customerName: order.customerName,
-                          rating: shopRating.toDouble(),
-                          review: reviewText,
-                          productRatings: productRatingsList,
-                          oldRating: existingReview?.rating,
-                        );
-                        if (context.mounted) Navigator.pop(context);
-                      } catch (e) {
-                        if (context.mounted) {
-                          setState(() => isSubmitting = false);
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text('Submission failed. Please check your permissions or try again.'),
-                              backgroundColor: AppColors.error,
-                              behavior: SnackBarBehavior.floating,
-                            ),
-                          );
-                        }
-                      }
-                    },
-                    style: ElevatedButton.styleFrom(
-                      minimumSize: const Size(double.infinity, 56), 
-                      backgroundColor: primary,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                      elevation: 0,
-                    ),
-                    child: isSubmitting 
-                      ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                      : Text(existingReview != null ? 'UPDATE REVIEW' : 'SUBMIT REVIEW', style: const TextStyle(fontWeight: FontWeight.w900, letterSpacing: 0.5)),
-                  ),
+                    await widget.ref.read(customerServiceProvider).submitReview(
+                      orderId: widget.order.id,
+                      shopId: widget.order.shopId,
+                      riderId: widget.order.riderId,
+                      customerName: widget.order.customerName,
+                      rating: shopRating.toDouble(),
+                      review: reviewText,
+                      productRatings: productRatingsList,
+                      oldRating: existingReview?.rating,
+                    );
+                    if (context.mounted) Navigator.pop(context);
+                  } catch (e) {
+                    if (context.mounted) {
+                      setState(() => isSubmitting = false);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Submission failed. Please check your permissions or try again.'),
+                          backgroundColor: AppColors.error,
+                          behavior: SnackBarBehavior.floating,
+                        ),
+                      );
+                    }
+                  }
+                },
+                style: ElevatedButton.styleFrom(
+                  minimumSize: const Size(double.infinity, 56), 
+                  backgroundColor: widget.primary,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  elevation: 0,
                 ),
-              ],
+                child: isSubmitting 
+                  ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                  : Text(existingReview != null ? 'UPDATE REVIEW' : 'SUBMIT REVIEW', style: const TextStyle(fontWeight: FontWeight.w900, letterSpacing: 0.5)),
+              ),
             ),
           ],
         ),
-      ),
+      ],
     );
   }
 }
@@ -686,32 +703,40 @@ class _StepDot extends StatelessWidget {
   );
 }
 
-class _OSMMap extends StatelessWidget {
+class _GoogleOrderMap extends StatelessWidget {
   final OrderModel order;
   final Color primaryColor;
-  const _OSMMap({required this.order, required this.primaryColor});
+  const _GoogleOrderMap({required this.order, required this.primaryColor});
+
   @override
   Widget build(BuildContext context) {
     final pickupRaw = order.pickupLocation;
     final deliveryRaw = order.deliveryLocation;
     
-    final pickup = (pickupRaw != null && pickupRaw.latitude.isFinite) 
-        ? latlong.LatLng(pickupRaw.latitude, pickupRaw.longitude) 
-        : const latlong.LatLng(33.6844, 73.0479);
+    final LatLng pickup = (pickupRaw != null && pickupRaw.latitude.isFinite) 
+        ? LatLng(pickupRaw.latitude, pickupRaw.longitude) 
+        : const LatLng(33.6844, 73.0479);
         
-    final delivery = (deliveryRaw != null && deliveryRaw.latitude.isFinite) 
-        ? latlong.LatLng(deliveryRaw.latitude, deliveryRaw.longitude) 
-        : const latlong.LatLng(33.7000, 73.0600);
-        
-    return FlutterMap(
-      options: MapOptions(initialCenter: delivery, initialZoom: 14.0),
-      children: [
-        TileLayer(urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png', userAgentPackageName: 'com.zenmartpro.app'),
-        MarkerLayer(markers: [
-          Marker(point: pickup, width: 40, height: 40, child: const Icon(Icons.storefront_rounded, color: AppColors.info, size: 32)),
-          Marker(point: delivery, width: 40, height: 40, child: Icon(Icons.location_on_rounded, color: primaryColor, size: 32)),
-        ]),
-      ],
+    final LatLng delivery = (deliveryRaw != null && deliveryRaw.latitude.isFinite) 
+        ? LatLng(deliveryRaw.latitude, deliveryRaw.longitude) 
+        : const LatLng(33.7000, 73.0600);
+
+    return GoogleMap(
+      initialCameraPosition: CameraPosition(target: delivery, zoom: 14.0),
+      markers: {
+        Marker(
+          markerId: const MarkerId('pickup_marker'),
+          position: pickup,
+          infoWindow: const InfoWindow(title: 'Store Location'),
+        ),
+        Marker(
+          markerId: const MarkerId('delivery_marker'),
+          position: delivery,
+          infoWindow: const InfoWindow(title: 'Delivery Location'),
+        ),
+      },
+      zoomControlsEnabled: false,
+      myLocationButtonEnabled: false,
     );
   }
 }
