@@ -9,10 +9,10 @@ class WelcomeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF0B1120), // Deep Navy
+      backgroundColor: const Color(0xFF1A0A14), // تم التعديل إلى الوردي الغامض المتناسق مع تصميم التطبيق
       body: Stack(
         children: [
-          // Background subtle glows
+          // Background subtle glows (تم تعديل الوهج ليطابق الطابع الوردي الغامض)
           Positioned(
             top: 100,
             right: -100,
@@ -23,7 +23,7 @@ class WelcomeScreen extends StatelessWidget {
                 shape: BoxShape.circle,
                 gradient: RadialGradient(
                   colors: [
-                    AppColors.premiumDarkPrimary.withValues(alpha: 0.1),
+                    AppColors.premiumDarkPrimary.withValues(alpha: 0.25),
                     Colors.transparent
                   ],
                 ),
@@ -35,22 +35,11 @@ class WelcomeScreen extends StatelessWidget {
             child: SingleChildScrollView(
               child: Column(
                 children: [
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 30), // زيادة بسيطة لتعويض مكان الصورة المحذوفة وجعل التصميم متوازناً
                   
-                  // Top Main Logo (image.png)
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 20),
-                    child: Image.asset(
-                      'assets/images/image.png',
-                      width: double.infinity,
-                      height: 150,
-                      fit: BoxFit.contain,
-                    ),
-                  ),
+                  // تم حذف الصورة رقم 1 (Top Main Logo) بناءً على طلبك بالكامل
 
-                  const SizedBox(height: 10),
-
-                  // Welcome Image Graphic (welcome.jpeg)
+                  // Welcome Image Graphic (الصورة رقم 2 باقية في مكانها وبنفس الخصائص)
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 24),
                     child: ClipRRect(
@@ -104,7 +93,7 @@ class WelcomeScreen extends StatelessWidget {
 
                   const SizedBox(height: 40),
 
-                  // Feature Chips (يمكنك استخدام rounded-image.png هنا كأيقونة مصغرة إذا أردت)
+                  // Feature Chips
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 24),
                     child: Row(
@@ -212,7 +201,6 @@ class _FeatureChip extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          // يمكنك استبدال الأيقونة بـ Image.asset('assets/images/rounded-image.png') إذا أردت استخدام الصورة المصغرة هنا
           Icon(icon, color: AppColors.premiumDarkPrimary, size: 20),
           const SizedBox(width: 10),
           Expanded(

@@ -26,6 +26,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
   static const Color _mysteriousPinkPrimary = Color(0xFFC2185B);
   static const Color _mysteriousPinkDark = Color(0xFF880E4F);
+  static const Color _socialButtonColor = Color(0xFF2A1529);
   static const Color _surfaceColor = Color(0xFF1E111C);
   static const Color _bgColor = Color(0xFF0F0810);
 
@@ -93,6 +94,27 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     await _handleAuthAction(
       () => ref.read(authServiceProvider).signIn(email, password),
       setLoading: (val) => setState(() => _isLoading = val),
+    );
+  }
+
+  Future<void> _signInWithGoogle() async {
+    if (_isGoogleLoading || _isLoading || _isEmailLoginLoading) return;
+
+    await _handleAuthAction(
+      () => ref.read(authServiceProvider).signInWithGoogle(),
+      setLoading: (val) => setState(() => _isGoogleLoading = val),
+    );
+  }
+
+  Future<void> _signInWithEmailSocial() async {
+    if (_isEmailLoginLoading || _isLoading || _isGoogleLoading) return;
+
+    await _handleAuthAction(
+      () async {
+        if (!_formKey.currentState!.validate()) throw Exception('الرجاء إدخال البريد الإلكتروني');
+        await ref.read(authServiceProvider).signIn(_emailController.text.trim(), _passwordController.text.trim());
+      },
+      setLoading: (val) => setState(() => _isEmailLoginLoading = val),
     );
   }
 
@@ -353,10 +375,31 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
+                              TextButton(
+                                onPressed: _showForgotPasswordDialog,
+                                style: TextButton.styleFrom(padding: EdgeInsets.zero),
+                                child: Text(
+                                  'Forgot Password?',
+                                  style: GoogleFonts.plusJakartaSans(
+                                    color: _mysteriousPinkPrimary,
+                                    fontWeight: FontWeight.w700,
+                                    fontSize: 13,
+                                  ),
+                                ),
+                              ),
                               GestureDetector(
                                 onTap: () => setState(() => _rememberMe = !_rememberMe),
                                 child: Row(
                                   children: [
+                                    Text(
+                                      'Remember me',
+                                      style: GoogleFonts.plusJakartaSans(
+                                        color: Colors.white.withOpacity(0.6),
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 10),
                                     Container(
                                       width: 20,
                                       height: 20,
@@ -372,28 +415,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                           ? const Icon(Icons.check, size: 14, color: Colors.white) 
                                           : null,
                                     ),
-                                    const SizedBox(width: 10),
-                                    Text(
-                                      'Remember me',
-                                      style: GoogleFonts.plusJakartaSans(
-                                        color: Colors.white.withOpacity(0.6),
-                                        fontSize: 13,
-                                        fontWeight: FontWeight.w600,
-                                      ),
-                                    ),
                                   ],
-                                ),
-                              ),
-                              TextButton(
-                                onPressed: _showForgotPasswordDialog,
-                                style: TextButton.styleFrom(padding: EdgeInsets.zero),
-                                child: Text(
-                                  'Forgot Password?',
-                                  style: GoogleFonts.plusJakartaSans(
-                                    color: _mysteriousPinkPrimary,
-                                    fontWeight: FontWeight.w700,
-                                    fontSize: 13,
-                                  ),
                                 ),
                               ),
                             ],
@@ -443,15 +465,79 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                               ),
                             ),
                           ),
+                          const SizedBox(height: 32),
+                          Row(
+                            children: [
+                              Expanded(child: Divider(color: Colors.white.withOpacity(0.1))),
+                              Padding(
+                                padding: const EdgeInsets.symmetric(horizontal: 16),
+                                child: Text(
+                                  'OR CONTINUE WITH',
+                                  style: GoogleFonts.plusJakartaSans(
+                                    color: Colors.white.withOpacity(0.3),
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w700,
+                                    letterSpacing: 1,
+                                  ),
+                                ),
+                              ),
+                              Expanded(child: Divider(color: Colors.white.withOpacity(0.1))),
+                            ],
+                          ),
+                          const SizedBox(height: 24),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              _buildSocialButton(
+                                icon: Icons.mail_rounded,
+                                onTap: _signInWithEmailSocial,
+                                isLoading: _isEmailLoginLoading,
+                              ),
+                              const SizedBox(width: 16),
+                              _buildSocialButton(
+                                icon: Icons.apple,
+                                onTap: () {},
+                                isLoading: false,
+                              ),
+                              const SizedBox(width: 16),
+                              _buildSocialButton(
+                                icon: Icons.g_mobiledata_rounded,
+                                onTap: _signInWithGoogle,
+                                isLoading: _isGoogleLoading,
+                              ),
+                            ],
+                          ),
                         ],
                       ),
                     ),
+                    const SizedBox(height: 32),
                   ],
                 ),
               ),
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildSocialButton({required IconData icon, required VoidCallback onTap, required bool isLoading}) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(20),
+      child: Container(
+        width: 64,
+        height: 64,
+        decoration: BoxDecoration(
+          color: _socialButtonColor,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: Colors.white.withOpacity(0.05)),
+        ),
+        child: Center(
+          child: isLoading
+              ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(color: _mysteriousPinkPrimary, strokeWidth: 2))
+              : Icon(icon, color: Colors.white, size: 26),
+        ),
       ),
     );
   }
