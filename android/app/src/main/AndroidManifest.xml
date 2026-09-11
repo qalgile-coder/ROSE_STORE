@@ -5,6 +5,10 @@
     <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.CAMERA" />
+    
+    <!-- الصلاحيات المطلوبة لتشغيل الخرائط وتحديد الموقع الحالي بدقة -->
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
 
     <uses-feature android:name="android.hardware.camera" android:required="false" />
     <uses-feature android:name="android.hardware.camera.autofocus" android:required="false" />
@@ -14,6 +18,12 @@
         android:name="${applicationName}"
         android:icon="@mipmap/launcher_icon"
         android:enableOnBackInvokedCallback="true">
+        
+        <!-- مفتاح Google Maps API المدمج خصيصاً لتطبيقك -->
+        <meta-data
+            android:name="com.google.android.geo.API_KEY"
+            android:value="AIzaSyC1-2SUhVW-QsWYIo9Qcm2Olk8KOZY80q4" />
+
         <activity
             android:name=".MainActivity"
             android:exported="true"

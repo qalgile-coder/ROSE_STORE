@@ -1,91 +1,113 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_map/flutter_map.dart';
-import 'package:latlong2/latlong.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 import '../../core/providers.dart';
 import '../../theme/app_colors.dart';
 import '../../models/order_model.dart';
 
-class OrderMapScreen extends ConsumerWidget {
+class OrderMapScreen extends ConsumerStatefulWidget {
   const OrderMapScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<OrderMapScreen> createState() => _OrderMapScreenState();
+}
+
+class _OrderMapScreenState extends ConsumerState<OrderMapScreen> {
+  GoogleMapController? _mapController;
+  
+  // مركز افتراضي ذكي (مثلاً الخرطوم كمركز رئيسي، ويمكن توسيعه لمصر والسعودية تلقائياً حسب الطلبات)
+  static const LatLng _defaultCenter = LatLng(15.5007, 32.5599);
+
+  @override
+  Widget build(BuildContext context) {
     final ordersAsync = ref.watch(allOrdersProvider);
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Platform Pulse Map', style: TextStyle(fontWeight: FontWeight.w900)),
+        title: const Text('Platform Pulse Map - نطاق العمل', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 16)),
         backgroundColor: theme.scaffoldBackgroundColor,
         elevation: 0,
         centerTitle: true,
       ),
       body: ordersAsync.when(
         data: (orders) {
-          final markers = _buildMarkers(orders, colorScheme);
+          final markers = _buildGoogleMarkers(orders);
           
-          return FlutterMap(
-            options: const MapOptions(
-              initialCenter: LatLng(33.6844, 73.0479), // Default to Islamabad center
-              initialZoom: 12.0,
+          // تحديد أول نقطة طلب أو الرجوع للمركز الافتراضي
+          LatLng initialTarget = _defaultCenter;
+          if (orders.isNotEmpty) {
+            final firstValid = orders.firstWhere(
+              (o) => o.deliveryLocation != null && o.deliveryLocation!.latitude.isFinite,
+              orElse: () => orders.first,
+            );
+            if (firstValid.deliveryLocation != null) {
+              initialTarget = LatLng(
+                firstValid.deliveryLocation!.latitude, 
+                firstValid.deliveryLocation!.longitude
+              );
+            }
+          }
+
+          return GoogleMap(
+            initialCameraPosition: CameraPosition(
+              target: initialTarget,
+              zoom: 12.0,
             ),
-            children: [
-              TileLayer(
-                urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                userAgentPackageName: 'com.zenmartpro.app',
-              ),
-              MarkerLayer(markers: markers),
-            ],
+            onMapCreated: (controller) {
+              _mapController = controller;
+            },
+            markers: markers,
+            myLocationEnabled: true,
+            myLocationButtonEnabled: true,
+            mapType: MapType.normal,
+            zoomControlsEnabled: false,
           );
         },
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, s) => Center(child: Text('Error loading map: $e')),
+        error: (e, s) => Center(child: Text('خطأ في تحميل الخريطة: $e')),
       ),
     );
   }
 
-  List<Marker> _buildMarkers(List<OrderModel> orders, ColorScheme colorScheme) {
-    return orders.where((o) => o.status != OrderStatus.delivered && o.status != OrderStatus.cancelled).map((order) {
-      final loc = order.deliveryLocation;
-      final lat = (loc != null && loc.latitude.isFinite) ? loc.latitude : 33.6844;
-      final lng = (loc != null && loc.longitude.isFinite) ? loc.longitude : 73.0479;
+  Set<Marker> _buildGoogleMarkers(List<OrderModel> orders) {
+    Set<Marker> markers = {};
 
-      return Marker(
-        point: LatLng(lat, lng),
-        width: 80,
-        height: 80,
-        child: GestureDetector(
-          onTap: () {
-            // Show mini info
-          },
-          child: Column(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(4),
-                decoration: BoxDecoration(
-                  color: _getStatusColor(order.status),
-                  borderRadius: BorderRadius.circular(8),
-                  boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.2), blurRadius: 4)],
-                ),
-                child: const Icon(Icons.shopping_bag_rounded, color: Colors.white, size: 20),
-              ),
-              const Icon(Icons.arrow_drop_down, color: Colors.black, size: 20),
-            ],
+    for (var order in orders) {
+      if (order.status == OrderStatus.delivered || order.status == OrderStatus.cancelled) {
+        continue;
+      }
+
+      final loc = order.deliveryLocation;
+      if (loc != null && loc.latitude.isFinite && loc.longitude.isFinite) {
+        final lat = loc.latitude;
+        final lng = loc.longitude;
+
+        markers.add(
+          Marker(
+            markerId: MarkerId(order.id ?? DateTime.now().toIso8601String()),
+            position: LatLng(lat, lng),
+            infoWindow: InfoWindow(
+              title: 'طلب #${order.id ?? "جديد"}',
+              snippet: 'الحالة: ${order.status.name}',
+            ),
+            icon: BitmapDescriptor.defaultMarkerWithHue(_getStatusHue(order.status)),
           ),
-        ),
-      );
-    }).toList();
+        );
+      }
+    }
+
+    return markers;
   }
 
-  Color _getStatusColor(OrderStatus status) {
+  double _getStatusHue(OrderStatus status) {
     switch (status) {
-      case OrderStatus.pending: return Colors.orange;
-      case OrderStatus.preparing: return Colors.blue;
-      case OrderStatus.confirmed: return Colors.green;
-      case OrderStatus.outForDelivery: return Colors.purple;
-      default: return Colors.grey;
+      case OrderStatus.pending: return BitmapDescriptor.hueOrange;
+      case OrderStatus.preparing: return BitmapDescriptor.hueAzure;
+      case OrderStatus.confirmed: return BitmapDescriptor.hueGreen;
+      case OrderStatus.outForDelivery: return BitmapDescriptor.hueViolet;
+      default: return BitmapDescriptor.hueRed;
     }
   }
 }

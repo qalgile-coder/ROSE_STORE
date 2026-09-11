@@ -13,28 +13,4 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get changeLanguage => 'تغيير اللغة';
-
-  @override
-  String get getStarted => 'ابدأ الآن';
-
-  @override
-  String get login => 'تسجيل الدخول';
-
-  @override
-  String get signup => 'إنشاء حساب';
-
-  @override
-  String get alreadyMember => 'لديك حساب بالفعل؟ ';
-
-  @override
-  String get premiumVendors => 'متاجر مميزة';
-
-  @override
-  String get expressDelivery => 'توصيل سريع';
-
-  @override
-  String get storeName => 'متجر روز';
-
-  @override
-  String get welcomeSubtitle => 'الجيل القادم من تجربة التسوق وإدارة المتاجر متعددة البائعين.';
 }

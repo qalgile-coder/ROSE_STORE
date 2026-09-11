@@ -176,22 +176,16 @@
       "languageVersion": "3.4"
     },
     {
+      "name": "csslib",
+      "rootUri": "file:///C:/Users/OSI/AppData/Local/Pub/Cache/hosted/pub.dev/csslib-1.0.2",
+      "packageUri": "lib/",
+      "languageVersion": "3.1"
+    },
+    {
       "name": "cupertino_icons",
       "rootUri": "file:///C:/Users/OSI/AppData/Local/Pub/Cache/hosted/pub.dev/cupertino_icons-1.0.9",
       "packageUri": "lib/",
       "languageVersion": "3.9"
-    },
-    {
-      "name": "dart_earcut",
-      "rootUri": "file:///C:/Users/OSI/AppData/Local/Pub/Cache/hosted/pub.dev/dart_earcut-1.2.0",
-      "packageUri": "lib/",
-      "languageVersion": "3.0"
-    },
-    {
-      "name": "dart_polylabel2",
-      "rootUri": "file:///C:/Users/OSI/AppData/Local/Pub/Cache/hosted/pub.dev/dart_polylabel2-1.0.0",
-      "packageUri": "lib/",
-      "languageVersion": "3.6"
     },
     {
       "name": "dbus",
@@ -386,12 +380,6 @@
       "languageVersion": "3.10"
     },
     {
-      "name": "flutter_map",
-      "rootUri": "file:///C:/Users/OSI/AppData/Local/Pub/Cache/hosted/pub.dev/flutter_map-8.3.1",
-      "packageUri": "lib/",
-      "languageVersion": "3.6"
-    },
-    {
       "name": "flutter_plugin_android_lifecycle",
       "rootUri": "file:///C:/Users/OSI/AppData/Local/Pub/Cache/hosted/pub.dev/flutter_plugin_android_lifecycle-2.0.35",
       "packageUri": "lib/",
@@ -470,6 +458,42 @@
       "languageVersion": "3.4"
     },
     {
+      "name": "google_maps",
+      "rootUri": "file:///C:/Users/OSI/AppData/Local/Pub/Cache/hosted/pub.dev/google_maps-8.3.0",
+      "packageUri": "lib/",
+      "languageVersion": "3.4"
+    },
+    {
+      "name": "google_maps_flutter",
+      "rootUri": "file:///C:/Users/OSI/AppData/Local/Pub/Cache/hosted/pub.dev/google_maps_flutter-2.18.0",
+      "packageUri": "lib/",
+      "languageVersion": "3.10"
+    },
+    {
+      "name": "google_maps_flutter_android",
+      "rootUri": "file:///C:/Users/OSI/AppData/Local/Pub/Cache/hosted/pub.dev/google_maps_flutter_android-2.19.13",
+      "packageUri": "lib/",
+      "languageVersion": "3.12"
+    },
+    {
+      "name": "google_maps_flutter_ios",
+      "rootUri": "file:///C:/Users/OSI/AppData/Local/Pub/Cache/hosted/pub.dev/google_maps_flutter_ios-2.18.6",
+      "packageUri": "lib/",
+      "languageVersion": "3.10"
+    },
+    {
+      "name": "google_maps_flutter_platform_interface",
+      "rootUri": "file:///C:/Users/OSI/AppData/Local/Pub/Cache/hosted/pub.dev/google_maps_flutter_platform_interface-2.16.1",
+      "packageUri": "lib/",
+      "languageVersion": "3.10"
+    },
+    {
+      "name": "google_maps_flutter_web",
+      "rootUri": "file:///C:/Users/OSI/AppData/Local/Pub/Cache/hosted/pub.dev/google_maps_flutter_web-0.6.3+1",
+      "packageUri": "lib/",
+      "languageVersion": "3.10"
+    },
+    {
       "name": "google_sign_in",
       "rootUri": "file:///C:/Users/OSI/AppData/Local/Pub/Cache/hosted/pub.dev/google_sign_in-6.3.0",
       "packageUri": "lib/",
@@ -516,6 +540,12 @@
       "rootUri": "file:///C:/Users/OSI/AppData/Local/Pub/Cache/hosted/pub.dev/hooks-2.0.2",
       "packageUri": "lib/",
       "languageVersion": "3.10"
+    },
+    {
+      "name": "html",
+      "rootUri": "file:///C:/Users/OSI/AppData/Local/Pub/Cache/hosted/pub.dev/html-0.15.7",
+      "packageUri": "lib/",
+      "languageVersion": "3.6"
     },
     {
       "name": "http",
@@ -608,12 +638,6 @@
       "languageVersion": "3.9"
     },
     {
-      "name": "latlong2",
-      "rootUri": "file:///C:/Users/OSI/AppData/Local/Pub/Cache/hosted/pub.dev/latlong2-0.10.1",
-      "packageUri": "lib/",
-      "languageVersion": "3.0"
-    },
-    {
       "name": "leak_tracker",
       "rootUri": "file:///C:/Users/OSI/AppData/Local/Pub/Cache/hosted/pub.dev/leak_tracker-11.0.2",
       "packageUri": "lib/",
@@ -666,12 +690,6 @@
       "rootUri": "file:///C:/Users/OSI/AppData/Local/Pub/Cache/hosted/pub.dev/meta-1.18.0",
       "packageUri": "lib/",
       "languageVersion": "3.5"
-    },
-    {
-      "name": "mgrs_dart",
-      "rootUri": "file:///C:/Users/OSI/AppData/Local/Pub/Cache/hosted/pub.dev/mgrs_dart-3.0.0",
-      "packageUri": "lib/",
-      "languageVersion": "3.0"
     },
     {
       "name": "mime",
@@ -788,12 +806,6 @@
       "languageVersion": "3.12"
     },
     {
-      "name": "proj4dart",
-      "rootUri": "file:///C:/Users/OSI/AppData/Local/Pub/Cache/hosted/pub.dev/proj4dart-3.0.0",
-      "packageUri": "lib/",
-      "languageVersion": "3.0"
-    },
-    {
       "name": "pub_semver",
       "rootUri": "file:///C:/Users/OSI/AppData/Local/Pub/Cache/hosted/pub.dev/pub_semver-2.2.0",
       "packageUri": "lib/",
@@ -872,6 +884,12 @@
       "languageVersion": "2.17"
     },
     {
+      "name": "sanitize_html",
+      "rootUri": "file:///C:/Users/OSI/AppData/Local/Pub/Cache/hosted/pub.dev/sanitize_html-2.2.0",
+      "packageUri": "lib/",
+      "languageVersion": "3.5"
+    },
+    {
       "name": "share_plus",
       "rootUri": "file:///C:/Users/OSI/AppData/Local/Pub/Cache/hosted/pub.dev/share_plus-10.1.4",
       "packageUri": "lib/",
@@ -926,12 +944,6 @@
       "languageVersion": "3.3"
     },
     {
-      "name": "simple_sparse_list",
-      "rootUri": "file:///C:/Users/OSI/AppData/Local/Pub/Cache/hosted/pub.dev/simple_sparse_list-0.1.4",
-      "packageUri": "lib/",
-      "languageVersion": "3.0"
-    },
-    {
       "name": "sky_engine",
       "rootUri": "file:///E:/src/flutter/bin/cache/pkg/sky_engine",
       "packageUri": "lib/",
@@ -960,6 +972,12 @@
       "rootUri": "file:///C:/Users/OSI/AppData/Local/Pub/Cache/hosted/pub.dev/stream_channel-2.1.4",
       "packageUri": "lib/",
       "languageVersion": "3.3"
+    },
+    {
+      "name": "stream_transform",
+      "rootUri": "file:///C:/Users/OSI/AppData/Local/Pub/Cache/hosted/pub.dev/stream_transform-2.1.2",
+      "packageUri": "lib/",
+      "languageVersion": "3.4"
     },
     {
       "name": "string_scanner",
@@ -996,12 +1014,6 @@
       "rootUri": "file:///C:/Users/OSI/AppData/Local/Pub/Cache/hosted/pub.dev/typed_data-1.4.0",
       "packageUri": "lib/",
       "languageVersion": "3.5"
-    },
-    {
-      "name": "unicode",
-      "rootUri": "file:///C:/Users/OSI/AppData/Local/Pub/Cache/hosted/pub.dev/unicode-1.1.9",
-      "packageUri": "lib/",
-      "languageVersion": "3.0"
     },
     {
       "name": "url_launcher",
@@ -1080,12 +1092,6 @@
       "rootUri": "file:///C:/Users/OSI/AppData/Local/Pub/Cache/hosted/pub.dev/win32-5.15.0",
       "packageUri": "lib/",
       "languageVersion": "3.8"
-    },
-    {
-      "name": "wkt_parser",
-      "rootUri": "file:///C:/Users/OSI/AppData/Local/Pub/Cache/hosted/pub.dev/wkt_parser-2.0.0",
-      "packageUri": "lib/",
-      "languageVersion": "2.12"
     },
     {
       "name": "xdg_directories",
