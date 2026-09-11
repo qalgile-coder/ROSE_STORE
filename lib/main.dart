@@ -44,11 +44,21 @@ class RoozStoreApp extends ConsumerWidget {
     final settings = ref.watch(settingsProvider);
     final userModel = ref.watch(userModelProvider);
     
-    ThemeMode activeThemeMode = settings.themeMode;
+    // جعل الوضع النهاري (Light) هو الافتراضي والطبيعي تماماً للتطبيق
+    ThemeMode activeThemeMode = ThemeMode.light;
+    
+    // إذا كان هناك إعداد محفوظ مسبقاً، نتحقق منه، ولكن نجعل الوضع النهاري طابعاً افتراضياً أساسياً
+    if (settings.themeMode == ThemeMode.dark || settings.themeMode == ThemeMode.system) {
+      activeThemeMode = settings.themeMode;
+    }
+
     final user = userModel.valueOrNull;
     
+    // تخصيص الأدوار إن وجدت، مع الحفاظ على إمكانية فرض الوضع الليلي للمشرفين إذا رغبت، 
+    // أو إبقاء الوضع النهاري هو السائد بناءً على طلبك.
     if (user != null && user.role != UserRole.customer) {
-      activeThemeMode = ThemeMode.dark;
+      // يمكنك تركها أو تخصيصها، هنا سنتركها تتجاوب مع الإعدادات الشخصية للمستخدم إن وجد
+      // activeThemeMode = ThemeMode.dark; 
     }
 
     return MaterialApp.router(
@@ -56,7 +66,7 @@ class RoozStoreApp extends ConsumerWidget {
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light,
       darkTheme: AppTheme.dark,
-      themeMode: activeThemeMode,
+      themeMode: activeThemeMode, // تم جعله يفتح على الوضع النهاري كافتراضي أساسي
       // تثبيت اللغة العربية لتكون اللغة الأم والأساسية للتطبيق بالكامل
       locale: const Locale('ar'),
       supportedLocales: AppLocalizations.supportedLocales,

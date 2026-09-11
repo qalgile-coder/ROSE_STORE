@@ -27,8 +27,10 @@ class SettingsNotifier extends StateNotifier<SettingsState> {
 
   SettingsNotifier(this._prefs)
       : super(SettingsState(
-          themeMode: ThemeMode.values[_prefs.getInt('themeMode') ?? ThemeMode.dark.index],
-          locale: Locale(_prefs.getString('languageCode') ?? 'en'),
+          // تم تغيير القيمة الافتراضية عند عدم وجود إعداد مخزن مسبقاً لتقع على الوضع النهاري (ThemeMode.light) بدلاً من الداكن
+          themeMode: ThemeMode.values[_prefs.getInt('themeMode') ?? ThemeMode.light.index],
+          // تم ضبط القيمة الافتراضية للغة لتتوافق مع مشروعك (العربية 'ar' بدلاً من 'en')
+          locale: Locale(_prefs.getString('languageCode') ?? 'ar'),
         ));
 
   void toggleTheme(bool isDark) {

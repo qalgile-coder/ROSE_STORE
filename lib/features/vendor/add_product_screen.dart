@@ -24,6 +24,16 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
   final _unitController = TextEditingController(text: 'pcs');
   final _categoryController = TextEditingController();
   
+  // متغير العملة المختارة الافتراضي (السودان)
+  String _selectedCurrency = 'ج.س';
+
+  // قائمة العملات المدعومة للدول الثلاث
+  final List<Map<String, String>> _currencies = [
+    {'label': 'السودان (ج.س)', 'symbol': 'ج.س'},
+    {'label': 'مصر (ج.م)', 'symbol': 'ج.م'},
+    {'label': 'السعودية (ر.س)', 'symbol': 'ر.س'},
+  ];
+
   bool _isLoading = false;
   bool _isAvailable = true;
   File? _pickedImageFile; // لتخزين وعرض الصورة محلياً فوراً
@@ -86,6 +96,7 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
         name: _nameController.text.trim(),
         description: _descriptionController.text.trim(),
         price: double.parse(_priceController.text.trim()),
+        currency: _selectedCurrency, // إرسال العملة المختارة للنموذج
         discount: double.parse(_discountController.text.trim()),
         stock: int.parse(_stockController.text.trim()),
         unit: _unitController.text.trim(),
@@ -203,19 +214,35 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
               const SizedBox(height: 32),
               _buildSectionHeader('PRICING & STOCK', colorScheme),
               const SizedBox(height: 16),
+              
+              // سطر السعر وقائمة اختيار العملة
               Row(
                 children: [
-                  Expanded(child: _buildModernField(_priceController, 'Price ج.س', Icons.payments_rounded, colorScheme, isLight, keyboardType: TextInputType.number)),
-                  const SizedBox(width: 16),
+                  Expanded(
+                    flex: 3,
+                    child: _buildModernField(_priceController, 'Price', Icons.payments_rounded, colorScheme, isLight, keyboardType: TextInputType.number),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    flex: 2,
+                    child: _buildCurrencyDropdown(colorScheme, isLight),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+
+              Row(
+                children: [
                   Expanded(child: _buildModernField(_discountController, 'Discount %', Icons.percent_rounded, colorScheme, isLight, keyboardType: TextInputType.number)),
+                  const SizedBox(width: 16),
+                  Expanded(child: _buildModernField(_stockController, 'Initial Stock', Icons.inventory_2_rounded, colorScheme, isLight, keyboardType: TextInputType.number)),
                 ],
               ),
               const SizedBox(height: 16),
               Row(
                 children: [
-                  Expanded(child: _buildModernField(_stockController, 'Initial Stock', Icons.inventory_2_rounded, colorScheme, isLight, keyboardType: TextInputType.number)),
-                  const SizedBox(width: 16),
                   Expanded(child: _buildModernField(_unitController, 'Unit (pcs, kg)', Icons.scale_rounded, colorScheme, isLight)),
+                  const Spacer(),
                 ],
               ),
               
@@ -257,6 +284,45 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
               const SizedBox(height: 40),
             ],
           ),
+        ),
+      ),
+    );
+  }
+
+  // ويدجت قائمة اختيار العملة بتصميم متوافق تماماً مع حقول الإدخال
+  Widget _buildCurrencyDropdown(ColorScheme colorScheme, bool isLight) {
+    return Container(
+      height: 60,
+      padding: const EdgeInsets.symmetric(horizontal: 12),
+      decoration: BoxDecoration(
+        color: colorScheme.surface,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: isLight ? [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10)] : null,
+        border: Border.all(color: colorScheme.outline.withOpacity(isLight ? 0.5 : 0.05)),
+      ),
+      child: DropdownButtonHideUnderline(
+        child: DropdownButton<String>(
+          value: _selectedCurrency,
+          dropdownColor: colorScheme.surface,
+          icon: Icon(Icons.keyboard_arrow_down_rounded, color: colorScheme.primary, size: 20),
+          items: _currencies.map((curr) {
+            return DropdownMenuItem<String>(
+              value: curr['symbol'],
+              child: Text(
+                curr['symbol']!,
+                style: TextStyle(
+                  color: colorScheme.onSurface,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            );
+          }).toList(),
+          onChanged: (val) {
+            setState(() {
+              _selectedCurrency = val!;
+            });
+          },
         ),
       ),
     );

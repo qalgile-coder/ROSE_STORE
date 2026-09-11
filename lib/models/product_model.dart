@@ -7,6 +7,7 @@ class ProductModel {
   final String name;
   final String description;
   final double price;
+  final String currency; // حقل العملة الجديد (ج.س، ج.م، ر.س)
   final double discount;
   final int stock;
   final int soldQuantity;
@@ -27,6 +28,7 @@ class ProductModel {
     required this.name,
     required this.description,
     required this.price,
+    this.currency = 'ج.س', // القيمة الافتراضية جنيه سوداني
     this.discount = 0.0,
     required this.stock,
     this.soldQuantity = 0,
@@ -50,6 +52,7 @@ class ProductModel {
       name: data['name'] ?? '',
       description: data['description'] ?? '',
       price: (data['price'] ?? 0.0).toDouble(),
+      currency: data['currency'] ?? 'ج.س', // قراءة العملة من فايرستور
       discount: (data['discount'] ?? 0.0).toDouble(),
       stock: data['stock'] ?? 0,
       soldQuantity: data['soldQuantity'] ?? 0,
@@ -77,6 +80,7 @@ class ProductModel {
       name: map['name'] ?? '',
       description: map['description'] ?? '',
       price: (map['price'] ?? 0.0).toDouble(),
+      currency: map['currency'] ?? 'ج.س', // قراءة العملة من الخريطة
       discount: (map['discount'] ?? 0.0).toDouble(),
       stock: map['stock'] ?? 0,
       soldQuantity: map['soldQuantity'] ?? 0,
@@ -103,6 +107,7 @@ class ProductModel {
       'name': name,
       'description': description,
       'price': price,
+      'currency': currency, // تخزين العملة في قاعدة البيانات
       'discount': discount,
       'stock': stock,
       'soldQuantity': soldQuantity,

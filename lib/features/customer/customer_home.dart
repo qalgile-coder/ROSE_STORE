@@ -593,12 +593,12 @@ class _AllMerchantProductsGridList extends ConsumerWidget {
   }
 }
 
-class _GridProductCard extends StatelessWidget {
+class _GridProductCard extends ConsumerWidget {
   final ProductModel product;
   const _GridProductCard({required this.product});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final isLight = Theme.of(context).brightness == Brightness.light;
     final primaryColor = isLight ? AppColors.lightPrimary : AppColors.premiumDarkPrimary;
     final cardColor = isLight ? AppColors.lightSurface : AppColors.premiumDarkSurface;
@@ -657,8 +657,9 @@ class _GridProductCard extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
+                // تم التعديل هنا لقراءة العملة مباشرة من نموذج المنتج product.currency
                 Text(
-                  'Rs ${product.price.round()}', 
+                  '${product.price.round()} ${product.currency}', 
                   style: TextStyle(
                     color: primaryColor, 
                     fontWeight: FontWeight.w900, 
@@ -794,109 +795,6 @@ class _FeaturedShopCard extends StatelessWidget {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 4),
-                  Text(
-                    '${shop.category} • ${shop.address}', 
-                    style: TextStyle(
-                      color: secondaryTextColor.withOpacity(0.7), 
-                      fontSize: 11, 
-                      fontWeight: FontWeight.w600
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _TrendingProducts extends ConsumerWidget {
-  const _TrendingProducts();
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final productsAsync = ref.watch(trendingProductsProvider);
-
-    return productsAsync.when(
-      data: (products) {
-        if (products.isEmpty) return const SizedBox.shrink();
-        
-        return SizedBox(
-          height: 110,
-          child: ListView.separated(
-            scrollDirection: Axis.horizontal,
-            physics: const BouncingScrollPhysics(),
-            itemCount: products.length,
-            separatorBuilder: (_, __) => const SizedBox(width: 14),
-            itemBuilder: (context, index) => _SmallProductCard(product: products[index]),
-          ),
-        );
-      },
-      loading: () => SizedBox(height: 110, child: ListView(scrollDirection: Axis.horizontal, children: List.generate(2, (_) => const Padding(padding: EdgeInsets.only(right: 14), child: _Skeleton(width: 230, height: 110, radius: 20))))),
-      error: (e, s) => const SizedBox.shrink(),
-    );
-  }
-}
-
-class _SmallProductCard extends StatelessWidget {
-  final ProductModel product;
-  const _SmallProductCard({required this.product});
-
-  @override
-  Widget build(BuildContext context) {
-    final isLight = Theme.of(context).brightness == Brightness.light;
-    final primaryColor = isLight ? AppColors.lightPrimary : AppColors.premiumDarkPrimary;
-    final cardColor = isLight ? AppColors.lightSurface : AppColors.premiumDarkSurface;
-    final textColor = isLight ? AppColors.lightTextPrimary : AppColors.premiumDarkTextPrimary;
-
-    return InkWell(
-      onTap: () => context.push('/customer/product', extra: product),
-      borderRadius: BorderRadius.circular(20),
-      child: Container(
-        width: 230,
-        padding: const EdgeInsets.all(10),
-        decoration: BoxDecoration(
-          color: cardColor, 
-          borderRadius: BorderRadius.circular(20),
-          boxShadow: isLight ? [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 8)] : null,
-          border: isLight ? Border.all(color: AppColors.lightBorder) : Border.all(color: AppColors.premiumDarkDivider.withOpacity(0.4)),
-        ),
-        child: Row(
-          children: [
-            ClipRRect(
-              borderRadius: BorderRadius.circular(14),
-              child: Image.network(product.imageUrl, width: 60, height: 60, fit: BoxFit.cover),
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    product.name, 
-                    style: TextStyle(
-                      fontWeight: FontWeight.w800, 
-                      fontSize: 13, 
-                      color: textColor
-                    ), 
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    'Rs ${product.price.round()}', 
-                    style: TextStyle(
-                      color: primaryColor, 
-                      fontWeight: FontWeight.w900, 
-                      fontSize: 14
-                    )
-                  ),
                 ],
               ),
             ),
@@ -918,11 +816,11 @@ class _GlassBadge extends StatelessWidget {
     return ClipRRect(
       borderRadius: BorderRadius.circular(10),
       child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 6, sigmaY: 6),
+        filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
           decoration: BoxDecoration(
-            color: Colors.black.withOpacity(0.35),
+            color: Colors.black.withOpacity(0.4),
             borderRadius: BorderRadius.circular(10),
             border: Border.all(color: Colors.white.withOpacity(0.1)),
           ),
@@ -930,8 +828,11 @@ class _GlassBadge extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               Icon(icon, color: color, size: 12),
-              const SizedBox(width: 3),
-              Text(label, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 10)),
+              const SizedBox(width: 4),
+              Text(
+                label,
+                style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w800),
+              ),
             ],
           ),
         ),
@@ -953,9 +854,40 @@ class _Skeleton extends StatelessWidget {
       width: width,
       height: height,
       decoration: BoxDecoration(
-        color: isLight ? AppColors.lightSurface : AppColors.premiumDarkSurface,
+        color: isLight ? Colors.black.withOpacity(0.05) : Colors.white.withOpacity(0.05),
         borderRadius: BorderRadius.circular(radius),
       ),
+    );
+  }
+}
+
+class _TrendingProducts extends ConsumerWidget {
+  const _TrendingProducts();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final trendingAsync = ref.watch(trendingProductsProvider);
+
+    return trendingAsync.when(
+      data: (products) {
+        if (products.isEmpty) return const SizedBox.shrink();
+        return SizedBox(
+          height: 240,
+          child: ListView.separated(
+            scrollDirection: Axis.horizontal,
+            physics: const BouncingScrollPhysics(),
+            itemCount: products.length,
+            padding: const EdgeInsets.only(right: 20),
+            separatorBuilder: (_, __) => const SizedBox(width: 14),
+            itemBuilder: (context, index) => SizedBox(
+              width: 160,
+              child: _GridProductCard(product: products[index]),
+            ),
+          ),
+        );
+      },
+      loading: () => SizedBox(height: 240, child: ListView(scrollDirection: Axis.horizontal, children: List.generate(2, (_) => const Padding(padding: EdgeInsets.only(right: 14), child: _Skeleton(width: 160, height: 240, radius: 22))))),
+      error: (e, s) => const SizedBox.shrink(),
     );
   }
 }

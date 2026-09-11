@@ -30,20 +30,21 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-    const navyBg = Color(0xFF0B1120);
+    // تعريف درجات الوردي الغامض (Mysterious Pink Palette)
+    const Color mysteriousPink = Color(0xFFC2185B); 
+    const Color darkNavyBg = Color(0xFF0F0810); // خلفية متناسقة مع الوردي الغامض
+    const Color cardBgColor = Color(0xFF1E111C);
 
     return Scaffold(
-      backgroundColor: navyBg, 
+      backgroundColor: darkNavyBg, 
       body: Stack(
         children: [
-          // Background Aesthetic Glow
+          // Background Aesthetic Glow بالوردي الغامض
           Positioned(
             top: -150,
             right: -150,
             child: _GlowCircle(
-              color: colorScheme.primary.withValues(alpha: 0.1), 
+              color: mysteriousPink.withValues(alpha: 0.15), 
               size: 500
             ),
           ),
@@ -54,37 +55,37 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  // Premium Logo Container with sophisticated SaaS styling
+                  // Premium Logo Container with Mysterious Pink styling
                   Container(
                     width: 170,
                     height: 170,
                     decoration: BoxDecoration(
-                      color: const Color(0xFF1E293B).withValues(alpha: 0.4),
+                      color: cardBgColor.withValues(alpha: 0.6),
                       borderRadius: BorderRadius.circular(54),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.3), 
+                          color: Colors.black.withValues(alpha: 0.4), 
                           blurRadius: 60, 
                           offset: const Offset(0, 30)
                         ),
                         BoxShadow(
-                          color: colorScheme.primary.withValues(alpha: 0.1),
+                          color: mysteriousPink.withValues(alpha: 0.2),
                           blurRadius: 30,
                           spreadRadius: -10,
                         ),
                       ],
-                      border: Border.all(color: Colors.white.withValues(alpha: 0.05), width: 2),
+                      border: Border.all(color: mysteriousPink.withValues(alpha: 0.2), width: 2),
                     ),
                     padding: const EdgeInsets.all(24),
                     child: Hero(
                       tag: 'app_logo',
                       child: Image.asset(
-                        'assets/images/image.png', // تم التحديث لاستخدام اللوجو الأساسي image.png
+                        'assets/images/image.png',
                         fit: BoxFit.contain,
-                        errorBuilder: (context, error, stackTrace) => Icon(
+                        errorBuilder: (context, error, stackTrace) => const Icon(
                           Icons.auto_awesome_mosaic_rounded,
                           size: 72,
-                          color: colorScheme.primary,
+                          color: mysteriousPink,
                         ),
                       ),
                     ),
@@ -107,7 +108,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                   Text(
                     'PREMIUM MARKETPLACE',
                     style: TextStyle(
-                      color: colorScheme.primary.withValues(alpha: 0.8),
+                      color: mysteriousPink.withValues(alpha: 0.9),
                       fontSize: 10,
                       fontWeight: FontWeight.w900,
                       letterSpacing: 3,
@@ -117,7 +118,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                   const SizedBox(height: 120),
 
                   // SaaS-style Loader
-                  const _ModernLoader(),
+                  const _ModernLoader(mysteriousPink: mysteriousPink),
                 ],
               ),
             ),
@@ -129,7 +130,8 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
 }
 
 class _ModernLoader extends StatefulWidget {
-  const _ModernLoader();
+  final Color mysteriousPink;
+  const _ModernLoader({required this.mysteriousPink});
 
   @override
   State<_ModernLoader> createState() => _ModernLoaderState();
@@ -155,8 +157,6 @@ class _ModernLoaderState extends State<_ModernLoader> with SingleTickerProviderS
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-
     return AnimatedBuilder(
       animation: _controller,
       builder: (context, child) {
@@ -164,7 +164,7 @@ class _ModernLoaderState extends State<_ModernLoader> with SingleTickerProviderS
           width: 200,
           height: 4,
           decoration: BoxDecoration(
-            color: const Color(0xFF1E293B),
+            color: const Color(0xFF1E111C),
             borderRadius: BorderRadius.circular(10),
           ),
           child: Stack(
@@ -175,10 +175,10 @@ class _ModernLoaderState extends State<_ModernLoader> with SingleTickerProviderS
                   width: 50,
                   height: 4,
                   decoration: BoxDecoration(
-                    color: colorScheme.primary,
+                    color: widget.mysteriousPink,
                     borderRadius: BorderRadius.circular(10),
                     boxShadow: [
-                      BoxShadow(color: colorScheme.primary.withValues(alpha: 0.5), blurRadius: 10),
+                      BoxShadow(color: widget.mysteriousPink.withValues(alpha: 0.6), blurRadius: 10),
                     ],
                   ),
                 ),

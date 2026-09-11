@@ -24,6 +24,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   bool _obscurePassword = true;
   bool _rememberMe = false;
 
+  // تعريف درجات اللون الوردي الغامض (Mysterious Pink Palette)
+  static const Color _mysteriousPinkPrimary = Color(0xFFC2185B); // اللون الأساسي للوردي الغامض
+  static const Color _mysteriousPinkDark = Color(0xFF880E4F); // درجة أغمق للتدرجات
+  static const Color _socialButtonColor = Color(0xFF2A1529); // لون خلفية أيقونات السوشيال ميديا
+  static const Color _surfaceColor = Color(0xFF1E111C); // لون خلفية الحاويات (مشابه للسبلاش)
+  static const Color _bgColor = Color(0xFF0F0810); // لون الخلفية العامة (مشابه للسبلاش)
+
   @override
   void initState() {
     super.initState();
@@ -72,7 +79,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       }
     } catch (e) {
       if (mounted) {
-        // طباعة الخطأ الحقيقي القادم من السيرفر أو Firebase لتسهيل اكتشاف المشكلة
         _showErrorSnackBar('خطأ: ${e.toString()}');
       }
     } finally {
@@ -104,10 +110,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   Future<void> _signInWithEmailSocial() async {
     if (_isEmailLoginLoading || _isLoading || _isGoogleLoading) return;
 
-    // تم تصحيح الدالة هنا لتناسب تسجيل الدخول عبر البريد الإلكتروني المخصص بدلاً من استدعاء جوجل بالخطأ
     await _handleAuthAction(
       () async {
-        // ضع هنا دالة تسجيل الدخول البديلة الخاصة بك إذا وجدت، أو اتركها لخدمة الـ Auth
         if (!_formKey.currentState!.validate()) throw Exception('الرجاء إدخال البريد الإلكتروني');
         await ref.read(authServiceProvider).signIn(_emailController.text.trim(), _passwordController.text.trim());
       },
@@ -135,7 +139,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: const Color(0xFF1E293B),
+        backgroundColor: _surfaceColor, // تم التحديث للون الوردي الغامض
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
         title: Text('Reset Password', style: GoogleFonts.plusJakartaSans(color: Colors.white, fontWeight: FontWeight.w800)),
         content: Column(
@@ -144,7 +148,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           children: [
             Text(
               'Enter your email address to receive a recovery link.',
-              style: GoogleFonts.plusJakartaSans(color: Colors.white.withValues(alpha: 0.6), fontSize: 14),
+              style: GoogleFonts.plusJakartaSans(color: Colors.white.withOpacity(0.6), fontSize: 14),
             ),
             const SizedBox(height: 24),
             TextField(
@@ -152,9 +156,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               style: const TextStyle(color: Colors.white),
               decoration: InputDecoration(
                 hintText: 'Recovery Email',
-                hintStyle: TextStyle(color: Colors.white.withValues(alpha: 0.3)),
-                prefixIcon: const Icon(Icons.mail_rounded, size: 20, color: Color(0xFF38BDF8)),
-                fillColor: const Color(0xFF0B1120).withValues(alpha: 0.5),
+                hintStyle: TextStyle(color: Colors.white.withOpacity(0.3)),
+                prefixIcon: const Icon(Icons.mail_rounded, size: 20, color: _mysteriousPinkPrimary), // تم التحديث للون الوردي الغامض
+                fillColor: _bgColor.withOpacity(0.5), // تم التحديث للون الوردي الغامض
                 filled: true,
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
               ),
@@ -164,7 +168,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context), 
-            child: Text('CANCEL', style: TextStyle(color: Colors.white.withValues(alpha: 0.5)))
+            child: Text('CANCEL', style: TextStyle(color: Colors.white.withOpacity(0.5)))
           ),
           ElevatedButton(
             onPressed: () async {
@@ -193,7 +197,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               }
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF38BDF8),
+              backgroundColor: _mysteriousPinkPrimary, // تم التحديث للون الوردي الغامض
               minimumSize: const Size(100, 48),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
             ),
@@ -206,14 +210,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
-    const accentColor = Color(0xFF38BDF8);
-    const surfaceColor = Color(0xFF1E293B);
-    const bgColor = Color(0xFF0B1120);
-
     return Scaffold(
-      backgroundColor: bgColor,
+      backgroundColor: _bgColor, // تم التحديث للخلفية العامة
       body: Stack(
         children: [
+          // Background Aesthetic Glow بالوردي الغامض
           Positioned(
             top: -50,
             right: -50,
@@ -224,7 +225,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 shape: BoxShape.circle,
                 gradient: RadialGradient(
                   colors: [
-                    accentColor.withValues(alpha: 0.15),
+                    _mysteriousPinkPrimary.withOpacity(0.15), // تم التحديث للوردي الغامض
                     Colors.transparent
                   ],
                 ),
@@ -245,7 +246,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         onPressed: () => context.pop(),
                         icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 20, color: Colors.white),
                         style: IconButton.styleFrom(
-                          backgroundColor: surfaceColor.withValues(alpha: 0.5),
+                          backgroundColor: _surfaceColor.withOpacity(0.5), // تم التحديث للخلفية
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                         ),
                       ),
@@ -259,14 +260,14 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(40),
                           gradient: const LinearGradient(
-                            colors: [Color(0xFF38BDF8), Color(0xFF6366F1), Color(0xFF34D399)],
+                            colors: [_mysteriousPinkPrimary, _mysteriousPinkDark, Color(0xFF6366F1)], // تم التحديث بتدرج الوردي
                             begin: Alignment.topLeft,
                             end: Alignment.bottomRight,
                           ),
                         ),
                         child: Container(
                           decoration: BoxDecoration(
-                            color: bgColor,
+                            color: _bgColor, // تم التحديث للخلفية
                             borderRadius: BorderRadius.circular(36),
                           ),
                           padding: const EdgeInsets.all(16),
@@ -275,7 +276,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                             child: Image.asset(
                               'assets/images/rounded-image.png',
                               fit: BoxFit.contain,
-                              errorBuilder: (c, e, s) => const Icon(Icons.auto_awesome_mosaic_rounded, color: accentColor, size: 48),
+                              errorBuilder: (c, e, s) => const Icon(Icons.auto_awesome_mosaic_rounded, color: _mysteriousPinkPrimary, size: 48),
                             ),
                           ),
                         ),
@@ -294,7 +295,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           const TextSpan(text: 'Welcome '),
                           TextSpan(
                             text: 'Back',
-                            style: TextStyle(color: accentColor),
+                            style: TextStyle(color: _mysteriousPinkPrimary), // تم التحديث للوردي الغامض
                           ),
                         ],
                       ),
@@ -303,7 +304,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     Text(
                       'Access your premium marketplace',
                       style: GoogleFonts.plusJakartaSans(
-                        color: Colors.white.withValues(alpha: 0.5),
+                        color: Colors.white.withOpacity(0.5),
                         fontSize: 16,
                         fontWeight: FontWeight.w500,
                       ),
@@ -312,9 +313,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     Container(
                       padding: const EdgeInsets.all(24),
                       decoration: BoxDecoration(
-                        color: surfaceColor.withValues(alpha: 0.3),
+                        color: _surfaceColor.withOpacity(0.3), // تم التحديث للخلفية
                         borderRadius: BorderRadius.circular(32),
-                        border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
+                        border: Border.all(color: Colors.white.withOpacity(0.05)),
                       ),
                       child: Column(
                         children: [
@@ -349,10 +350,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                       decoration: BoxDecoration(
                                         borderRadius: BorderRadius.circular(6),
                                         border: Border.all(
-                                          color: _rememberMe ? accentColor : Colors.white24,
+                                          color: _rememberMe ? _mysteriousPinkPrimary : Colors.white24, // تم التحديث للوردي الغامض
                                           width: 1.5,
                                         ),
-                                        color: _rememberMe ? accentColor : Colors.transparent,
+                                        color: _rememberMe ? _mysteriousPinkPrimary : Colors.transparent, // تم التحديث للوردي الغامض
                                       ),
                                       child: _rememberMe 
                                           ? const Icon(Icons.check, size: 14, color: Colors.white) 
@@ -362,7 +363,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                     Text(
                                       'Remember me',
                                       style: GoogleFonts.plusJakartaSans(
-                                        color: Colors.white.withValues(alpha: 0.6),
+                                        color: Colors.white.withOpacity(0.6),
                                         fontSize: 13,
                                         fontWeight: FontWeight.w600,
                                       ),
@@ -376,7 +377,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                 child: Text(
                                   'Forgot Password?',
                                   style: GoogleFonts.plusJakartaSans(
-                                    color: accentColor,
+                                    color: _mysteriousPinkPrimary, // تم التحديث للوردي الغامض
                                     fontWeight: FontWeight.w700,
                                     fontSize: 13,
                                   ),
@@ -392,14 +393,14 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                               height: 64,
                               decoration: BoxDecoration(
                                 gradient: const LinearGradient(
-                                  colors: [accentColor, Color(0xFF2563EB)],
+                                  colors: [_mysteriousPinkPrimary, _mysteriousPinkDark], // تم التحديث لتدرج الوردي
                                   begin: Alignment.centerLeft,
                                   end: Alignment.centerRight,
                                 ),
                                 borderRadius: BorderRadius.circular(20),
                                 boxShadow: [
                                   BoxShadow(
-                                    color: accentColor.withValues(alpha: 0.3),
+                                    color: _mysteriousPinkPrimary.withOpacity(0.3), // تم التحديث للوردي الغامض
                                     blurRadius: 12,
                                     offset: const Offset(0, 4),
                                   ),
@@ -425,157 +426,3 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                     const Icon(Icons.arrow_forward_rounded, color: Colors.white, size: 20),
                                     const SizedBox(width: 16),
                                   ],
-                                ],
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 36),
-                    Row(
-                      children: [
-                        const Expanded(child: Divider(color: Colors.white10)),
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 16),
-                          child: Text(
-                            'OR CONTINUE WITH',
-                            style: GoogleFonts.plusJakartaSans(
-                              color: Colors.white.withValues(alpha: 0.25),
-                              fontSize: 10,
-                              fontWeight: FontWeight.w800,
-                              letterSpacing: 1.5,
-                            ),
-                          ),
-                        ),
-                        const Expanded(child: Divider(color: Colors.white10)),
-                      ],
-                    ),
-                    const SizedBox(height: 32),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        _SocialTile(
-                          iconData: Icons.g_mobiledata_rounded,
-                          iconColor: Colors.white,
-                          isLoading: _isGoogleLoading,
-                          onTap: _signInWithGoogle,
-                        ),
-                        const SizedBox(width: 20),
-                        _SocialTile(
-                          iconData: Icons.apple_rounded,
-                          onTap: () {},
-                        ),
-                        const SizedBox(width: 20),
-                        _SocialTile(
-                          iconData: Icons.mail_rounded,
-                          color: accentColor.withValues(alpha: 0.1),
-                          iconColor: accentColor,
-                          isLoading: _isEmailLoginLoading,
-                          onTap: _signInWithEmailSocial,
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 48),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildTextField({
-    required TextEditingController controller,
-    required String hint,
-    required IconData icon,
-    bool isPassword = false,
-    bool isObscured = false,
-    VoidCallback? toggleObscure,
-    TextInputType? keyboardType,
-    String? Function(String?)? validator,
-  }) {
-    const accentColor = Color(0xFF38BDF8);
-    const surfaceColor = Color(0xFF1E293B);
-
-    return TextFormField(
-      controller: controller,
-      obscureText: isObscured,
-      keyboardType: keyboardType,
-      validator: validator,
-      style: GoogleFonts.plusJakartaSans(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w600),
-      decoration: InputDecoration(
-        hintText: hint,
-        hintStyle: GoogleFonts.plusJakartaSans(color: Colors.white.withValues(alpha: 0.2), fontSize: 15),
-        prefixIcon: Icon(icon, size: 20, color: accentColor),
-        suffixIcon: isPassword
-            ? IconButton(
-                icon: Icon(
-                  isObscured ? Icons.visibility_off_rounded : Icons.visibility_rounded,
-                  size: 20,
-                  color: Colors.white.withValues(alpha: 0.4),
-                ),
-                onPressed: toggleObscure,
-              )
-            : null,
-        filled: true,
-        fillColor: surfaceColor.withValues(alpha: 0.5),
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
-        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.05))),
-        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: const BorderSide(color: accentColor, width: 1.5)),
-        errorBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: const BorderSide(color: AppColors.error, width: 1.5)),
-      ),
-    );
-  }
-}
-
-class _SocialTile extends StatelessWidget {
-  final IconData iconData;
-  final Color? color;
-  final Color? iconColor;
-  final bool isLoading;
-  final VoidCallback onTap;
-
-  const _SocialTile({
-    required this.iconData,
-    this.color,
-    this.iconColor,
-    this.isLoading = false,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      onTap: isLoading ? null : onTap,
-      borderRadius: BorderRadius.circular(16),
-      child: Container(
-        width: 56,
-        height: 56,
-        decoration: BoxDecoration(
-          color: color ?? const Color(0xFF1E293B).withValues(alpha: 0.3),
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
-        ),
-        child: Center(
-          child: isLoading
-              ? const SizedBox(
-                  width: 20,
-                  height: 20,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                    color: Colors.white,
-                  ),
-                )
-              : Icon(
-                  iconData,
-                  color: iconColor ?? Colors.white,
-                  size: 24,
-                ),
-        ),
-      ),
-    );
-  }
-}
