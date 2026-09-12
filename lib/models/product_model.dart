@@ -45,6 +45,52 @@ class ProductModel {
     required this.createdAt,
   });
 
+  ProductModel copyWith({
+    String? id,
+    String? vendorId,
+    String? shopId,
+    String? name,
+    String? description,
+    double? price,
+    String? currency,
+    double? discount,
+    int? stock,
+    int? soldQuantity,
+    String? unit,
+    List<String>? imageUrls,
+    String? imageUrl,
+    String? category,
+    String? brand,
+    bool? isAvailable,
+    double? rating,
+    int? reviewCount,
+    int? orderCount,
+    DateTime? createdAt,
+  }) {
+    return ProductModel(
+      id: id ?? this.id,
+      vendorId: vendorId ?? this.vendorId,
+      shopId: shopId ?? this.shopId,
+      name: name ?? this.name,
+      description: description ?? this.description,
+      price: price ?? this.price,
+      currency: currency ?? this.currency,
+      discount: discount ?? this.discount,
+      stock: stock ?? this.stock,
+      soldQuantity: soldQuantity ?? this.soldQuantity,
+      unit: unit ?? this.unit,
+      imageUrls: imageUrls ?? this.imageUrls,
+      imageUrl: imageUrl ?? this.imageUrl,
+      category: category ?? this.category,
+      brand: brand ?? this.brand,
+      isAvailable: isAvailable ?? this.isAvailable,
+      rating: rating ?? this.rating,
+      reviewCount: reviewCount ?? this.reviewCount,
+      orderCount: orderCount ?? this.orderCount,
+      createdAt: createdAt ?? this.createdAt,
+    );
+  }
+
   factory ProductModel.fromFirestore(DocumentSnapshot doc) {
     Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
     
