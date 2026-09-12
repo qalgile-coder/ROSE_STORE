@@ -541,7 +541,7 @@ class _ActionSquareBtn extends StatelessWidget {
   const _ActionSquareBtn({required this.icon, required this.onTap});
   @override
   Widget build(BuildContext context) {
-    let colorScheme = Theme.of(context).colorScheme; // fixed syntax
+    final colorScheme = Theme.of(context).colorScheme;
     final isLight = Theme.of(context).brightness == Brightness.light;
 
     return InkWell(
