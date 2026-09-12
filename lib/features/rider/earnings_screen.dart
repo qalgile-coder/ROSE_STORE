@@ -391,7 +391,7 @@ class _WithdrawalActionState extends ConsumerState<_WithdrawalAction> {
                     try {
                       await ref.read(riderServiceProvider).requestWithdrawal(widget.user.uid, amount);
                       if (mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Payout request sent to Zen Mart Admin!'), backgroundColor: AppColors.success));
+                        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Payout request sent to Rose Store Admin!'), backgroundColor: AppColors.success));
                       }
                     } catch (e) {
                       if (mounted) {

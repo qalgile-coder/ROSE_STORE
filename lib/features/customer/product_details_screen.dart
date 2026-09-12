@@ -57,29 +57,7 @@ class _ProductDetailsScreenState extends ConsumerState<ProductDetailsScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          _Badge(label: liveProduct.category, color: colorScheme.primary),
-                          _RatingBadge(
-                            rating: liveProduct.rating.toStringAsFixed(1), 
-                            count: liveProduct.reviewCount.toString(),
-                            onTap: () => context.push('/customer/product-reviews/${liveProduct.id}/${liveProduct.name}'),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 24),
-                      Text(
-                        liveProduct.name,
-                        style: TextStyle(fontSize: 34, fontWeight: FontWeight.w800, color: colorScheme.onSurface, letterSpacing: -1),
-                      ),
-                      const SizedBox(height: 6),
-                      Text(
-                        '${'by'.tr(ref)} ${liveProduct.brand}',
-                        style: TextStyle(fontSize: 16, color: colorScheme.onSurface.withValues(alpha: 0.5), fontWeight: FontWeight.w600),
-                      ),
-                      const SizedBox(height: 32),
-                      
+                      // 1. قسم اختيار الصور أصبحت في الأعلى مباشرة تحت الصورة الكبيرة
                       if (allImages.length > 1) ...[
                         Text(
                           'SELECT PHOTO VARIATION',
@@ -131,6 +109,32 @@ class _ProductDetailsScreenState extends ConsumerState<ProductDetailsScreen> {
                         ),
                         const SizedBox(height: 32),
                       ],
+
+                      // 2. الفئة والتقييم
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          _Badge(label: liveProduct.category, color: colorScheme.primary),
+                          _RatingBadge(
+                            rating: liveProduct.rating.toStringAsFixed(1), 
+                            count: liveProduct.reviewCount.toString(),
+                            onTap: () => context.push('/customer/product-reviews/${liveProduct.id}/${liveProduct.name}'),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 24),
+                      
+                      // 3. اسم المنتج والماركة
+                      Text(
+                        liveProduct.name,
+                        style: TextStyle(fontSize: 34, fontWeight: FontWeight.w800, color: colorScheme.onSurface, letterSpacing: -1),
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        '${'by'.tr(ref)} ${liveProduct.brand}',
+                        style: TextStyle(fontSize: 16, color: colorScheme.onSurface.withValues(alpha: 0.5), fontWeight: FontWeight.w600),
+                      ),
+                      const SizedBox(height: 32),
 
                       _PriceSection(product: liveProduct),
                       Padding(
@@ -309,7 +313,6 @@ class _ProductDetailsScreenState extends ConsumerState<ProductDetailsScreen> {
               Expanded(
                 child: ElevatedButton(
                   onPressed: () {
-                    // استخدام copyWith لتحديث الصورة المختارة بأمان وبدون فقدان أي بيانات أخرى
                     final productToOrder = liveProduct.copyWith(
                       imageUrl: _selectedImageUrl,
                       imageUrls: [_selectedImageUrl],

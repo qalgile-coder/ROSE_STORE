@@ -79,7 +79,7 @@ class _SupportChatScreenState extends ConsumerState<SupportChatScreen> {
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('Zen Mart Support', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+            const Text('Rose Store Support', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
             Row(
               children: [
                 Container(width: 8, height: 8, decoration: const BoxDecoration(color: Colors.green, shape: BoxShape.circle)),

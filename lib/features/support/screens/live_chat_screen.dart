@@ -254,7 +254,7 @@ class _LiveChatScreenState extends ConsumerState<LiveChatScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Zen MArt Support', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w900, color: textColor)),
+                Text('Rose Store Support', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w900, color: textColor)),
                 StreamBuilder<bool>(
                   stream: ref.watch(supportServiceProvider).isAdminOnline(),
                   builder: (context, snapshot) {

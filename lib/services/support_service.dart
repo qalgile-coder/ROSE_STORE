@@ -48,9 +48,9 @@ class SupportService {
     await sendSupportMessage(docRef.id, SupportMessageModel(
       id: '',
       senderId: 'system',
-      senderName: 'Zen MArt AI',
+      senderName: 'Rose Store AI',
       senderRole: 'system',
-      message: 'Hello 👋\n\nWelcome to Zen MArt Support.\n\nPlease describe your issue.\n\nIf your issue relates to an order, please attach the order.\n\nOur support team will reply shortly.',
+      message: 'Hello 👋\n\nWelcome to Rose Store Support.\n\nPlease describe your issue.\n\nIf your issue relates to an order, please attach the order.\n\nOur support team will reply shortly.',
       timestamp: DateTime.now(),
     ));
 
@@ -243,7 +243,7 @@ Ticket ID: #${ticketId.substring(0, 8).toUpperCase()}''';
       await sendMessage(ticketId, SupportMessageModel(
         id: '',
         senderId: 'system',
-        senderName: 'Zen Mart Support',
+        senderName: 'Rose Store Support',
         senderRole: 'system',
         message: professionalMessage,
         timestamp: DateTime.now(),
