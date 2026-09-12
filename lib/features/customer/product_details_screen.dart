@@ -10,22 +10,38 @@ import '../../models/product_model.dart';
 import '../../models/review_model.dart';
 import '../../theme/app_colors.dart';
 
-class ProductDetailsScreen extends ConsumerWidget {
+class ProductDetailsScreen extends ConsumerStatefulWidget {
   final ProductModel product;
   const ProductDetailsScreen({super.key, required this.product});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<ProductDetailsScreen> createState() => _ProductDetailsScreenState();
+}
+
+class _ProductDetailsScreenState extends ConsumerState<ProductDetailsScreen> {
+  late String _selectedImageUrl;
+
+  @override
+  void initState() {
+    super.initState();
+    _selectedImageUrl = widget.product.imageUrl;
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final isLight = theme.brightness == Brightness.light;
     final wishlist = ref.watch(customerWishlistProvider).asData?.value ?? [];
-    final isWishlisted = wishlist.any((p) => p.id == product.id);
-    final reviewsAsync = ref.watch(productReviewsProvider(product.id));
+    final isWishlisted = wishlist.any((p) => p.id == widget.product.id);
+    final reviewsAsync = ref.watch(productReviewsProvider(widget.product.id));
 
-    // Watch real-time product data for live updates on ratings and order count
-    final liveProductAsync = ref.watch(productDetailProvider(product.id));
-    final liveProduct = liveProductAsync.asData?.value ?? product;
+    final liveProductAsync = ref.watch(productDetailProvider(widget.product.id));
+    final liveProduct = liveProductAsync.asData?.value ?? widget.product;
+
+    final List<String> allImages = liveProduct.imageUrls.isNotEmpty 
+        ? liveProduct.imageUrls 
+        : (liveProduct.imageUrl.isNotEmpty ? [liveProduct.imageUrl] : []);
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
@@ -34,7 +50,7 @@ class ProductDetailsScreen extends ConsumerWidget {
           CustomScrollView(
             physics: const BouncingScrollPhysics(),
             slivers: [
-              _buildModernAppBar(context, ref, isWishlisted),
+              _buildModernAppBar(context, ref, isWishlisted, allImages),
               SliverToBoxAdapter(
                 child: Padding(
                   padding: const EdgeInsets.fromLTRB(24, 32, 24, 150),
@@ -63,7 +79,59 @@ class ProductDetailsScreen extends ConsumerWidget {
                         style: TextStyle(fontSize: 16, color: colorScheme.onSurface.withValues(alpha: 0.5), fontWeight: FontWeight.w600),
                       ),
                       const SizedBox(height: 32),
-                      // تمرير المنتج بالكامل ليعرض السعر والعملة كما رفعها التاجر تماماً
+                      
+                      if (allImages.length > 1) ...[
+                        Text(
+                          'SELECT PHOTO VARIATION',
+                          style: TextStyle(
+                            color: colorScheme.primary.withOpacity(0.7),
+                            fontSize: 11,
+                            fontWeight: FontWeight.w900,
+                            letterSpacing: 1.5,
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        SizedBox(
+                          height: 75,
+                          child: ListView.builder(
+                            scrollDirection: Axis.horizontal,
+                            physics: const BouncingScrollPhysics(),
+                            itemCount: allImages.length,
+                            itemBuilder: (context, index) {
+                              final imgUrl = allImages[index];
+                              final isSelected = imgUrl == _selectedImageUrl;
+                              return GestureDetector(
+                                onTap: () {
+                                  setState(() {
+                                    _selectedImageUrl = imgUrl;
+                                  });
+                                },
+                                child: Container(
+                                  width: 75,
+                                  height: 75,
+                                  margin: const EdgeInsets.only(right: 12),
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(16),
+                                    border: Border.all(
+                                      color: isSelected ? colorScheme.primary : Colors.transparent,
+                                      width: 2.5,
+                                    ),
+                                    image: DecorationImage(
+                                      image: NetworkImage(imgUrl),
+                                      fit: BoxFit.cover,
+                                    ),
+                                    boxShadow: isSelected
+                                        ? [BoxShadow(color: colorScheme.primary.withOpacity(0.3), blurRadius: 8)]
+                                        : null,
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+                        const SizedBox(height: 32),
+                      ],
+
                       _PriceSection(product: liveProduct),
                       Padding(
                         padding: const EdgeInsets.symmetric(vertical: 32),
@@ -111,7 +179,7 @@ class ProductDetailsScreen extends ConsumerWidget {
             left: 0,
             right: 0,
             bottom: 0,
-            child: _buildFloatingAction(context, ref),
+            child: _buildFloatingAction(context, ref, liveProduct),
           ),
         ],
       ),
@@ -146,17 +214,21 @@ class ProductDetailsScreen extends ConsumerWidget {
   }
 
   void _shareProduct() {
-    final link = 'https://zenmartpro.app/product/${product.id}';
+    final link = 'https://zenmartpro.app/product/${widget.product.id}';
     Share.share(
-      'Check out this ${product.name} on ROOZ Store!\n\nBuy it here: $link',
+      'Check out this ${widget.product.name} on ROOZ Store!\n\nBuy it here: $link',
       subject: 'Great deal on ROOZ Store!',
     );
   }
 
-  Widget _buildModernAppBar(BuildContext context, WidgetRef ref, bool isWishlisted) {
+  Widget _buildModernAppBar(BuildContext context, WidgetRef ref, bool isWishlisted, List<String> allImages) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final isLight = theme.brightness == Brightness.light;
+
+    final displayImage = _selectedImageUrl.isNotEmpty 
+        ? _selectedImageUrl 
+        : (widget.product.imageUrl.isNotEmpty ? widget.product.imageUrl : '');
 
     return SliverAppBar(
       expandedHeight: 420,
@@ -186,7 +258,7 @@ class ProductDetailsScreen extends ConsumerWidget {
           onTap: () {
             final user = ref.read(userModelProvider).asData?.value;
             if (user != null) {
-              ref.read(customerServiceProvider).toggleWishlist(user.uid, product);
+              ref.read(customerServiceProvider).toggleWishlist(user.uid, widget.product);
             }
           }
         ),
@@ -194,11 +266,11 @@ class ProductDetailsScreen extends ConsumerWidget {
       ],
       flexibleSpace: FlexibleSpaceBar(
         background: Hero(
-          tag: 'product_${product.id}',
+          tag: 'product_${widget.product.id}',
           child: Container(
             color: isLight ? AppColors.lightSecondaryBackground : AppColors.secondaryBackground,
-            child: product.imageUrl.isNotEmpty 
-                ? Image.network(product.imageUrl, fit: BoxFit.contain)
+            child: displayImage.isNotEmpty 
+                ? Image.network(displayImage, fit: BoxFit.contain)
                 : Center(child: Icon(Icons.image, size: 80, color: colorScheme.onSurface.withValues(alpha: 0.05))),
           ),
         ),
@@ -206,7 +278,7 @@ class ProductDetailsScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildFloatingAction(BuildContext context, WidgetRef ref) {
+  Widget _buildFloatingAction(BuildContext context, WidgetRef ref, ProductModel liveProduct) {
     final theme = Theme.of(context);
     final isLight = theme.brightness == Brightness.light;
     final colorScheme = theme.colorScheme;
@@ -231,16 +303,21 @@ class ProductDetailsScreen extends ConsumerWidget {
             children: [
               _ActionSquareBtn(
                 icon: Icons.share_rounded, 
-                onTap: () {},
+                onTap: _shareProduct,
               ),
               const SizedBox(width: 16),
               Expanded(
                 child: ElevatedButton(
                   onPressed: () {
-                    ref.read(cartProvider.notifier).addItem(product);
+                    final productToOrder = liveProduct.copyWith(
+                      imageUrl: _selectedImageUrl,
+                      imageUrls: [_selectedImageUrl],
+                    );
+
+                    ref.read(cartProvider.notifier).addItem(productToOrder);
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
-                        content: Text('${product.name} added to bag'),
+                        content: Text('${liveProduct.name} added to bag'),
                         backgroundColor: colorScheme.primary,
                         behavior: SnackBarBehavior.floating,
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -373,7 +450,6 @@ class _PriceSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    // جلب العملة الديناميكية التي قام التاجر بتحديدها عند رفع المنتج، وإذا لم تتوفر يتم استخدام 'ج.س' كقيمة افتراضية
     final currencySymbol = product.currency.isNotEmpty ? product.currency : 'ج.س';
 
     return Row(
@@ -465,7 +541,7 @@ class _ActionSquareBtn extends StatelessWidget {
   const _ActionSquareBtn({required this.icon, required this.onTap});
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
+    let colorScheme = Theme.of(context).colorScheme; // fixed syntax
     final isLight = Theme.of(context).brightness == Brightness.light;
 
     return InkWell(
