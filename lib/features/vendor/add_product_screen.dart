@@ -36,7 +36,9 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
 
   bool _isLoading = false;
   bool _isAvailable = true;
-  File? _pickedImageFile; // لتخزين وعرض الصورة محلياً فوراً
+  
+  // قائمة الصور المحلية بدلاً من صورة واحدة مفردة
+  final List<File> _pickedImages = [];
 
   @override
   void dispose() {
@@ -50,22 +52,32 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
     super.dispose();
   }
 
-  Future<void> _pickImage() async {
+  // دالة لاختيار صور متعددة من المعرض
+  Future<void> _pickImages() async {
     final picker = ImagePicker();
-    final pickedImage = await picker.pickImage(source: ImageSource.gallery, imageQuality: 80);
+    final pickedFiles = await picker.pickMultiImage(imageQuality: 80);
     
-    if (pickedImage != null) {
+    if (pickedFiles.isNotEmpty) {
       setState(() {
-        _pickedImageFile = File(pickedImage.path);
+        for (var file in pickedFiles) {
+          _pickedImages.add(File(file.path));
+        }
       });
     }
   }
 
+  // دالة لحذف صورة معينة من القائمة المحلية
+  void _removeImage(int index) {
+    setState(() {
+      _pickedImages.removeAt(index);
+    });
+  }
+
   Future<void> _saveProduct() async {
-    if (!_formKey.currentState!.validate() || _pickedImageFile == null) {
+    if (!_formKey.currentState!.validate() || _pickedImages.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Please fill all fields and select an image'),
+          content: Text('Please fill all fields and select at least one image'),
           backgroundColor: AppColors.warning,
           behavior: SnackBarBehavior.floating,
         ),
@@ -79,14 +91,20 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
       final user = ref.read(userModelProvider).value;
       if (user == null || user.shopId == null) throw Exception('Session error. Please log in again.');
 
-      // رفع الصورة المحفوظة محلياً للحصول على رابط سحابي
-      final uploadedImageUrl = await ref.read(uploadServiceProvider).uploadFile(
-            file: _pickedImageFile!,
-            folder: 'products',
-          );
+      // رفع جميع الصور المحددة محلياً للحصول على روابط سحابية
+      List<String> uploadedImageUrls = [];
+      for (var imageFile in _pickedImages) {
+        final uploadedUrl = await ref.read(uploadServiceProvider).uploadFile(
+              file: imageFile,
+              folder: 'products',
+            );
+        if (uploadedUrl != null && uploadedUrl.isNotEmpty) {
+          uploadedImageUrls.add(uploadedUrl);
+        }
+      }
 
-      if (uploadedImageUrl == null || uploadedImageUrl.isEmpty) {
-        throw Exception('Failed to upload image. Please try again.');
+      if (uploadedImageUrls.isEmpty) {
+        throw Exception('Failed to upload images. Please try again.');
       }
 
       final product = ProductModel(
@@ -96,11 +114,12 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
         name: _nameController.text.trim(),
         description: _descriptionController.text.trim(),
         price: double.parse(_priceController.text.trim()),
-        currency: _selectedCurrency, // إرسال العملة المختارة للنموذج
+        currency: _selectedCurrency,
         discount: double.parse(_discountController.text.trim()),
         stock: int.parse(_stockController.text.trim()),
         unit: _unitController.text.trim(),
-        imageUrl: uploadedImageUrl,
+        imageUrls: uploadedImageUrls, // إرسال قائمة روابط الصور السحابية
+        imageUrl: uploadedImageUrls.first, // الصورة الرئيسية الأولى للتوافق العكسي
         category: _categoryController.text.trim().isEmpty ? 'General' : _categoryController.text.trim(),
         isAvailable: _isAvailable,
         createdAt: DateTime.now(),
@@ -157,50 +176,132 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _buildSectionHeader('PRODUCT VISUALS', colorScheme),
+              _buildSectionHeader('PRODUCT VISUALS (MULTIPLE)', colorScheme),
               const SizedBox(height: 16),
-              GestureDetector(
-                onTap: _pickImage,
-                child: Container(
-                  height: 220,
-                  width: double.infinity,
-                  decoration: BoxDecoration(
-                    color: colorScheme.surface,
-                    borderRadius: BorderRadius.circular(32),
-                    border: Border.all(color: colorScheme.outline.withOpacity(isLight ? 0.5 : 0.1)),
-                    image: _pickedImageFile != null 
-                        ? DecorationImage(
-                            image: FileImage(_pickedImageFile!),
-                            fit: BoxFit.cover,
-                          ) 
-                        : null,
-                    boxShadow: isLight ? [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 20)] : null,
-                  ),
-                  child: _pickedImageFile == null
-                      ? Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.all(16),
-                              decoration: BoxDecoration(color: colorScheme.primary.withOpacity(0.1), shape: BoxShape.circle),
-                              child: Icon(Icons.add_a_photo_rounded, size: 32, color: colorScheme.primary),
+              
+              // القائمة الأفقية المتجاورة الاحترافية للصور
+              SizedBox(
+                height: 140,
+                child: ListView.builder(
+                  scrollDirection: Axis.horizontal,
+                  physics: const BouncingScrollPhysics(),
+                  itemCount: _pickedImages.length + 1, // الزر الإضافي لإضافة صورة جديدة
+                  itemBuilder: (context, index) {
+                    // زر إضافة صورة جديدة في أول أو آخر القائمة
+                    if (index == 0) {
+                      return Padding(
+                        padding: const EdgeInsets.only(right: 12),
+                        child: GestureDetector(
+                          onTap: _pickImages,
+                          child: Container(
+                            width: 120,
+                            height: 140,
+                            decoration: BoxDecoration(
+                              color: colorScheme.surface,
+                              borderRadius: BorderRadius.circular(24),
+                              border: Border.all(
+                                color: colorScheme.primary.withOpacity(0.4),
+                                width: 1.5,
+                              ),
+                              boxShadow: isLight ? [BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 10)] : null,
                             ),
-                            const SizedBox(height: 16),
-                            Text('Upload product photo', style: TextStyle(color: colorScheme.onSurface.withOpacity(0.5), fontSize: 13, fontWeight: FontWeight.w600)),
-                          ],
-                        ) 
-                      : Align(
-                          alignment: Alignment.bottomRight,
-                          child: Padding(
-                            padding: const EdgeInsets.all(12),
-                            child: CircleAvatar(
-                              backgroundColor: Colors.black.withOpacity(0.45),
-                              child: const Icon(Icons.edit_rounded, color: Colors.white, size: 18),
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.all(12),
+                                  decoration: BoxDecoration(
+                                    color: colorScheme.primary.withOpacity(0.1),
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: Icon(Icons.add_photo_alternate_rounded, size: 28, color: colorScheme.primary),
+                                ),
+                                const SizedBox(height: 8),
+                                Text(
+                                  'Add Photos',
+                                  style: TextStyle(
+                                    color: colorScheme.primary,
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
                         ),
+                      );
+                    }
+
+                    // عرض الصور المختارة محلياً مع زر الحذف
+                    final imageIndex = index - 1;
+                    final file = _pickedImages[imageIndex];
+
+                    return Padding(
+                      padding: const EdgeInsets.only(right: 12),
+                      child: Stack(
+                        children: [
+                          Container(
+                            width: 120,
+                            height: 140,
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(24),
+                              image: DecorationImage(
+                                image: FileImage(file),
+                                fit: BoxFit.cover,
+                              ),
+                              boxShadow: isLight ? [BoxShadow(color: Colors.black.withOpacity(0.06), blurRadius: 10)] : null,
+                            ),
+                          ),
+                          // زر الحذف (أيقونة X في الزاوية)
+                          Positioned(
+                            top: 8,
+                            right: 8,
+                            child: GestureDetector(
+                              onTap: () => _removeImage(imageIndex),
+                              child: Container(
+                                padding: const EdgeInsets.all(6),
+                                decoration: const BoxDecoration(
+                                  color: Colors.black54,
+                                  shape: BoxShape.circle,
+                                ),
+                                child: const Icon(
+                                  Icons.close_rounded,
+                                  size: 14,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ),
+                          ),
+                          // شارة تدل على الصورة الرئيسية الأولى
+                          if (imageIndex == 0)
+                            Positioned(
+                              bottom: 8,
+                              left: 8,
+                              right: 8,
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(vertical: 3),
+                                decoration: BoxDecoration(
+                                  color: Colors.black.withOpacity(0.6),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: const Text(
+                                  'Cover',
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                            ),
+                        ],
+                      ),
+                    );
+                  },
                 ),
               ),
+
               const SizedBox(height: 32),
 
               _buildSectionHeader('PRODUCT DETAILS', colorScheme),
