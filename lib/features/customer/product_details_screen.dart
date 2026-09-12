@@ -309,22 +309,10 @@ class _ProductDetailsScreenState extends ConsumerState<ProductDetailsScreen> {
               Expanded(
                 child: ElevatedButton(
                   onPressed: () {
-                    // إنشاء نسخة جديدة مع الصورة المختارة دون الحاجة لدالة copyWith
-                    final productToOrder = ProductModel(
-                      id: liveProduct.id,
-                      name: liveProduct.name,
-                      description: liveProduct.description,
-                      price: liveProduct.price,
-                      discount: liveProduct.discount,
+                    // استخدام copyWith لتحديث الصورة المختارة بأمان وبدون فقدان أي بيانات أخرى
+                    final productToOrder = liveProduct.copyWith(
                       imageUrl: _selectedImageUrl,
                       imageUrls: [_selectedImageUrl],
-                      category: liveProduct.category,
-                      brand: liveProduct.brand,
-                      stock: liveProduct.stock,
-                      rating: liveProduct.rating,
-                      reviewCount: liveProduct.reviewCount,
-                      orderCount: liveProduct.orderCount,
-                      currency: liveProduct.currency,
                     );
 
                     ref.read(cartProvider.notifier).addItem(productToOrder);
