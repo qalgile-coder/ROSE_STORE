@@ -31,11 +31,15 @@ jobs:
       - name: Generate Launcher Icons
         run: dart run flutter_launcher_icons
 
-      - name: Build APK
-        run: flutter build apk --release
+      - name: Build Signed APK
+        run: |
+          flutter build apk --release \
+            --dart-define=KEY_ALIAS="${{ secrets.ANDROID_KEY_ALIAS }}" \
+            --dart-define=KEY_PASSWORD="${{ secrets.ANDROID_KEY_PASSWORD }}" \
+            --dart-define=STORE_PASSWORD="${{ secrets.ANDROID_STORE_PASSWORD }}"
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
-          name: release-apk
+          name: release-signed-apk
           path: build/app/outputs/flutter-apk/app-release.apk
