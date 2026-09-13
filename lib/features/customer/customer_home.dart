@@ -94,12 +94,12 @@ class CustomerHome extends ConsumerWidget {
                       const SizedBox(height: 10),
                       const _PromoBanner(),
                       const SizedBox(height: 32),
-                      _SectionHeader(title: 'Quick Categories', showSeeAll: false, textColor: textColor, primaryColor: primaryColor),
+                      _SectionHeader(title: 'الأقسام الرئيسية', showSeeAll: false, textColor: textColor, primaryColor: primaryColor),
                       const SizedBox(height: 16),
                       const _CategoryGrid(),
                       const SizedBox(height: 32),
                       _SectionHeader(
-                        title: 'All Products', 
+                        title: 'جميع المنتجات', 
                         showSeeAll: true, 
                         onSeeAll: '/customer/all-products',
                         textColor: textColor, 
@@ -110,7 +110,6 @@ class CustomerHome extends ConsumerWidget {
                   ),
                 ),
               ),
-              // شبكة عرض المنتجات العامة (عمودين بتصميم احترافي متناسق)
               const _AllMerchantProductsGridList(),
               SliverToBoxAdapter(
                 child: Padding(
@@ -120,7 +119,7 @@ class CustomerHome extends ConsumerWidget {
                     children: [
                       const SizedBox(height: 32),
                       _SectionHeader(
-                        title: 'featured_stores'.tr(ref), 
+                        title: 'المتاجر المميزة', 
                         showSeeAll: true,
                         onSeeAll: '/customer/featured-shops',
                         textColor: textColor,
@@ -130,7 +129,7 @@ class CustomerHome extends ConsumerWidget {
                       const _FeaturedShops(),
                       const SizedBox(height: 32),
                       _SectionHeader(
-                        title: 'Trending Now', 
+                        title: 'المنتجات الرائجة', 
                         showSeeAll: true, 
                         onSeeAll: '/customer/trending-products',
                         textColor: textColor, 
@@ -146,7 +145,6 @@ class CustomerHome extends ConsumerWidget {
             ],
           ),
           
-          // Floating Bottom Nav
           Positioned(
             left: 0,
             right: 0,
@@ -196,7 +194,7 @@ class _LocationHeader extends StatelessWidget {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Text(
-                        'deliver_to'.tr(ref).toUpperCase(),
+                        'التوصيل إلى',
                         style: TextStyle(
                           color: primaryColor.withOpacity(0.8),
                           fontSize: 9,
@@ -209,7 +207,7 @@ class _LocationHeader extends StatelessWidget {
                         children: [
                           Flexible(
                             child: Text(
-                              defaultAddress?.fullAddress ?? 'Select Location',
+                              defaultAddress?.fullAddress ?? 'اختر موقع التوصيل',
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: textColor),
@@ -331,7 +329,7 @@ class _SearchBar extends ConsumerWidget {
             Icon(Icons.search_rounded, color: primaryColor, size: 22),
             const SizedBox(width: 14),
             Text(
-              'search_hint'.tr(ref),
+              'ابحث عن ما تحتاج إليه...',
               style: TextStyle(color: secondaryTextColor.withOpacity(0.6), fontSize: 14, fontWeight: FontWeight.w500),
             ),
             const Spacer(),
@@ -405,7 +403,7 @@ class _PromoBanner extends ConsumerWidget {
                         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                         decoration: BoxDecoration(color: primaryColor, borderRadius: BorderRadius.circular(8)),
                         child: Text(
-                          offer.offerType == 'percentage' ? '${offer.value.round()}% OFF' : 'VIP DEAL',
+                          offer.offerType == 'percentage' ? '${offer.value.round()}% خصم' : 'عرض مميز',
                           style: TextStyle(color: isLight ? Colors.white : AppColors.premiumDarkBackground, fontSize: 10, fontWeight: FontWeight.w900, letterSpacing: 1),
                         ),
                       ),
@@ -423,7 +421,7 @@ class _PromoBanner extends ConsumerWidget {
                           minimumSize: const Size(100, 40),
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                         ),
-                        child: const Text('SHOP NOW', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 12)),
+                        child: const Text('تسوق الآن', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 12)),
                       ),
                     ],
                   ),
@@ -466,25 +464,23 @@ class _SectionHeader extends StatelessWidget {
           ),
         ),
         if (showSeeAll)
-          Consumer(
-            builder: (context, ref, child) => TextButton(
-              onPressed: () {
-                if (onSeeAll != null) {
-                  context.push(onSeeAll!);
-                }
-              },
-              style: TextButton.styleFrom(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text('view_all'.tr(ref), style: TextStyle(color: primaryColor, fontWeight: FontWeight.w900, fontSize: 12, letterSpacing: 0.5)),
-                  const SizedBox(width: 4),
-                  Icon(Icons.arrow_forward_ios_rounded, size: 10, color: primaryColor),
-                ],
-              ),
+          TextButton(
+            onPressed: () {
+              if (onSeeAll != null) {
+                context.push(onSeeAll!);
+              }
+            },
+            style: TextButton.styleFrom(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text('عرض الكل', style: TextStyle(color: primaryColor, fontWeight: FontWeight.w900, fontSize: 12, letterSpacing: 0.5)),
+                const SizedBox(width: 4),
+                Icon(Icons.arrow_forward_ios_rounded, size: 10, color: primaryColor),
+              ],
             ),
           ),
       ],
@@ -501,60 +497,60 @@ class _CategoryGrid extends StatelessWidget {
     final cardColor = isLight ? AppColors.lightSurface : AppColors.premiumDarkSurface;
     final secondaryTextColor = isLight ? AppColors.lightTextSecondary : AppColors.premiumDarkTextSecondary;
 
-    return Consumer(
-      builder: (context, ref, child) {
-        final categories = [
-          {'name': 'grocery'.tr(ref), 'key': 'Grocery', 'icon': Icons.local_grocery_store_rounded, 'color': const Color(0xFF6366F1)},
-          {'name': 'food'.tr(ref), 'key': 'Food', 'icon': Icons.restaurant_rounded, 'color': const Color(0xFFF59E0B)},
-          {'name': 'pharmacy'.tr(ref), 'key': 'Pharmacy', 'icon': Icons.medical_services_rounded, 'color': const Color(0xFF10B981)},
-          {'name': 'fashion'.tr(ref), 'key': 'Fashion', 'icon': Icons.checkroom_rounded, 'color': const Color(0xFFEC4899)},
-        ];
+    // الأقسام الـ 9 المحددة حصرياً بالأسماء العربية والـ Keys المطلوبة بدقة عالية
+    final categories = [
+      {'name': 'ملابس رجالية', 'key': 'mens_clothing', 'icon': Icons.man_rounded, 'color': const Color(0xFF3B82F6)},
+      {'name': 'ملابس نسائية', 'key': 'womens_clothing', 'icon': Icons.woman_rounded, 'color': const Color(0xFFEC4899)},
+      {'name': 'إكسسوارات', 'key': 'accessories', 'icon': Icons.watch_rounded, 'color': const Color(0xFF8B5CF6)},
+      {'name': 'مستحضرات تجميل', 'key': 'cosmetics', 'icon': Icons.face_retouching_natural_rounded, 'color': const Color(0xFFF43F5E)},
+      {'name': 'أحذية رجالية', 'key': 'mens_shoes', 'icon': Icons.roller_skating_rounded, 'color': const Color(0xFF6366F1)},
+      {'name': 'أحذية نسائية', 'key': 'womens_shoes', 'icon': Icons.set_meal_rounded, 'color': const Color(0xFF14B8A6)},
+      {'name': 'ملابس أطفال', 'key': 'kids_clothing', 'icon': Icons.child_care_rounded, 'color': const Color(0xFFEF4444)},
+      {'name': 'حقائب ومحافظ', 'key': 'bags_wallets', 'icon': Icons.shopping_bag_rounded, 'color': const Color(0xFFF59E0B)},
+      {'name': 'عطور', 'key': 'perfumes', 'icon': Icons.propane_tank_rounded, 'color': const Color(0xFF10B981)},
+    ];
 
-        return SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          physics: const BouncingScrollPhysics(),
-          child: Row(
-            children: categories.map((cat) {
-              final color = cat['color'] as Color;
-              return Padding(
-                padding: const EdgeInsets.only(right: 14),
-                child: InkWell(
-                  onTap: () => context.push('/customer/category/${cat['key']}'),
-                  borderRadius: BorderRadius.circular(22),
-                  child: Column(
-                    children: [
-                      Container(
-                        width: 72,
-                        height: 72,
-                        decoration: BoxDecoration(
-                          color: cardColor,
-                          borderRadius: BorderRadius.circular(22),
-                          border: Border.all(color: isLight ? color.withOpacity(0.15) : AppColors.premiumDarkDivider.withOpacity(0.5), width: 1),
-                          boxShadow: isLight ? [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10)] : null,
-                        ),
-                        child: Center(child: Icon(cat['icon'] as IconData, color: color, size: 28)),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(cat['name'] as String, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: secondaryTextColor)),
-                    ],
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      physics: const BouncingScrollPhysics(),
+      child: Row(
+        children: categories.map((cat) {
+          final color = cat['color'] as Color;
+          return Padding(
+            padding: const EdgeInsets.only(right: 14),
+            child: InkWell(
+              onTap: () => context.push('/customer/category/${cat['key']}'),
+              borderRadius: BorderRadius.circular(22),
+              child: Column(
+                children: [
+                  Container(
+                    width: 72,
+                    height: 72,
+                    decoration: BoxDecoration(
+                      color: cardColor,
+                      borderRadius: BorderRadius.circular(22),
+                      border: Border.all(color: isLight ? color.withOpacity(0.15) : AppColors.premiumDarkDivider.withOpacity(0.5), width: 1),
+                      boxShadow: isLight ? [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10)] : null,
+                    ),
+                    child: Center(child: Icon(cat['icon'] as IconData, color: color, size: 28)),
                   ),
-                ),
-              );
-            }).toList(),
-          ),
-        );
-      },
+                  const SizedBox(height: 8),
+                  Text(cat['name'] as String, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: secondaryTextColor)),
+                ],
+              ),
+            ),
+          );
+        }).toList(),
+      ),
     );
   }
 }
 
-// شبكة المنتجات العامة (تستخدم مزود مستقل ومنظم)
 class _AllMerchantProductsGridList extends ConsumerWidget {
   const _AllMerchantProductsGridList();
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // تم استخدام trendingProductsProvider هنا كمثال، ويمكن استبداله بمزود عام للمنتجات إن وجد
     final allProductsAsync = ref.watch(trendingProductsProvider); 
     final isLight = Theme.of(context).brightness == Brightness.light;
     final primaryColor = isLight ? AppColors.lightPrimary : AppColors.premiumDarkPrimary;
@@ -644,7 +640,7 @@ class _GridProductCard extends ConsumerWidget {
             ),
             const SizedBox(height: 2),
             Text(
-              product.description.isNotEmpty ? product.description : 'Merchant Product', 
+              product.description.isNotEmpty ? product.description : 'منتج مميز', 
               style: TextStyle(
                 color: secondaryTextColor.withOpacity(0.7), 
                 fontSize: 11, 
@@ -657,7 +653,6 @@ class _GridProductCard extends ConsumerWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                // تم التعديل هنا لقراءة العملة مباشرة من نموذج المنتج product.currency
                 Text(
                   '${product.price.round()} ${product.currency}', 
                   style: TextStyle(
@@ -721,7 +716,6 @@ class _FeaturedShopCard extends StatelessWidget {
     final isLight = theme.brightness == Brightness.light;
     final cardColor = isLight ? AppColors.lightSurface : AppColors.premiumDarkSurface;
     final textColor = isLight ? AppColors.lightTextPrimary : AppColors.premiumDarkTextPrimary;
-    final secondaryTextColor = isLight ? AppColors.lightTextSecondary : AppColors.premiumDarkTextSecondary;
 
     return InkWell(
       onTap: () => context.push('/customer/shop/${shop.id}'),
@@ -763,7 +757,7 @@ class _FeaturedShopCard extends StatelessWidget {
                   Positioned(
                     top: 12,
                     right: 12,
-                    child: _GlassBadge(label: 'FREE', icon: Icons.bolt_rounded, color: AppColors.success),
+                    child: _GlassBadge(label: 'توصيل مجاني', icon: Icons.bolt_rounded, color: AppColors.success),
                   ),
               ],
             ),

@@ -22,7 +22,22 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
   final _discountController = TextEditingController(text: '0');
   final _stockController = TextEditingController();
   final _unitController = TextEditingController(text: 'pcs');
-  final _categoryController = TextEditingController();
+  
+  // متغير القسم المحدد (يحفظ الـ key الخاص بالقسم)
+  String? _selectedCategoryKey;
+
+  // قائمة الأقسام الـ 9 المعتمدة بالعربية مع المفاتيح البرمجية المرتبطة
+  final List<Map<String, String>> _categories = [
+    {'name': 'ملابس رجالية', 'key': 'mens_clothing'},
+    {'name': 'ملابس نسائية', 'key': 'womens_clothing'},
+    {'name': 'إكسسوارات', 'key': 'accessories'},
+    {'name': 'مستحضرات تجميل', 'key': 'cosmetics'},
+    {'name': 'أحذية رجالية', 'key': 'mens_shoes'},
+    {'name': 'أحذية نسائية', 'key': 'womens_shoes'},
+    {'name': 'ملابس أطفال', 'key': 'kids_clothing'},
+    {'name': 'حقائب ومحافظ', 'key': 'bags_wallets'},
+    {'name': 'عطور', 'key': 'perfumes'},
+  ];
   
   // متغير العملة المختارة الافتراضي (السودان)
   String _selectedCurrency = 'ج.س';
@@ -48,7 +63,6 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
     _discountController.dispose();
     _stockController.dispose();
     _unitController.dispose();
-    _categoryController.dispose();
     super.dispose();
   }
 
@@ -120,7 +134,7 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
         unit: _unitController.text.trim(),
         imageUrls: uploadedImageUrls, // إرسال قائمة روابط الصور السحابية
         imageUrl: uploadedImageUrls.first, // الصورة الرئيسية الأولى للتوافق العكسي
-        category: _categoryController.text.trim().isEmpty ? 'General' : _categoryController.text.trim(),
+        category: _selectedCategoryKey ?? 'General', // إرسال المفتاح البرمجي المختار للقسم
         isAvailable: _isAvailable,
         createdAt: DateTime.now(),
       );
@@ -187,7 +201,7 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
                   physics: const BouncingScrollPhysics(),
                   itemCount: _pickedImages.length + 1, // الزر الإضافي لإضافة صورة جديدة
                   itemBuilder: (context, index) {
-                    // زر إضافة صورة جديدة في أول أو آخر القائمة
+                    // زر إضافة صورة جديدة في أول القائمة
                     if (index == 0) {
                       return Padding(
                         padding: const EdgeInsets.only(right: 12),
@@ -310,7 +324,9 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
               const SizedBox(height: 16),
               _buildModernField(_descriptionController, 'Description', Icons.description_rounded, colorScheme, isLight, maxLines: 4),
               const SizedBox(height: 16),
-              _buildModernField(_categoryController, 'Category (e.g. Dairy, Fruits)', Icons.category_rounded, colorScheme, isLight, isRequired: false),
+              
+              // خانة اختيار الأقسام الـ 9 باللغة العربية
+              _buildCategoryDropdown(colorScheme, isLight),
               
               const SizedBox(height: 32),
               _buildSectionHeader('PRICING & STOCK', colorScheme),
@@ -386,6 +402,57 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  // ويدجت قائمة اختيار القسم الـ 9 بتصميم متناسق مع الحقول
+  Widget _buildCategoryDropdown(ColorScheme colorScheme, bool isLight) {
+    return Container(
+      decoration: BoxDecoration(
+        color: colorScheme.surface,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: isLight ? [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10)] : null,
+      ),
+      child: DropdownButtonFormField<String>(
+        value: _selectedCategoryKey,
+        dropdownColor: colorScheme.surface,
+        icon: Icon(Icons.keyboard_arrow_down_rounded, color: colorScheme.primary, size: 20),
+        decoration: InputDecoration(
+          labelText: 'اختر قسم المنتج',
+          labelStyle: TextStyle(color: colorScheme.onSurface.withOpacity(0.4), fontSize: 13, fontWeight: FontWeight.w500),
+          prefixIcon: Icon(Icons.category_rounded, color: colorScheme.primary, size: 20),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(20), 
+            borderSide: BorderSide(color: colorScheme.outline.withOpacity(isLight ? 0.5 : 0.05))
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(20), 
+            borderSide: BorderSide(color: colorScheme.outline.withOpacity(isLight ? 0.5 : 0.05))
+          ),
+          filled: true,
+          fillColor: Colors.transparent,
+          contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+        ),
+        items: _categories.map((cat) {
+          return DropdownMenuItem<String>(
+            value: cat['key'], // يحفظ المفتاح البرمجي بدقة للربط
+            child: Text(
+              cat['name']!, // يعرض الاسم بالعربي للتاجر
+              style: TextStyle(
+                color: colorScheme.onSurface,
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          );
+        }).toList(),
+        onChanged: (val) {
+          setState(() {
+            _selectedCategoryKey = val;
+          });
+        },
+        validator: (v) => v == null ? 'الرجاء اختيار القسم' : null,
       ),
     );
   }
