@@ -406,7 +406,7 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
     );
   }
 
-  // ويدجت قائمة اختيار القسم الـ 9 بتصميم متناسق مع الحقول
+  // ويدجت قائمة اختيار القسم الـ 9 بتصميم متناسق مع الحقول وبدون أخطاء مطابقة القيم
   Widget _buildCategoryDropdown(ColorScheme colorScheme, bool isLight) {
     return Container(
       decoration: BoxDecoration(
@@ -415,7 +415,8 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
         boxShadow: isLight ? [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10)] : null,
       ),
       child: DropdownButtonFormField<String>(
-        value: _selectedCategoryKey,
+        // التأكد من أن القيمة المحددة موجودة فعلياً ضمن مفاتيح القائمة لمنع حدوث خطأ مطابقة DropdownButton
+        value: _categories.any((cat) => cat['key'] == _selectedCategoryKey) ? _selectedCategoryKey : null,
         dropdownColor: colorScheme.surface,
         icon: Icon(Icons.keyboard_arrow_down_rounded, color: colorScheme.primary, size: 20),
         decoration: InputDecoration(
@@ -470,7 +471,7 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
       ),
       child: DropdownButtonHideUnderline(
         child: DropdownButton<String>(
-          value: _selectedCurrency,
+          value: _currencies.any((curr) => curr['symbol'] == _selectedCurrency) ? _selectedCurrency : null,
           dropdownColor: colorScheme.surface,
           icon: Icon(Icons.keyboard_arrow_down_rounded, color: colorScheme.primary, size: 20),
           items: _currencies.map((curr) {
