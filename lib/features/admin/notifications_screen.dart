@@ -1,16 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import '../../core/providers.dart';
 import '../../models/notification_model.dart';
-import '../../theme/app_colors.dart';
 
 class NotificationsScreen extends ConsumerWidget {
   const NotificationsScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    // ملاحظة: إذا كانت الشاشة للتاجر/المستخدم، استبدل البروفايدر بما يناسب جلب إشعارات المستخدم الحالي
     final notificationsAsync = ref.watch(adminNotificationsProvider);
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
@@ -18,7 +17,7 @@ class NotificationsScreen extends ConsumerWidget {
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        title: const Text('Notifications', style: TextStyle(fontWeight: FontWeight.w900)),
+        title: const Text('الإشعارات', style: TextStyle(fontWeight: FontWeight.w900)),
         backgroundColor: theme.scaffoldBackgroundColor,
         elevation: 0,
         centerTitle: true,
@@ -29,10 +28,23 @@ class NotificationsScreen extends ConsumerWidget {
         actions: [
           IconButton(
             icon: Icon(Icons.done_all_rounded, color: colorScheme.primary),
-            onPressed: () {
-              // TODO: Mark all as read
+            onPressed: () async {
+              // تفعيل زر تعليم الكل كمقروء
+              try {
+                final notifications = notificationsAsync.valueOrNull ?? [];
+                for (var notif in notifications) {
+                  if (!notif.isRead) {
+                    await ref.read(adminServiceProvider).markAsRead(notif.id);
+                  }
+                }
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('تم تعليم كافة الإشعارات كمقروءة')),
+                );
+              } catch (e) {
+                debugPrint('Error marking all as read: $e');
+              }
             },
-            tooltip: 'Mark all as read',
+            tooltip: 'تعليم الكل كمقروء',
           ),
         ],
       ),
@@ -43,9 +55,9 @@ class NotificationsScreen extends ConsumerWidget {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.notifications_none_rounded, size: 64, color: colorScheme.onSurface.withValues(alpha: 0.1)),
+                  Icon(Icons.notifications_none_rounded, size: 64, color: colorScheme.onSurface.withOpacity(0.1)),
                   const SizedBox(height: 16),
-                  Text('No notifications yet', style: TextStyle(color: colorScheme.onSurface.withValues(alpha: 0.4), fontWeight: FontWeight.bold)),
+                  Text('لا توجد إشعارات حتى الآن', style: TextStyle(color: colorScheme.onSurface.withOpacity(0.4), fontWeight: FontWeight.bold)),
                 ],
               ),
             );
@@ -59,7 +71,7 @@ class NotificationsScreen extends ConsumerWidget {
           );
         },
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, s) => Center(child: Text('Error: $e')),
+        error: (e, s) => Center(child: Text('خطأ في التحميل: $e')),
       ),
     );
   }
@@ -125,12 +137,13 @@ class _NotificationTile extends ConsumerWidget {
             ref.read(adminServiceProvider).markAsRead(notification.id);
           }
         },
+        borderRadius: BorderRadius.circular(20),
         child: Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: notification.isRead ? colorScheme.surface : colorScheme.primary.withValues(alpha: 0.05),
+            color: notification.isRead ? colorScheme.surface : colorScheme.primary.withOpacity(0.05),
             borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: notification.isRead ? colorScheme.outline.withValues(alpha: 0.1) : colorScheme.primary.withValues(alpha: 0.2)),
+            border: Border.all(color: notification.isRead ? colorScheme.outline.withOpacity(0.1) : colorScheme.primary.withOpacity(0.2)),
           ),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -138,7 +151,7 @@ class _NotificationTile extends ConsumerWidget {
               Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: _getColor().withValues(alpha: 0.1),
+                  color: _getColor().withOpacity(0.1),
                   shape: BoxShape.circle,
                 ),
                 child: Icon(_getIcon(), color: _getColor(), size: 20),
@@ -166,7 +179,7 @@ class _NotificationTile extends ConsumerWidget {
                         const SizedBox(width: 8),
                         Text(
                           DateFormat('h:mm a').format(notification.timestamp),
-                          style: TextStyle(color: colorScheme.onSurface.withValues(alpha: 0.3), fontSize: 11, fontWeight: FontWeight.bold),
+                          style: TextStyle(color: colorScheme.onSurface.withOpacity(0.3), fontSize: 11, fontWeight: FontWeight.bold),
                         ),
                       ],
                     ),
@@ -174,7 +187,7 @@ class _NotificationTile extends ConsumerWidget {
                     Text(
                       notification.message,
                       style: TextStyle(
-                        color: colorScheme.onSurface.withValues(alpha: 0.6),
+                        color: colorScheme.onSurface.withOpacity(0.6),
                         fontSize: 13,
                         height: 1.4,
                         fontWeight: FontWeight.w500,
@@ -188,7 +201,7 @@ class _NotificationTile extends ConsumerWidget {
                           color: colorScheme.primary,
                           borderRadius: BorderRadius.circular(6),
                         ),
-                        child: const Text('NEW', style: TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.w900, letterSpacing: 0.5)),
+                        child: const Text('جديد', style: TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.w900, letterSpacing: 0.5)),
                       ),
                   ],
                 ),

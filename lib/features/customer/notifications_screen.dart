@@ -16,24 +16,29 @@ class CustomerNotificationsScreen extends ConsumerWidget {
     final colorScheme = theme.colorScheme;
     final isLight = theme.brightness == Brightness.light;
 
-    if (user == null) return Scaffold(backgroundColor: theme.scaffoldBackgroundColor, body: Center(child: CircularProgressIndicator(color: colorScheme.primary)));
+    if (user == null) {
+      return Scaffold(
+        backgroundColor: theme.scaffoldBackgroundColor,
+        body: Center(child: CircularProgressIndicator(color: colorScheme.primary)),
+      );
+    }
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        title: Text('Notifications', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 20, color: colorScheme.onBackground)),
+        title: Text('الإشعارات', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 20, color: colorScheme.onSurface)),
         backgroundColor: theme.scaffoldBackgroundColor,
         elevation: 0,
         centerTitle: true,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back_ios_new_rounded, size: 20, color: colorScheme.onBackground),
+          icon: Icon(Icons.arrow_back_ios_new_rounded, size: 20, color: colorScheme.onSurface),
           onPressed: () => Navigator.pop(context),
         ),
         actions: [
           IconButton(
             onPressed: () => ref.read(customerServiceProvider).markAllNotificationsAsRead(user.uid),
             icon: Icon(Icons.done_all_rounded, color: colorScheme.primary, size: 22),
-            tooltip: 'Mark all as read',
+            tooltip: 'تحديد الكل كمقروء',
           ),
           const SizedBox(width: 8),
         ],
@@ -44,7 +49,9 @@ class CustomerNotificationsScreen extends ConsumerWidget {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return Center(child: CircularProgressIndicator(color: colorScheme.primary));
           }
-          if (snapshot.hasError) return Center(child: Text('Error: ${snapshot.error}', style: TextStyle(color: colorScheme.error)));
+          if (snapshot.hasError) {
+            return Center(child: Text('خطأ: ${snapshot.error}', style: TextStyle(color: colorScheme.error)));
+          }
           
           final notifications = snapshot.data ?? [];
 
@@ -75,18 +82,10 @@ class CustomerNotificationsScreen extends ConsumerWidget {
                   ref.read(customerServiceProvider).deleteNotification(user.uid, notif.id);
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
-                      content: const Text('Notification removed'),
+                      content: const Text('تمت إزالة الإشعار'),
                       behavior: SnackBarBehavior.floating,
                       backgroundColor: colorScheme.surface,
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                      action: SnackBarAction(
-                        label: 'UNDO',
-                        textColor: colorScheme.primary,
-                        onPressed: () {
-                          // In a real app, you might want to re-insert it, 
-                          // but for simplicity we'll just show the message.
-                        },
-                      ),
                     ),
                   );
                 },
@@ -140,64 +139,64 @@ class _NotificationTile extends StatelessWidget {
           border: isRead ? null : Border.all(color: colorScheme.primary.withOpacity(0.2), width: 1),
           boxShadow: isLight && !isRead ? [BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 15)] : null,
         ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: isRead ? (isLight ? AppColors.lightSecondaryBackground : AppColors.premiumDarkSecondaryBackground) : colorScheme.primary.withOpacity(0.1),
-              shape: BoxShape.circle,
-            ),
-            child: Icon(
-              _getIcon(notif.type), 
-              color: isRead ? colorScheme.onSurface.withOpacity(0.3) : colorScheme.primary, 
-              size: 20
-            ),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  notif.title, 
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    fontWeight: FontWeight.w900, 
-                    fontSize: 15, 
-                    color: isRead ? colorScheme.onSurface.withOpacity(0.6) : colorScheme.onSurface
-                  )
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  notif.message, 
-                  style: TextStyle(
-                    color: colorScheme.onSurface.withOpacity(0.5), 
-                    fontSize: 13, 
-                    height: 1.5,
-                    fontWeight: FontWeight.w500,
-                  )
-                ),
-                const SizedBox(height: 10),
-                Text(
-                  DateFormat('MMM dd • h:mm a').format(notif.timestamp),
-                  style: TextStyle(color: colorScheme.onSurface.withOpacity(0.3), fontSize: 11, fontWeight: FontWeight.w800),
-                ),
-              ],
-            ),
-          ),
-          if (!isRead)
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
             Container(
-              margin: const EdgeInsets.only(top: 4),
-              width: 8, 
-              height: 8, 
-              decoration: BoxDecoration(color: colorScheme.primary, shape: BoxShape.circle)
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: isRead ? (isLight ? AppColors.lightSecondaryBackground : AppColors.premiumDarkSecondaryBackground) : colorScheme.primary.withOpacity(0.1),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                _getIcon(notif.type), 
+                color: isRead ? colorScheme.onSurface.withOpacity(0.3) : colorScheme.primary, 
+                size: 20
+              ),
             ),
-        ],
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    notif.title, 
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontWeight: FontWeight.w900, 
+                      fontSize: 15, 
+                      color: isRead ? colorScheme.onSurface.withOpacity(0.6) : colorScheme.onSurface
+                    )
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    notif.message, 
+                    style: TextStyle(
+                      color: colorScheme.onSurface.withOpacity(0.5), 
+                      fontSize: 13, 
+                      height: 1.5,
+                      fontWeight: FontWeight.w500,
+                    )
+                  ),
+                  const SizedBox(height: 10),
+                  Text(
+                    DateFormat('MMM dd • h:mm a').format(notif.timestamp),
+                    style: TextStyle(color: colorScheme.onSurface.withOpacity(0.3), fontSize: 11, fontWeight: FontWeight.w800),
+                  ),
+                ],
+              ),
+            ),
+            if (!isRead)
+              Container(
+                margin: const EdgeInsets.only(top: 4),
+                width: 8, 
+                height: 8, 
+                decoration: BoxDecoration(color: colorScheme.primary, shape: BoxShape.circle)
+              ),
+          ],
+        ),
       ),
-    ),
     );
   }
 

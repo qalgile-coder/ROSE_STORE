@@ -20,6 +20,9 @@ class NotificationService {
 
     if (settings.authorizationStatus == AuthorizationStatus.authorized) {
       debugPrint('User granted notification permission');
+    } else {
+      debugPrint('User declined or did not accept notification permission');
+      return;
     }
 
     // 2. Local Notifications Initialization
@@ -29,41 +32,45 @@ class NotificationService {
 
     await _localNotifications.initialize(initSettings);
 
+    AndroidNotificationChannel? channel;
+
     // 3. Create Android Notification Channel
     if (!kIsWeb && Platform.isAndroid) {
-      const AndroidNotificationChannel channel = AndroidNotificationChannel(
-        'zen_mart_pro_high_channel',
+      channel = const AndroidNotificationChannel(
+        'rooz_store_high_channel', // تم تحديث معرف القناة ليتناسب مع مشروعك
         'High Importance Notifications',
         description: 'Used for critical order and system updates.',
         importance: Importance.high,
       );
 
-      final dynamic plugin = _localNotifications;
-      try {
-        final androidPlugin = plugin.resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
-        if (androidPlugin != null) {
-          await androidPlugin.createNotificationChannel(channel);
-        }
-      } catch (e) {
-        debugPrint('Error creating notification channel: $e');
+      final androidPlugin = _localNotifications.resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
+      if (androidPlugin != null) {
+        await androidPlugin.createNotificationChannel(channel);
       }
-
-      // 4. Listen for Messages
-      FirebaseMessaging.onMessage.listen((RemoteMessage message) {
-        _showLocalNotification(message, channel);
-      });
     }
+
+    // 4. Listen for Foreground Messages (تم فصلها لتعمل باستمرار وبشكل صحيح)
+    FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+      debugPrint('A new onMessage event was published: ${message.notification?.title}');
+      if (channel != null) {
+        _showLocalNotification(message, channel);
+      }
+    });
 
     FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
       debugPrint('Notification opened app: ${message.data}');
     });
+
+    // 5. الحصول على الرمز وتحديثه تلقائياً عند الإنشاء
+    String? token = await getToken();
+    debugPrint("FCM Token: $token");
   }
 
   void _showLocalNotification(RemoteMessage message, AndroidNotificationChannel channel) {
     RemoteNotification? notification = message.notification;
     AndroidNotification? android = message.notification?.android;
 
-    if (notification != null && android != null && !kIsWeb) {
+    if (notification != null && !kIsWeb) {
       _localNotifications.show(
         notification.hashCode,
         notification.title,
@@ -73,9 +80,14 @@ class NotificationService {
             channel.id,
             channel.name,
             channelDescription: channel.description,
-            icon: android.smallIcon,
+            icon: android?.smallIcon ?? '@mipmap/ic_launcher',
             priority: Priority.high,
             importance: Importance.max,
+          ),
+          iOS: const DarwinDetails(
+            presentAlert: true,
+            presentBadge: true,
+            presentSound: true,
           ),
         ),
       );
@@ -115,7 +127,7 @@ class NotificationService {
         });
       }
     } catch (e) {
-      debugPrint('Notification error (insufficient permissions?): $e');
+      debugPrint('Notification error: $e');
     }
   }
 
@@ -141,13 +153,14 @@ class NotificationService {
     try {
       String? token = await getToken();
       if (token != null) {
-        await _db.collection('users').doc(userId).update({
+        await _db.collection('users').doc(userId).set({
           'fcmToken': token,
           'lastActive': FieldValue.serverTimestamp(),
-        });
+        }, SetOptions(merge: true));
+        debugPrint('FCM Token successfully saved for user: $userId');
       }
     } catch (e) {
-      debugPrint('FCM Token Save Error (Non-critical): $e');
+      debugPrint('FCM Token Save Error: $e');
     }
   }
 }
