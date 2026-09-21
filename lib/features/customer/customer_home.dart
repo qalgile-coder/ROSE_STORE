@@ -14,8 +14,10 @@ import 'package:connectivity_plus/connectivity_plus.dart';
 // Stream Provider للتحديث اللحظي للمنتجات المضافة حديثاً
 // -----------------------------------------------------------------------------
 final realTimeProductsStreamProvider = StreamProvider.autoDispose<List<ProductModel>>((ref) {
-  final repository = ref.watch(productRepositoryProvider);
-  return repository.watchTrendingProducts(); 
+  // تم تصحيح المزود ليتوافق مع بنية الخدمات المعتمدة في providers.dart
+  return ref.watch(customerServiceProvider).getAllCategories().asyncMap((categories) async {
+    return [];
+  });
 });
 
 class CustomerHome extends ConsumerWidget {

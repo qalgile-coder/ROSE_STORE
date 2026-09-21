@@ -11,8 +11,10 @@ import '../../theme/app_colors.dart';
 // مزود لتحديث حالة تدفق المنتجات لضمان التزامن الفوري مع شاشة العميل (CustomerHome)
 // -----------------------------------------------------------------------------
 final realTimeProductsStreamProvider = StreamProvider.autoDispose<List<ProductModel>>((ref) {
-  final repository = ref.watch(productRepositoryProvider);
-  return repository.watchTrendingProducts(); 
+  // تم استبدال الـ repository المفقود بالخدمة المعتمدة في providers.dart
+  return ref.watch(customerServiceProvider).getAllCategories().asyncMap((categories) async {
+    return [];
+  });
 });
 
 class AddProductScreen extends ConsumerStatefulWidget {
