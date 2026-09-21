@@ -1,0 +1,51 @@
+name: Build Flutter APK
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          cache: true
+
+      - name: Clean and Get dependencies
+        run: |
+          flutter clean
+          flutter pub get
+
+      - name: Generate Launcher Icons & Localization
+        run: |
+          dart run flutter_launcher_icons
+          flutter gen-l10n || true
+
+      - name: Create key.properties
+        run: |
+          echo "storePassword=${{ secrets.ANDROID_STORE_PASSWORD }}" > android/key.properties
+          echo "keyPassword=${{ secrets.ANDROID_KEY_PASSWORD }}" >> android/key.properties
+          echo "keyAlias=${{ secrets.ANDROID_KEY_ALIAS }}" >> android/key.properties
+          echo "storeFile=upload-keystore.jks" >> android/key.properties
+
+      - name: Build Signed APK
+        run: flutter build apk --release --android-skip-build-dependency-validation
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-signed-apk
+          path: build/app/outputs/flutter-apk/*.apk
