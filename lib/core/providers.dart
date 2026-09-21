@@ -13,7 +13,6 @@ import '../services/order_service.dart';
 import '../services/support_service.dart';
 import '../services/emergency_service.dart';
 import '../services/notification_service.dart';
-import '../repositories/product_repository.dart'; // تأكد من مسار المستودع لديك
 import '../models/user_model.dart';
 import '../models/order_model.dart';
 import '../models/product_model.dart';
@@ -50,13 +49,12 @@ final supportServiceProvider = Provider((ref) => SupportService(ref.read(notific
 final emergencyServiceProvider = Provider((ref) => EmergencyService(ref.read(notificationServiceProvider)));
 final notificationServiceProvider = Provider((ref) => NotificationService());
 
-// --- REPOSITORY PROVIDERS ---
-final productRepositoryProvider = Provider((ref) => ProductRepository());
-
-// --- REAL-TIME STREAM PROVIDERS ---
+// --- REAL-TIME STREAM & REPOSITORY PROVIDERS ---
 final realTimeProductsStreamProvider = StreamProvider<List<ProductModel>>((ref) {
-  final repository = ref.watch(productRepositoryProvider);
-  return repository.getRealTimeProducts(); // دالة جلب المنتجات اللحظية من المستودع
+  return FirebaseFirestore.instance
+      .collection('products')
+      .snapshots()
+      .map((snapshot) => snapshot.docs.map((doc) => ProductModel.fromFirestore(doc)).toList());
 });
 
 final connectivityProvider = StreamProvider<ConnectivityResult>((ref) {
