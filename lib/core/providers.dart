@@ -13,6 +13,7 @@ import '../services/order_service.dart';
 import '../services/support_service.dart';
 import '../services/emergency_service.dart';
 import '../services/notification_service.dart';
+import '../repositories/product_repository.dart'; // تأكد من مسار المستودع لديك
 import '../models/user_model.dart';
 import '../models/order_model.dart';
 import '../models/product_model.dart';
@@ -49,6 +50,15 @@ final supportServiceProvider = Provider((ref) => SupportService(ref.read(notific
 final emergencyServiceProvider = Provider((ref) => EmergencyService(ref.read(notificationServiceProvider)));
 final notificationServiceProvider = Provider((ref) => NotificationService());
 
+// --- REPOSITORY PROVIDERS ---
+final productRepositoryProvider = Provider((ref) => ProductRepository());
+
+// --- REAL-TIME STREAM PROVIDERS ---
+final realTimeProductsStreamProvider = StreamProvider<List<ProductModel>>((ref) {
+  final repository = ref.watch(productRepositoryProvider);
+  return repository.getRealTimeProducts(); // دالة جلب المنتجات اللحظية من المستودع
+});
+
 final connectivityProvider = StreamProvider<ConnectivityResult>((ref) {
   return Connectivity().onConnectivityChanged.map((results) => 
     results.isNotEmpty ? results.first : ConnectivityResult.none
@@ -69,7 +79,7 @@ final userModelProvider = StreamProvider<UserModel?>((ref) async* {
   final authState = ref.watch(authStateProvider);
   
   if (authState.isLoading && !authState.hasValue) {
-    return; // Keep current state while auth is loading initially
+    return;
   }
 
   final user = authState.valueOrNull;
@@ -77,14 +87,12 @@ final userModelProvider = StreamProvider<UserModel?>((ref) async* {
   if (user == null) {
     yield null;
   } else {
-    // Save FCM Token when user logs in - Wrap in error handling
     try {
       ref.read(notificationServiceProvider).saveTokenToFirestore(user.uid);
     } catch (e) {
       debugPrint('FCM Token Save Failed (Non-critical): $e');
     }
     
-    // Using a more resilient stream handling
     final stream = ref.read(authServiceProvider).getUserStream(user.uid);
     
     yield* stream.handleError((e) {
@@ -605,7 +613,7 @@ final vendorSalesAnalyticsProvider = StreamProvider.family<Map<String, dynamic>,
       start = now.subtract(Duration(days: now.weekday - 1));
       start = DateTime(start.year, start.month, start.day);
     } else {
-      start = DateTime(now.year, now.month, now.day); // أو بداية الشهر
+      start = DateTime(now.year, now.month, now.day);
     }
     
     final filtered = orders.where((o) => o.createdAt.isAfter(start)).toList();
