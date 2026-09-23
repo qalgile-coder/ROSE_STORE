@@ -1,887 +1,675 @@
-import 'dart:ui';
-import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
-import '../../core/providers.dart';
-import '../../theme/app_colors.dart';
-import '../../models/shop_model.dart';
-import '../../models/product_model.dart';
-import './widgets/customer_bottom_nav.dart';
-import '../../core/localization.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import '../services/auth_service.dart';
+import '../services/rider_service.dart';
+import '../services/cloudinary_service.dart';
+import '../services/upload_service.dart';
+import '../services/vendor_service.dart';
+import '../services/admin_service.dart';
+import '../services/customer_service.dart';
+import '../services/order_service.dart';
+import '../services/support_service.dart';
+import '../services/emergency_service.dart';
+import '../services/notification_service.dart';
+import '../models/user_model.dart';
+import '../models/order_model.dart';
+import '../models/product_model.dart';
+import '../models/notification_model.dart';
+import '../models/vendor_notification_model.dart';
+import '../models/rider_notification_model.dart';
+import '../models/shop_model.dart';
+import '../models/approval_model.dart';
+import '../models/payout_model.dart';
+import '../models/activity_model.dart';
+import '../models/review_model.dart';
+import '../models/coupon_model.dart';
+import '../models/address_model.dart';
+import '../models/category_model.dart';
+import '../models/support_chat_model.dart';
+import '../models/support_ticket_model.dart';
+import '../models/emergency_report_model.dart';
+import '../models/offer_model.dart';
+import '../models/cart_model.dart';
+import '../models/system_settings_model.dart';
+import '../services/cache_service.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 
-class CustomerHome extends ConsumerWidget {
-  const CustomerHome({super.key});
+// --- CORE SERVICE PROVIDERS ---
+final authServiceProvider = Provider((ref) => AuthService());
+final riderServiceProvider = Provider((ref) => RiderService());
+final cloudinaryServiceProvider = Provider((ref) => CloudinaryService());
+final uploadServiceProvider = Provider((ref) => UploadService(ref));
+final vendorServiceProvider = Provider((ref) => VendorService());
+final adminServiceProvider = Provider((ref) => AdminService());
+final customerServiceProvider = Provider((ref) => CustomerService());
+final orderServiceProvider = Provider((ref) => OrderService(ref.read(notificationServiceProvider)));
+final supportServiceProvider = Provider((ref) => SupportService(ref.read(notificationServiceProvider)));
+final emergencyServiceProvider = Provider((ref) => EmergencyService(ref.read(notificationServiceProvider)));
+final notificationServiceProvider = Provider((ref) => NotificationService());
 
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final theme = Theme.of(context);
-    final isLight = theme.brightness == Brightness.light;
-    final connectivity = ref.watch(connectivityProvider).asData?.value;
-    final isOffline = connectivity == ConnectivityResult.none;
+// --- REAL-TIME STREAM & REPOSITORY PROVIDERS ---
+final realTimeProductsStreamProvider = StreamProvider<List<ProductModel>>((ref) {
+  return FirebaseFirestore.instance
+      .collection('products')
+      .snapshots()
+      .map((snapshot) => snapshot.docs.map((doc) => ProductModel.fromFirestore(doc)).toList());
+});
+
+final connectivityProvider = StreamProvider<ConnectivityResult>((ref) {
+  return Connectivity().onConnectivityChanged.map((results) => 
+    results.isNotEmpty ? results.first : ConnectivityResult.none
+  );
+});
+
+final splashDurationProvider = FutureProvider<void>((ref) async {
+  await Future.delayed(const Duration(seconds: 3));
+});
+
+final forcedSplashProvider = StateProvider<bool>((ref) => false);
+
+final authStateProvider = StreamProvider((ref) {
+  return ref.watch(authServiceProvider).authStateChanges;
+});
+
+final userModelProvider = StreamProvider<UserModel?>((ref) async* {
+  final authState = ref.watch(authStateProvider);
+  
+  if (authState.isLoading && !authState.hasValue) {
+    return;
+  }
+
+  final user = authState.valueOrNull;
+  
+  if (user == null) {
+    yield null;
+  } else {
+    try {
+      ref.read(notificationServiceProvider).saveTokenToFirestore(user.uid);
+    } catch (e) {
+      debugPrint('FCM Token Save Failed (Non-critical): $e');
+    }
     
-    // Dynamic Theme Mapping
-    final bgColor = isLight ? AppColors.lightBackground : AppColors.premiumDarkBackground;
-    final primaryColor = isLight ? AppColors.lightPrimary : AppColors.premiumDarkPrimary;
-    final textColor = isLight ? AppColors.lightTextPrimary : AppColors.premiumDarkTextPrimary;
-
-    return Scaffold(
-      backgroundColor: bgColor,
-      body: Stack(
-        children: [
-          // Background Gradient Glow
-          Positioned(
-            top: -200,
-            left: -100,
-            child: Container(
-              width: 400,
-              height: 400,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                gradient: RadialGradient(
-                  colors: [primaryColor.withValues(alpha: isLight ? 0.12 : 0.08), Colors.transparent],
-                ),
-              ),
-            ),
-          ),
-          
-          CustomScrollView(
-            physics: const BouncingScrollPhysics(),
-            slivers: [
-              SliverAppBar(
-                expandedHeight: 160,
-                floating: true,
-                pinned: true,
-                elevation: 0,
-                backgroundColor: bgColor.withOpacity(0.8),
-                flexibleSpace: FlexibleSpaceBar(
-                  background: BackdropFilter(
-                    filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-                    child: Container(color: Colors.transparent),
-                  ),
-                ),
-                title: _LocationHeader(ref: ref),
-                bottom: PreferredSize(
-                  preferredSize: const Size.fromHeight(80),
-                  child: Column(
-                    children: [
-                      if (isOffline)
-                        Container(
-                          width: double.infinity,
-                          padding: const EdgeInsets.symmetric(vertical: 4),
-                          color: AppColors.error.withOpacity(0.8),
-                          child: const Center(
-                            child: Text(
-                              'WORKING OFFLINE • VIEWING CACHED DATA',
-                              style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w900, letterSpacing: 1),
-                            ),
-                          ),
-                        ),
-                      const Padding(
-                        padding: EdgeInsets.fromLTRB(20, 10, 20, 20),
-                        child: _SearchBar(),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const SizedBox(height: 10),
-                      const _PromoBanner(),
-                      const SizedBox(height: 32),
-                      _SectionHeader(title: 'الأقسام الرئيسية', showSeeAll: false, textColor: textColor, primaryColor: primaryColor),
-                      const SizedBox(height: 16),
-                      const _CategoryGrid(),
-                      const SizedBox(height: 32),
-                      _SectionHeader(
-                        title: 'جميع المنتجات', 
-                        showSeeAll: true, 
-                        onSeeAll: '/customer/all-products',
-                        textColor: textColor, 
-                        primaryColor: primaryColor
-                      ),
-                      const SizedBox(height: 16),
-                    ],
-                  ),
-                ),
-              ),
-              const _AllMerchantProductsGridList(),
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const SizedBox(height: 32),
-                      _SectionHeader(
-                        title: 'المتاجر المميزة', 
-                        showSeeAll: true,
-                        onSeeAll: '/customer/featured-shops',
-                        textColor: textColor,
-                        primaryColor: primaryColor,
-                      ),
-                      const SizedBox(height: 16),
-                      const _FeaturedShops(),
-                      const SizedBox(height: 32),
-                      _SectionHeader(
-                        title: 'المنتجات الرائجة', 
-                        showSeeAll: true, 
-                        onSeeAll: '/customer/trending-products',
-                        textColor: textColor, 
-                        primaryColor: primaryColor
-                      ),
-                      const SizedBox(height: 16),
-                      const _TrendingProducts(),
-                    ],
-                  ),
-                ),
-              ),
-              const SliverToBoxAdapter(child: SizedBox(height: 120)),
-            ],
-          ),
-          
-          Positioned(
-            left: 0,
-            right: 0,
-            bottom: 0,
-            child: const CustomerBottomNav(currentIndex: 0),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _LocationHeader extends StatelessWidget {
-  final WidgetRef ref;
-  const _LocationHeader({required this.ref});
-
-  @override
-  Widget build(BuildContext context) {
-    final defaultAddress = ref.watch(defaultAddressProvider);
-    final user = ref.watch(userModelProvider).asData?.value;
-    final isLight = Theme.of(context).brightness == Brightness.light;
+    final stream = ref.read(authServiceProvider).getUserStream(user.uid);
     
-    final primaryColor = isLight ? AppColors.lightPrimary : AppColors.premiumDarkPrimary;
-    final textColor = isLight ? AppColors.lightTextPrimary : AppColors.premiumDarkTextPrimary;
-    final cardColor = isLight ? Colors.white : const Color(0xFF1E293B);
-
-    return Row(
-      children: [
-        Expanded(
-          child: InkWell(
-            onTap: () => context.push('/customer/addresses'),
-            borderRadius: BorderRadius.circular(16),
-            child: Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    color: primaryColor.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                  child: Icon(Icons.location_on_rounded, color: primaryColor, size: 20),
-                ),
-                const SizedBox(width: 14),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        'التوصيل إلى',
-                        style: TextStyle(
-                          color: primaryColor.withOpacity(0.8),
-                          fontSize: 9,
-                          fontWeight: FontWeight.w900,
-                          letterSpacing: 1.5,
-                        ),
-                      ),
-                      const SizedBox(height: 2),
-                      Row(
-                        children: [
-                          Flexible(
-                            child: Text(
-                              defaultAddress?.fullAddress ?? 'اختر موقع التوصيل',
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: textColor),
-                            ),
-                          ),
-                          Icon(Icons.keyboard_arrow_down_rounded, size: 16, color: textColor.withOpacity(0.4)),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-        _HeaderActionBtn(
-          icon: Icons.notifications_none_rounded, 
-          onTap: () => context.push('/customer/notifications'),
-          cardColor: cardColor,
-          textColor: textColor,
-          isLight: isLight,
-        ),
-        const SizedBox(width: 12),
-        _HeaderActionBtn(
-          icon: Icons.favorite_border_rounded, 
-          onTap: () => context.push('/customer/wishlist'),
-          cardColor: cardColor,
-          textColor: textColor,
-          isLight: isLight,
-        ),
-        const SizedBox(width: 12),
-        GestureDetector(
-          onTap: () => context.push('/customer/profile'),
-          child: Hero(
-            tag: 'profile_avatar',
-            child: Container(
-              padding: const EdgeInsets.all(2),
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                border: Border.all(color: primaryColor.withOpacity(0.3), width: 1.5),
-              ),
-              child: CircleAvatar(
-                radius: 18,
-                backgroundColor: cardColor,
-                backgroundImage: (user?.profilePicture != null && user!.profilePicture!.isNotEmpty)
-                    ? NetworkImage(user.profilePicture!)
-                    : null,
-                child: (user?.profilePicture == null || user!.profilePicture!.isEmpty)
-                    ? Text(
-                        user?.name.substring(0, 1).toUpperCase() ?? '?',
-                        style: TextStyle(color: primaryColor, fontSize: 12, fontWeight: FontWeight.bold),
-                      )
-                    : null,
-              ),
-            ),
-          ),
-        ),
-      ],
-    );
+    yield* stream.handleError((e) {
+      debugPrint('Firestore User Stream Error: $e');
+    });
   }
-}
+});
 
-class _HeaderActionBtn extends StatelessWidget {
-  final IconData icon;
-  final VoidCallback onTap;
-  final Color cardColor;
-  final Color textColor;
-  final bool isLight;
-  const _HeaderActionBtn({required this.icon, required this.onTap, required this.cardColor, required this.textColor, required this.isLight});
+// --- RIDER PROVIDERS ---
+final availableOrdersProvider = StreamProvider<List<OrderModel>>((ref) {
+  final user = ref.watch(userModelProvider).valueOrNull;
+  if (user == null || user.role != UserRole.rider) return Stream.value([]);
+  return ref.watch(riderServiceProvider).getAvailableOrders(user.uid);
+});
 
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(12),
-      child: Container(
-        padding: const EdgeInsets.all(10),
-        decoration: BoxDecoration(
-          color: cardColor,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: isLight ? AppColors.lightBorder : AppColors.premiumDarkDivider),
-          boxShadow: isLight ? [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10)] : null,
-        ),
-        child: Icon(icon, color: textColor, size: 20),
-      ),
-    );
+final activeRiderOrdersProvider = StreamProvider<List<OrderModel>>((ref) {
+  final user = ref.watch(userModelProvider).valueOrNull;
+  if (user == null || user.role != UserRole.rider) return Stream.value([]);
+  return ref.watch(riderServiceProvider).getActiveRiderOrders(user.uid);
+});
+
+final riderHistoryProvider = StreamProvider<List<OrderModel>>((ref) {
+  final user = ref.watch(userModelProvider).valueOrNull;
+  if (user == null || user.role != UserRole.rider) return Stream.value([]);
+  return ref.watch(riderServiceProvider).getRiderHistory(user.uid);
+});
+
+final todayRiderHistoryProvider = StreamProvider<List<OrderModel>>((ref) {
+  final user = ref.watch(userModelProvider).valueOrNull;
+  if (user == null || user.role != UserRole.rider) return Stream.value([]);
+  return ref.watch(riderServiceProvider).getTodayRiderHistory(user.uid);
+});
+
+final riderNotificationsProvider = StreamProvider<List<RiderNotificationModel>>((ref) {
+  final user = ref.watch(userModelProvider).valueOrNull;
+  if (user == null || user.role != UserRole.rider) return Stream.value([]);
+  return ref.watch(riderServiceProvider).getNotifications(user.uid);
+});
+
+final riderReviewsProvider = StreamProvider<List<ReviewModel>>((ref) {
+  final user = ref.watch(userModelProvider).valueOrNull;
+  if (user == null || user.role != UserRole.rider) return Stream.value([]);
+  return ref.watch(riderServiceProvider).getRiderReviews(user.uid);
+});
+
+final riderPayoutHistoryProvider = StreamProvider<List<PayoutModel>>((ref) {
+  final user = ref.watch(userModelProvider).valueOrNull;
+  if (user == null || user.role != UserRole.rider) return Stream.value([]);
+  return ref.watch(riderServiceProvider).getPayoutHistory(user.uid);
+});
+
+// --- VENDOR PROVIDERS ---
+final shopProductsProvider = StreamProvider<List<ProductModel>>((ref) {
+  final user = ref.watch(userModelProvider).valueOrNull;
+  if (user == null || user.role != UserRole.vendor || user.shopId == null) return Stream.value([]);
+  return ref.watch(vendorServiceProvider).getShopProducts(user.shopId!);
+});
+
+final currentShopProvider = StreamProvider<ShopModel?>((ref) {
+  final user = ref.watch(userModelProvider).valueOrNull;
+  if (user == null || user.role != UserRole.vendor || user.shopId == null) return Stream.value(null);
+  return ref.watch(vendorServiceProvider).getShopData(user.shopId!);
+});
+
+final lowStockProductsProvider = StreamProvider<List<ProductModel>>((ref) {
+  final user = ref.watch(userModelProvider).valueOrNull;
+  if (user == null || user.role != UserRole.vendor || user.shopId == null) return Stream.value([]);
+  return ref.watch(vendorServiceProvider).getLowStockProducts(user.shopId!);
+});
+
+final shopReviewsProvider = StreamProvider<List<ReviewModel>>((ref) {
+  final user = ref.watch(userModelProvider).valueOrNull;
+  if (user == null || user.role != UserRole.vendor || user.shopId == null) return Stream.value([]);
+  return ref.watch(vendorServiceProvider).getShopReviews(user.shopId!);
+});
+
+final shopReviewsProviderFromService = StreamProvider.family<List<ReviewModel>, String>((ref, shopId) {
+  return ref.watch(vendorServiceProvider).getShopReviews(shopId);
+});
+
+final productReviewsProvider = StreamProvider.family<List<ReviewModel>, String>((ref, productId) {
+  return ref.watch(customerServiceProvider).getProductReviews(productId);
+});
+
+final incomingOrdersProvider = StreamProvider<List<OrderModel>>((ref) {
+  final user = ref.watch(userModelProvider).valueOrNull;
+  if (user == null || user.role != UserRole.vendor || user.shopId == null) return Stream.value([]);
+  return ref.watch(vendorServiceProvider).getIncomingOrders(user.shopId!);
+});
+
+final allShopOrdersProvider = StreamProvider<List<OrderModel>>((ref) {
+  final user = ref.watch(userModelProvider).valueOrNull;
+  if (user == null || user.role != UserRole.vendor || user.shopId == null) return Stream.value([]);
+  return ref.watch(vendorServiceProvider).getAllShopOrders(user.shopId!);
+});
+
+final shopCouponsProvider = StreamProvider<List<CouponModel>>((ref) {
+  final user = ref.watch(userModelProvider).valueOrNull;
+  if (user == null || user.role != UserRole.vendor || user.shopId == null) return Stream.value([]);
+  return ref.watch(vendorServiceProvider).getShopCoupons(user.shopId!);
+});
+
+final vendorNotificationsProvider = StreamProvider<List<VendorNotificationModel>>((ref) {
+  final user = ref.watch(userModelProvider).valueOrNull;
+  if (user == null || user.role != UserRole.vendor) return Stream.value([]);
+  return ref.watch(vendorServiceProvider).getNotifications(user.uid);
+});
+
+final vendorActiveOrderTabProvider = StateProvider<int>((ref) => 0);
+
+// --- CUSTOMER PROVIDERS ---
+final customerAddressesProvider = StreamProvider<List<AddressModel>>((ref) {
+  final user = ref.watch(userModelProvider).valueOrNull;
+  if (user == null || user.role != UserRole.customer) return Stream.value([]);
+  return ref.watch(customerServiceProvider).getSavedAddresses(user.uid);
+});
+
+final defaultAddressProvider = Provider<AddressModel?>((ref) {
+  final addresses = ref.watch(customerAddressesProvider).valueOrNull ?? [];
+  try {
+    return addresses.firstWhere((a) => a.isDefault);
+  } catch (_) {
+    return addresses.isNotEmpty ? addresses.first : null;
   }
-}
+});
 
-class _SearchBar extends ConsumerWidget {
-  const _SearchBar();
+final customerOrdersProvider = StreamProvider<List<OrderModel>>((ref) {
+  final user = ref.watch(userModelProvider).valueOrNull;
+  if (user == null || user.role != UserRole.customer) return Stream.value([]);
+  return ref.watch(customerServiceProvider).getCustomerOrders(user.uid);
+});
 
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final isLight = Theme.of(context).brightness == Brightness.light;
-    final primaryColor = isLight ? AppColors.lightPrimary : AppColors.premiumDarkPrimary;
-    final cardColor = isLight ? AppColors.lightSurface : AppColors.premiumDarkSurface;
-    final secondaryTextColor = isLight ? AppColors.lightTextSecondary : AppColors.premiumDarkTextSecondary;
+final customerWishlistProvider = StreamProvider<List<ProductModel>>((ref) {
+  final user = ref.watch(userModelProvider).valueOrNull;
+  if (user == null || user.role != UserRole.customer) return Stream.value([]);
+  return FirebaseFirestore.instance
+      .collection('users')
+      .doc(user.uid)
+      .collection('wishlist')
+      .snapshots()
+      .map((s) => s.docs.map((doc) => ProductModel.fromFirestore(doc)).toList());
+});
 
-    return GestureDetector(
-      onTap: () => context.push('/customer/search'),
-      child: Container(
-        height: 54,
-        padding: const EdgeInsets.symmetric(horizontal: 20),
-        decoration: BoxDecoration(
-          color: cardColor,
-          borderRadius: BorderRadius.circular(20),
-          boxShadow: [
-            BoxShadow(
-              color: isLight ? Colors.black.withOpacity(0.04) : Colors.black.withOpacity(0.12), 
-              blurRadius: 20, 
-              offset: const Offset(0, 8)
-            ),
-          ],
-          border: Border.all(color: isLight ? AppColors.lightBorder : AppColors.premiumDarkDivider.withOpacity(0.3)),
-        ),
-        child: Row(
-          children: [
-            Icon(Icons.search_rounded, color: primaryColor, size: 22),
-            const SizedBox(width: 14),
-            Text(
-              'ابحث عن ما تحتاج إليه...',
-              style: TextStyle(color: secondaryTextColor.withOpacity(0.6), fontSize: 14, fontWeight: FontWeight.w500),
-            ),
-            const Spacer(),
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(color: primaryColor.withOpacity(0.1), borderRadius: BorderRadius.circular(10)),
-              child: Icon(Icons.tune_rounded, color: primaryColor, size: 16),
-            ),
-          ],
-        ),
-      ),
-    );
+final activeOffersProvider = StreamProvider<List<OfferModel>>((ref) {
+  return ref.watch(customerServiceProvider).getActiveOffers();
+});
+
+final featuredShopsProvider = StreamProvider<List<ShopModel>>((ref) {
+  return ref.watch(customerServiceProvider).getNearbyShops().map((shops) {
+    final featured = shops.where((s) => s.isFeatured).toList();
+    if (featured.isNotEmpty) return featured;
+    
+    final sorted = List<ShopModel>.from(shops);
+    sorted.sort((a, b) => b.rating.compareTo(a.rating));
+    return sorted.take(5).toList();
+  });
+});
+
+final nearbyShopsProvider = StreamProvider<List<ShopModel>>((ref) {
+  final connectivity = ref.watch(connectivityProvider).valueOrNull;
+  final isOffline = connectivity == ConnectivityResult.none;
+
+  if (isOffline) {
+    return Stream.value(CacheService.getCachedShops());
   }
-}
 
-class _PromoBanner extends ConsumerWidget {
-  const _PromoBanner();
+  return ref.watch(customerServiceProvider).getNearbyShops().map((shops) {
+    CacheService.cacheShops(shops);
+    return shops;
+  });
+});
 
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final offersAsync = ref.watch(activeOffersProvider);
-    final isLight = Theme.of(context).brightness == Brightness.light;
-    final primaryColor = isLight ? AppColors.lightPrimary : AppColors.premiumDarkPrimary;
+final trendingProductsProvider = StreamProvider<List<ProductModel>>((ref) {
+  final connectivity = ref.watch(connectivityProvider).valueOrNull;
+  final isOffline = connectivity == ConnectivityResult.none;
 
-    return offersAsync.when(
-      data: (offers) {
-        if (offers.isEmpty) return const SizedBox.shrink();
-        final offer = offers.first;
+  if (isOffline) {
+    return Stream.value(CacheService.getCachedProducts());
+  }
 
-        return Container(
-          width: double.infinity,
-          height: 180,
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(28),
-            boxShadow: [
-              BoxShadow(
-                color: isLight ? primaryColor.withOpacity(0.12) : Colors.black.withOpacity(0.3), 
-                blurRadius: 30, 
-                offset: const Offset(0, 15)
-              ),
-            ],
+  return FirebaseFirestore.instance
+      .collection('products')
+      .where('isAvailable', isEqualTo: true)
+      .snapshots()
+      .map((s) {
+        final products = s.docs.map((doc) => ProductModel.fromFirestore(doc)).toList();
+        products.sort((a, b) => b.orderCount.compareTo(a.orderCount));
+        
+        final topProducts = products.take(10).toList();
+        CacheService.cacheProducts(topProducts);
+        return topProducts;
+      });
+});
+
+final allCategoriesProvider = StreamProvider<List<String>>((ref) {
+  return ref.watch(customerServiceProvider).getAllCategories();
+});
+
+final searchProductsProvider = StreamProvider.family<List<ProductModel>, String>((ref, query) {
+  return ref.watch(customerServiceProvider).searchProducts(query);
+});
+
+final searchShopsProvider = StreamProvider.family<List<ShopModel>, String>((ref, query) {
+  return ref.watch(customerServiceProvider).searchShops(query);
+});
+
+final shopDetailProvider = StreamProvider.family<ShopModel?, String>((ref, shopId) {
+  return ref.watch(customerServiceProvider).getShopById(shopId);
+});
+
+final shopProductsByIdProvider = StreamProvider.family<List<ProductModel>, String>((ref, shopId) {
+  return ref.watch(customerServiceProvider).getShopProducts(shopId);
+});
+
+final productDetailProvider = StreamProvider.family<ProductModel?, String>((ref, productId) {
+  return FirebaseFirestore.instance.collection('products').doc(productId).snapshots().map((doc) {
+    if (doc.exists) return ProductModel.fromFirestore(doc);
+    return null;
+  });
+});
+
+final categoryShopsProvider = StreamProvider.family<List<ShopModel>, String>((ref, category) {
+  return ref.watch(customerServiceProvider).getCategoryShops(category);
+});
+
+final offerShopsProvider = StreamProvider.family<List<ShopModel>, List<String>>((ref, shopIds) {
+  return ref.watch(customerServiceProvider).getShopsByIds(shopIds);
+});
+
+final offerProductsProvider = StreamProvider.family<List<ProductModel>, List<String>>((ref, productIds) {
+  return ref.watch(customerServiceProvider).getProductsByIds(productIds);
+});
+
+// --- ADMIN PROVIDERS ---
+final adminNotificationsProvider = StreamProvider<List<NotificationModel>>((ref) {
+  final user = ref.watch(userModelProvider).valueOrNull;
+  if (user == null || user.role != UserRole.superAdmin) return Stream.value([]);
+  return ref.watch(adminServiceProvider).getNotifications();
+});
+
+final allShopsProvider = StreamProvider<List<ShopModel>>((ref) {
+  final user = ref.watch(userModelProvider).valueOrNull;
+  if (user == null || user.role != UserRole.superAdmin) return Stream.value([]);
+  return ref.watch(adminServiceProvider).getAllShops();
+});
+
+final allRidersProvider = StreamProvider<List<UserModel>>((ref) {
+  final user = ref.watch(userModelProvider).valueOrNull;
+  if (user == null || user.role != UserRole.superAdmin) return Stream.value([]);
+  return ref.watch(adminServiceProvider).getAllRiders();
+});
+
+final allPendingOrdersProvider = StreamProvider<List<OrderModel>>((ref) {
+  final user = ref.watch(userModelProvider).valueOrNull;
+  if (user == null || user.role != UserRole.superAdmin) return Stream.value([]);
+  return ref.watch(adminServiceProvider).getPendingOrders();
+});
+
+final allOrdersProvider = StreamProvider<List<OrderModel>>((ref) {
+  final user = ref.watch(userModelProvider).valueOrNull;
+  if (user == null || user.role != UserRole.superAdmin) return Stream.value([]);
+  return ref.watch(adminServiceProvider).getAllOrders();
+});
+
+final allCustomersProvider = StreamProvider<List<UserModel>>((ref) {
+  final user = ref.watch(userModelProvider).valueOrNull;
+  if (user == null || user.role != UserRole.superAdmin) return Stream.value([]);
+  return ref.watch(adminServiceProvider).getAllCustomers();
+});
+
+final allVendorsProvider = StreamProvider<List<UserModel>>((ref) {
+  final user = ref.watch(userModelProvider).valueOrNull;
+  if (user == null || user.role != UserRole.superAdmin) return Stream.value([]);
+  return ref.watch(adminServiceProvider).getAllVendors();
+});
+
+final pendingApprovalsProvider = StreamProvider<List<ApprovalModel>>((ref) {
+  final user = ref.watch(userModelProvider).valueOrNull;
+  if (user == null || user.role != UserRole.superAdmin) return Stream.value([]);
+  return ref.watch(adminServiceProvider).getPendingApprovals();
+});
+
+final payoutRequestsProvider = StreamProvider<List<PayoutModel>>((ref) {
+  final user = ref.watch(userModelProvider).valueOrNull;
+  if (user == null || user.role != UserRole.superAdmin) return Stream.value([]);
+  return ref.watch(adminServiceProvider).getPayoutRequests();
+});
+
+final allCategoriesStreamProvider = StreamProvider<List<CategoryModel>>((ref) {
+  return ref.watch(adminServiceProvider).getCategories();
+});
+
+final allOffersProvider = StreamProvider<List<OfferModel>>((ref) {
+  final user = ref.watch(userModelProvider).valueOrNull;
+  if (user == null || user.role != UserRole.superAdmin) return Stream.value([]);
+  return ref.watch(adminServiceProvider).getAllOffers();
+});
+
+final activityLogsProvider = StreamProvider.family<List<ActivityModel>, DateTime?>((ref, start) {
+  final user = ref.watch(userModelProvider).valueOrNull;
+  if (user == null || user.role != UserRole.superAdmin) return Stream.value([]);
+  return ref.watch(adminServiceProvider).getActivityLogs(start: start);
+});
+
+final systemSettingsProvider = StreamProvider<SystemSettingsModel>((ref) {
+  return ref.watch(adminServiceProvider).getSystemSettings();
+});
+
+final globalCouponsProvider = StreamProvider<List<CouponModel>>((ref) {
+  return ref.watch(adminServiceProvider).getGlobalCoupons();
+});
+
+// Admin Stats Providers
+final totalShopsCountProvider = StreamProvider<int>((ref) {
+  final user = ref.watch(userModelProvider).valueOrNull;
+  if (user == null || user.role != UserRole.superAdmin) return Stream.value(0);
+  return FirebaseFirestore.instance.collection('shops').snapshots().map((s) => s.docs.length);
+});
+
+final totalRidersCountProvider = StreamProvider<int>((ref) {
+  final user = ref.watch(userModelProvider).valueOrNull;
+  if (user == null || user.role != UserRole.superAdmin) return Stream.value(0);
+  return FirebaseFirestore.instance.collection('users')
+      .where('role', isEqualTo: 'rider')
+      .snapshots().map((s) => s.docs.length);
+});
+
+final totalCustomersCountProvider = StreamProvider<int>((ref) {
+  final user = ref.watch(userModelProvider).valueOrNull;
+  if (user == null || user.role != UserRole.superAdmin) return Stream.value(0);
+  return FirebaseFirestore.instance.collection('users')
+      .where('role', isEqualTo: 'customer')
+      .snapshots().map((s) => s.docs.length);
+});
+
+final pendingOrdersCountProvider = StreamProvider<int>((ref) {
+  final user = ref.watch(userModelProvider).valueOrNull;
+  if (user == null || user.role != UserRole.superAdmin) return Stream.value(0);
+  return FirebaseFirestore.instance.collection('orders')
+      .where('status', isEqualTo: 'pending')
+      .snapshots().map((s) => s.docs.length);
+});
+
+final pendingPayoutsCountProvider = StreamProvider<int>((ref) {
+  final user = ref.watch(userModelProvider).valueOrNull;
+  if (user == null || user.role != UserRole.superAdmin) return Stream.value(0);
+  return FirebaseFirestore.instance.collection('payouts')
+      .where('status', isEqualTo: 'pending')
+      .snapshots().map((s) => s.docs.length);
+});
+
+// Revenue Providers
+final dailyRevenueProvider = StreamProvider<double>((ref) {
+  final user = ref.watch(userModelProvider).valueOrNull;
+  if (user == null || user.role != UserRole.superAdmin) return Stream.value(0.0);
+  final now = DateTime.now();
+  final start = DateTime(now.year, now.month, now.day);
+  final end = DateTime(now.year, now.month, now.day, 23, 59, 59);
+  return ref.watch(adminServiceProvider).getRevenueStream(start: start, end: end);
+});
+
+final weeklyRevenueProvider = StreamProvider<double>((ref) {
+  final user = ref.watch(userModelProvider).valueOrNull;
+  if (user == null || user.role != UserRole.superAdmin) return Stream.value(0.0);
+  final now = DateTime.now();
+  final start = now.subtract(Duration(days: now.weekday - 1));
+  final end = DateTime(now.year, now.month, now.day, 23, 59, 59);
+  return ref.watch(adminServiceProvider).getRevenueStream(start: start, end: end);
+});
+
+final monthlyRevenueProvider = StreamProvider<double>((ref) {
+  final user = ref.watch(userModelProvider).valueOrNull;
+  if (user == null || user.role != UserRole.superAdmin) return Stream.value(0.0);
+  final now = DateTime.now();
+  final start = DateTime(now.year, now.month, 1);
+  final end = DateTime(now.year, now.month, now.day, 23, 59, 59);
+  return ref.watch(adminServiceProvider).getRevenueStream(start: start, end: end);
+});
+
+// --- SUPPORT & EMERGENCY PROVIDERS ---
+final supportChatProvider = StreamProvider.family<SupportChatModel?, String>((ref, chatId) {
+  return ref.watch(supportServiceProvider).getChatStream(chatId);
+});
+
+final customerSupportChatProvider = StreamProvider<String?>((ref) async* {
+  final user = ref.watch(userModelProvider).valueOrNull;
+  if (user == null) {
+    yield null;
+  } else {
+    final db = FirebaseFirestore.instance;
+    final snapshots = db.collection('support_chats')
+        .where('customerId', isEqualTo: user.uid)
+        .limit(1)
+        .snapshots();
+    
+    await for (final snap in snapshots) {
+      if (snap.docs.isNotEmpty) {
+        yield snap.docs.first.id;
+      } else {
+        yield null;
+      }
+    }
+  }
+});
+
+final supportMessagesProvider = StreamProvider.family<List<SupportMessageModel>, String>((ref, chatId) {
+  return ref.watch(supportServiceProvider).getSupportMessages(chatId);
+});
+
+final customerEmergencyReportsProvider = StreamProvider<List<EmergencyReportModel>>((ref) {
+  final user = ref.watch(userModelProvider).valueOrNull;
+  if (user == null) return Stream.value([]);
+  return ref.watch(emergencyServiceProvider).getCustomerReports(user.uid);
+});
+
+final emergencyReportStreamProvider = StreamProvider.family<EmergencyReportModel?, String>((ref, reportId) {
+  return ref.watch(emergencyServiceProvider).getReportStream(reportId);
+});
+
+final emergencyTimelineProvider = StreamProvider.family<List<EmergencyTimelineEvent>, String>((ref, reportId) {
+  return ref.watch(emergencyServiceProvider).getTimeline(reportId);
+});
+
+final emergencyMessagesProvider = StreamProvider.family<List<SupportMessageModel>, String>((ref, reportId) {
+  return ref.watch(emergencyServiceProvider).getEmergencyMessages(reportId);
+});
+
+// --- CART ---
+class CartNotifier extends StateNotifier<CartModel> {
+  CartNotifier() : super(CartModel());
+
+  void addItem(ProductModel product, {String? shopName, String? shopImageUrl}) {
+    if (state.items.isEmpty) {
+      state = CartModel(
+        items: {product.id: CartItem(product: product)},
+        shopId: product.shopId,
+        shopName: shopName,
+        shopImageUrl: shopImageUrl,
+      );
+      return;
+    }
+
+    if (state.items.containsKey(product.id)) {
+      state = CartModel(
+        items: {
+          ...state.items,
+          product.id: state.items[product.id]!.copyWith(
+            quantity: state.items[product.id]!.quantity + 1,
           ),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(28),
-            child: Stack(
-              children: [
-                Positioned.fill(
-                  child: Image.network(
-                    offer.imageUrl.isNotEmpty ? offer.imageUrl : 'https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?q=80&w=600',
-                    fit: BoxFit.cover,
-                  ),
-                ),
-                Positioned.fill(
-                  child: Container(
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [Colors.black.withOpacity(0.85), Colors.transparent],
-                        begin: Alignment.centerLeft,
-                        end: Alignment.centerRight,
-                      ),
-                    ),
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.all(28),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                        decoration: BoxDecoration(color: primaryColor, borderRadius: BorderRadius.circular(8)),
-                        child: Text(
-                          offer.offerType == 'percentage' ? '${offer.value.round()}% خصم' : 'عرض مميز',
-                          style: TextStyle(color: isLight ? Colors.white : AppColors.premiumDarkBackground, fontSize: 10, fontWeight: FontWeight.w900, letterSpacing: 1),
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      Text(
-                        offer.title,
-                        style: const TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.w800, letterSpacing: -0.5),
-                      ),
-                      const SizedBox(height: 16),
-                      ElevatedButton(
-                        onPressed: () => context.push('/customer/offer', extra: offer),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.white,
-                          foregroundColor: Colors.black,
-                          minimumSize: const Size(100, 40),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                        ),
-                        child: const Text('تسوق الآن', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 12)),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
+        },
+        shopId: state.shopId,
+        shopName: state.shopName,
+        shopImageUrl: state.shopImageUrl,
+      );
+    } else {
+      state = CartModel(
+        items: {
+          ...state.items,
+          product.id: CartItem(product: product),
+        },
+        shopId: state.shopId,
+        shopName: state.shopName,
+        shopImageUrl: state.shopImageUrl,
+      );
+    }
+  }
+
+  void removeItem(String productId) {
+    if (!state.items.containsKey(productId)) return;
+    if (state.items[productId]!.quantity > 1) {
+      state = CartModel(
+        items: {
+          ...state.items,
+          productId: state.items[productId]!.copyWith(
+            quantity: state.items[productId]!.quantity - 1,
           ),
+        },
+        shopId: state.shopId,
+        shopName: state.shopName,
+        shopImageUrl: state.shopImageUrl,
+      );
+    } else {
+      final newItems = Map<String, CartItem>.from(state.items);
+      newItems.remove(productId);
+      if (newItems.isEmpty) {
+        state = CartModel();
+      } else {
+        state = CartModel(
+          items: newItems,
+          shopId: state.shopId,
+          shopName: state.shopName,
+          shopImageUrl: state.shopImageUrl,
         );
-      },
-      loading: () => const _Skeleton(height: 180, radius: 28),
-      error: (e, s) => const SizedBox.shrink(),
-    );
+      }
+    }
+  }
+
+  void clearCart() {
+    state = CartModel();
   }
 }
 
-class _SectionHeader extends StatelessWidget {
-  final String title;
-  final bool showSeeAll;
-  final String? onSeeAll;
-  final Color textColor;
-  final Color primaryColor;
-  const _SectionHeader({required this.title, required this.showSeeAll, this.onSeeAll, required this.textColor, required this.primaryColor});
+final cartProvider = StateNotifierProvider<CartNotifier, CartModel>((ref) {
+  return CartNotifier();
+});
 
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Expanded(
-          child: Text(
-            title,
-            style: TextStyle(
-              fontSize: 20, 
-              fontWeight: FontWeight.w900, 
-              color: textColor, 
-              letterSpacing: -0.5
-            ),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
-        ),
-        if (showSeeAll)
-          TextButton(
-            onPressed: () {
-              if (onSeeAll != null) {
-                context.push(onSeeAll!);
-              }
-            },
-            style: TextButton.styleFrom(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text('عرض الكل', style: TextStyle(color: primaryColor, fontWeight: FontWeight.w900, fontSize: 12, letterSpacing: 0.5)),
-                const SizedBox(width: 4),
-                Icon(Icons.arrow_forward_ios_rounded, size: 10, color: primaryColor),
-              ],
-            ),
-          ),
-      ],
-    );
-  }
-}
+// --- VENDOR ANALYTICS PROVIDERS ---
+final vendorSalesAnalyticsProvider = StreamProvider.family<Map<String, dynamic>, String>((ref, period) {
+  final user = ref.watch(userModelProvider).valueOrNull;
+  if (user == null || user.shopId == null) return Stream.value({});
+  
+  return ref.watch(vendorServiceProvider).getAllShopOrders(user.shopId!).map((orders) {
+    final now = DateTime.now();
+    DateTime start;
+    if (period == 'Daily') {
+      start = DateTime(now.year, now.month, now.day);
+    } else if (period == 'Weekly') {
+      start = now.subtract(Duration(days: now.weekday - 1));
+      start = DateTime(start.year, start.month, start.day);
+    } else {
+      start = DateTime(now.year, now.month, now.day);
+    }
+    
+    final filtered = orders.where((o) => o.createdAt.isAfter(start)).toList();
+    
+    double revenue = 0;
+    int itemsSold = 0;
+    Map<String, Map<String, dynamic>> productStats = {};
+    Map<int, double> chartMap = {};
+    
+    for (var o in filtered) {
+      if (o.status == OrderStatus.delivered) {
+        final amount = o.totalAmount - o.deliveryFee;
+        revenue += amount;
+        
+        for (var item in o.items) {
+          final pid = item['productId'] as String?;
+          if (pid == null) continue;
+          final qty = (item['quantity'] ?? 1) as int;
+          final price = (item['price'] ?? 0.0).toDouble();
+          itemsSold += qty;
+          
+          productStats.putIfAbsent(pid, () => {
+            'name': item['name'] ?? 'Product',
+            'sales': 0,
+            'revenue': 0.0,
+          });
+          productStats[pid]!['sales'] = (productStats[pid]!['sales'] as int) + qty;
+          productStats[pid]!['revenue'] = (productStats[pid]!['revenue'] as double) + (price * qty);
+        }
 
-class _CategoryGrid extends StatelessWidget {
-  const _CategoryGrid();
-
-  @override
-  Widget build(BuildContext context) {
-    final isLight = Theme.of(context).brightness == Brightness.light;
-    final cardColor = isLight ? AppColors.lightSurface : AppColors.premiumDarkSurface;
-    final secondaryTextColor = isLight ? AppColors.lightTextSecondary : AppColors.premiumDarkTextSecondary;
-
-    final categories = [
-      {'name': 'ملابس رجالية', 'key': 'mens_clothing', 'icon': Icons.man_rounded, 'color': const Color(0xFF3B82F6)},
-      {'name': 'ملابس نسائية', 'key': 'womens_clothing', 'icon': Icons.woman_rounded, 'color': const Color(0xFFEC4899)},
-      {'name': 'إكسسوارات', 'key': 'accessories', 'icon': Icons.watch_rounded, 'color': const Color(0xFF8B5CF6)},
-      {'name': 'مستحضرات تجميل', 'key': 'cosmetics', 'icon': Icons.face_retouching_natural_rounded, 'color': const Color(0xFFF43F5E)},
-      {'name': 'أحذية رجالية', 'key': 'mens_shoes', 'icon': Icons.roller_skating_rounded, 'color': const Color(0xFF6366F1)},
-      {'name': 'أحذية نسائية', 'key': 'womens_shoes', 'icon': Icons.set_meal_rounded, 'color': const Color(0xFF14B8A6)},
-      {'name': 'ملابس أطفال', 'key': 'kids_clothing', 'icon': Icons.child_care_rounded, 'color': const Color(0xFFEF4444)},
-      {'name': 'حقائب ومحافظ', 'key': 'bags_wallets', 'icon': Icons.shopping_bag_rounded, 'color': const Color(0xFFF59E0B)},
-      {'name': 'عطور', 'key': 'perfumes', 'icon': Icons.propane_tank_rounded, 'color': const Color(0xFF10B981)},
-    ];
-
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      physics: const BouncingScrollPhysics(),
-      child: Row(
-        children: categories.map((cat) {
-          final color = cat['color'] as Color;
-          return Padding(
-            padding: const EdgeInsets.only(right: 14),
-            child: InkWell(
-              onTap: () => context.push('/customer/category/${cat['key']}'),
-              borderRadius: BorderRadius.circular(22),
-              child: Column(
-                children: [
-                  Container(
-                    width: 72,
-                    height: 72,
-                    decoration: BoxDecoration(
-                      color: cardColor,
-                      borderRadius: BorderRadius.circular(22),
-                      border: Border.all(color: isLight ? color.withOpacity(0.15) : AppColors.premiumDarkDivider.withOpacity(0.5), width: 1),
-                      boxShadow: isLight ? [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10)] : null,
-                    ),
-                    child: Center(child: Icon(cat['icon'] as IconData, color: color, size: 28)),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(cat['name'] as String, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: secondaryTextColor)),
-                ],
-              ),
-            ),
-          );
-        }).toList(),
-      ),
-    );
-  }
-}
-
-class _AllMerchantProductsGridList extends ConsumerWidget {
-  const _AllMerchantProductsGridList();
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    // الاستعانة بـ realTimeProductsStreamProvider المعرف في providers.dart
-    final allProductsAsync = ref.watch(realTimeProductsStreamProvider);  
-    final isLight = Theme.of(context).brightness == Brightness.light;
-    final primaryColor = isLight ? AppColors.lightPrimary : AppColors.premiumDarkPrimary;
-
-    return allProductsAsync.when(
-      data: (products) {
-        if (products.isEmpty) return const SliverToBoxAdapter(child: SizedBox.shrink());
-        return SliverPadding(
-          padding: const EdgeInsets.symmetric(horizontal: 20),
-          sliver: SliverGrid(
-            delegate: SliverChildBuilderDelegate(
-              (context, index) {
-                return _GridProductCard(product: products[index]);
-              },
-              childCount: products.length,
-            ),
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 2,
-              mainAxisSpacing: 14,
-              crossAxisSpacing: 14,
-              childAspectRatio: 0.72,
-            ),
-          ),
-        );
-      },
-      loading: () => SliverToBoxAdapter(
-        child: Center(
-          child: Padding(
-            padding: const EdgeInsets.all(20),
-            child: CircularProgressIndicator(color: primaryColor),
-          ),
-        ),
-      ),
-      error: (e, s) => const SliverToBoxAdapter(child: SizedBox.shrink()),
-    );
-  }
-}
-
-class _GridProductCard extends ConsumerWidget {
-  final ProductModel product;
-  const _GridProductCard({required this.product});
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final isLight = Theme.of(context).brightness == Brightness.light;
-    final primaryColor = isLight ? AppColors.lightPrimary : AppColors.premiumDarkPrimary;
-    final cardColor = isLight ? AppColors.lightSurface : AppColors.premiumDarkSurface;
-    final textColor = isLight ? AppColors.lightTextPrimary : AppColors.premiumDarkTextPrimary;
-    final secondaryTextColor = isLight ? AppColors.lightTextSecondary : AppColors.premiumDarkTextSecondary;
-
-    return InkWell(
-      onTap: () => context.push('/customer/product', extra: product),
-      borderRadius: BorderRadius.circular(22),
-      child: Container(
-        padding: const EdgeInsets.all(10),
-        decoration: BoxDecoration(
-          color: cardColor, 
-          borderRadius: BorderRadius.circular(22),
-          boxShadow: isLight ? [BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 10, offset: const Offset(0, 4))] : null,
-          border: isLight ? Border.all(color: AppColors.lightBorder) : Border.all(color: AppColors.premiumDarkDivider.withOpacity(0.4)),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Expanded(
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(16),
-                child: product.imageUrl.isNotEmpty 
-                    ? Image.network(product.imageUrl, fit: BoxFit.cover, width: double.infinity)
-                    : Container(
-                        width: double.infinity, 
-                        color: isLight ? AppColors.lightSecondaryBackground : AppColors.premiumDarkSecondaryBackground, 
-                        child: Center(child: Icon(Icons.image, color: textColor.withOpacity(0.1)))
-                      ),
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              product.name, 
-              style: TextStyle(
-                fontWeight: FontWeight.w900, 
-                fontSize: 13, 
-                color: textColor
-              ), 
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-            const SizedBox(height: 2),
-            Text(
-              product.description.isNotEmpty ? product.description : 'منتج مميز', 
-              style: TextStyle(
-                color: secondaryTextColor.withOpacity(0.7), 
-                fontSize: 11, 
-                fontWeight: FontWeight.w600
-              ),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-            const SizedBox(height: 6),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  '${product.price.round()} ${product.currency}', 
-                  style: TextStyle(
-                    color: primaryColor, 
-                    fontWeight: FontWeight.w900, 
-                    fontSize: 13
-                  )
-                ),
-                Container(
-                  padding: const EdgeInsets.all(5),
-                  decoration: BoxDecoration(
-                    color: primaryColor.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Icon(Icons.add_rounded, color: primaryColor, size: 14),
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _FeaturedShops extends ConsumerWidget {
-  const _FeaturedShops();
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final featuredAsync = ref.watch(featuredShopsProvider);
-
-    return featuredAsync.when(
-      data: (shops) {
-        if (shops.isEmpty) return const SizedBox.shrink();
-        return SizedBox(
-          height: 250,
-          child: ListView.separated(
-            scrollDirection: Axis.horizontal,
-            physics: const BouncingScrollPhysics(),
-            itemCount: shops.length,
-            padding: const EdgeInsets.only(right: 20),
-            separatorBuilder: (_, __) => const SizedBox(width: 16),
-            itemBuilder: (context, index) => _FeaturedShopCard(shop: shops[index]),
-          ),
-        );
-      },
-      loading: () => SizedBox(height: 250, child: ListView(scrollDirection: Axis.horizontal, children: List.generate(2, (_) => const Padding(padding: EdgeInsets.only(right: 16), child: _Skeleton(width: 270, height: 250, radius: 28))))),
-      error: (e, s) => const SizedBox.shrink(),
-    );
-  }
-}
-
-class _FeaturedShopCard extends StatelessWidget {
-  final ShopModel shop;
-  const _FeaturedShopCard({required this.shop});
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final isLight = theme.brightness == Brightness.light;
-    final cardColor = isLight ? AppColors.lightSurface : AppColors.premiumDarkSurface;
-    final textColor = isLight ? AppColors.lightTextPrimary : AppColors.premiumDarkTextPrimary;
-
-    return InkWell(
-      onTap: () => context.push('/customer/shop/${shop.id}'),
-      borderRadius: BorderRadius.circular(28),
-      child: Container(
-        width: 280,
-        decoration: BoxDecoration(
-          color: cardColor,
-          borderRadius: BorderRadius.circular(28),
-          boxShadow: [
-            BoxShadow(
-              color: isLight ? Colors.black.withOpacity(0.04) : Colors.black.withOpacity(0.2), 
-              blurRadius: 24, 
-              offset: const Offset(0, 8)
-            )
-          ],
-          border: Border.all(color: isLight ? AppColors.lightBorder : AppColors.premiumDarkDivider.withOpacity(0.4)),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Stack(
-              children: [
-                ClipRRect(
-                  borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-                  child: Hero(
-                    tag: 'shop_home_${shop.id}',
-                    child: shop.imageUrl.isNotEmpty 
-                        ? Image.network(shop.imageUrl, height: 145, width: double.infinity, fit: BoxFit.cover)
-                        : Container(height: 145, color: isLight ? AppColors.lightSecondaryBackground : AppColors.premiumDarkSecondaryBackground, child: Center(child: Icon(Icons.storefront, color: textColor.withOpacity(0.1), size: 40))),
-                  ),
-                ),
-                Positioned(
-                  top: 12,
-                  left: 12,
-                  child: _GlassBadge(label: '${shop.rating}', icon: Icons.star_rounded, color: AppColors.warning),
-                ),
-                if (shop.hasFreeDelivery)
-                  Positioned(
-                    top: 12,
-                    right: 12,
-                    child: _GlassBadge(label: 'توصيل مجاني', icon: Icons.bolt_rounded, color: AppColors.success),
-                  ),
-              ],
-            ),
-            Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Expanded(
-                        child: Text(
-                          shop.name, 
-                          style: TextStyle(
-                            fontWeight: FontWeight.w900, 
-                            fontSize: 16, 
-                            color: textColor, 
-                            letterSpacing: -0.2
-                          ), 
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        shop.deliveryTime,
-                        style: TextStyle(color: theme.colorScheme.primary, fontSize: 11, fontWeight: FontWeight.w900),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _GlassBadge extends StatelessWidget {
-  final String label;
-  final IconData icon;
-  final Color color;
-  const _GlassBadge({required this.label, required this.icon, required this.color});
-
-  @override
-  Widget build(BuildContext context) {
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(10),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-          decoration: BoxDecoration(
-            color: Colors.black.withOpacity(0.4),
-            borderRadius: BorderRadius.circular(10),
-            border: Border.all(color: Colors.white.withOpacity(0.1)),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(icon, color: color, size: 12),
-              const SizedBox(width: 4),
-              Text(
-                label,
-                style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w800),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _Skeleton extends StatelessWidget {
-  final double? width;
-  final double height;
-  final double radius;
-  const _Skeleton({this.width, required this.height, required this.radius});
-
-  @override
-  Widget build(BuildContext context) {
-    final isLight = Theme.of(context).brightness == Brightness.light;
-    return Container(
-      width: width,
-      height: height,
-      decoration: BoxDecoration(
-        color: isLight ? Colors.black.withOpacity(0.05) : Colors.white.withOpacity(0.05),
-        borderRadius: BorderRadius.circular(radius),
-      ),
-    );
-  }
-}
-
-class _TrendingProducts extends ConsumerWidget {
-  const _TrendingProducts();
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final trendingAsync = ref.watch(trendingProductsProvider);
-
-    return trendingAsync.when(
-      data: (products) {
-        if (products.isEmpty) return const SizedBox.shrink();
-        return SizedBox(
-          height: 240,
-          child: ListView.separated(
-            scrollDirection: Axis.horizontal,
-            physics: const BouncingScrollPhysics(),
-            itemCount: products.length,
-            padding: const EdgeInsets.only(right: 20),
-            separatorBuilder: (_, __) => const SizedBox(width: 14),
-            itemBuilder: (context, index) => SizedBox(
-              width: 160,
-              child: _GridProductCard(product: products[index]),
-            ),
-          ),
-        );
-      },
-      loading: () => SizedBox(height: 240, child: ListView(scrollDirection: Axis.horizontal, children: List.generate(2, (_) => const Padding(padding: EdgeInsets.only(right: 14), child: _Skeleton(width: 160, height: 240, radius: 22))))),
-      error: (e, s) => const SizedBox.shrink(),
-    );
-  }
-}
+        int key;
+        if (period == 'Daily') {
+          key = o.createdAt.hour;
+        } else if (period == 'Weekly') {
+          key = o.createdAt.weekday;
+        } else {
+          key = o.createdAt.day;
+        }
+        chartMap[key] = (chartMap[key] ?? 0) + amount;
+      }
+    }
+    
+    final topProducts = productStats.values.toList();
+    topProducts.sort((a, b) => (b['sales'] as int).compareTo(a['sales'] as int));
+    
+    int maxPoints = period == 'Daily' ? 23 : (period == 'Weekly' ? 7 : 31);
+    int minPoint = period == 'Weekly' ? 1 : 0;
+    for (int i = minPoint; i <= maxPoints; i++) {
+      chartMap.putIfAbsent(i, () => 0.0);
+    }
+    
+    return {
+      'revenue': revenue,
+      'orders': filtered.length,
+      'itemsSold': itemsSold,
+      'avgValue': filtered.isEmpty ? 0.0 : revenue / filtered.length,
+      'topProducts': topProducts.take(5).toList(),
+      'chartMap': chartMap,
+    };
+  });
+});
