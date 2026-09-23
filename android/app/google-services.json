@@ -1,0 +1,62 @@
+{
+  "project_info": {
+    "project_number": "262483790491",
+    "project_id": "rooz-stor",
+    "storage_bucket": "rooz-stor.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:262483790491:android:186249fcc38c612657d43e",
+        "android_client_info": {
+          "package_name": "com.rooz.store"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "262483790491-3u8l84225b0e9ms8rg41v8sdgknabh9i.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.rooz.store",
+            "certificate_hash": "763ef62295c34634eb5b347ddbf608d1b7128eea"
+          }
+        },
+        {
+          "client_id": "262483790491-sl8gpc6lv1v9mna2it3gh4umln9rfk1c.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.rooz.store",
+            "certificate_hash": "e6115fc4faaee954870ea2874315929b3059d8a6"
+          }
+        },
+        {
+          "client_id": "262483790491-g4jgftfeef2nhs3ovh25vmj0dak1enlr.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC1-2SUhVW-QsWYlo9Qcm2Olk8KOZY80q4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "262483790491-g4jgftfeef2nhs3ovh25vmj0dak1enlr.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "262483790491-42qjaujhsvuutn1933rrol2o4i1cfrqh.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.rooz.store"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

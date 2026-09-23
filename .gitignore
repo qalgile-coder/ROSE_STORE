@@ -43,7 +43,7 @@ android/key.properties
 
 # Firebase configuration (Sensitive)
 lib/firebase_options*.dart
-android/app/google-services*.json
+# android/app/google-services.json
 ios/Runner/GoogleService-Info*.plist
 macos/Runner/GoogleService-Info*.plist
 ios/firebase_app_id_file.json
