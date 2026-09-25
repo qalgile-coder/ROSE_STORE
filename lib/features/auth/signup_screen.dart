@@ -24,16 +24,59 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
   bool _isLoading = false;
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
+  double _passwordStrength = 0.0;
+  String _passwordStrengthText = '';
+  Color _passwordStrengthColor = Colors.transparent;
+
+  @override
+  void initState() {
+    super.initState();
+    _passwordController.addListener(_updatePasswordStrength);
+  }
 
   @override
   void dispose() {
     _nameController.dispose();
     _emailController.dispose();
     _phoneController.dispose();
+    _passwordController.removeListener(_updatePasswordStrength);
     _passwordController.dispose();
     _confirmPasswordController.dispose();
     _referralController.dispose();
     super.dispose();
+  }
+
+  // دالة متقدمة لحساب قوة كلمة المرور وتحديث مؤشر العرض
+  void _updatePasswordStrength() {
+    final password = _passwordController.text;
+    if (password.isEmpty) {
+      setState(() {
+        _passwordStrength = 0.0;
+        _passwordStrengthText = '';
+        _passwordStrengthColor = Colors.transparent;
+      });
+      return;
+    }
+
+    double strength = 0.0;
+    if (password.length >= 6) strength += 0.3;
+    if (password.contains(RegExp(r'[A-Z]')) && password.contains(RegExp(r'[a-z]'))) strength += 0.3;
+    if (password.contains(RegExp(r'[0-9]'))) strength += 0.2;
+    if (password.contains(RegExp(r'[!@#$%^&*(),.?":{}|<>]'))) strength += 0.2;
+
+    setState(() {
+      _passwordStrength = strength.clamp(0.0, 1.0);
+      if (_passwordStrength <= 0.3) {
+        _passwordStrengthText = 'ضعيفة';
+        _passwordStrengthColor = Colors.redAccent;
+      } else if (_passwordStrength <= 0.7) {
+        _passwordStrengthText = 'متوسطة';
+        _passwordStrengthColor = Colors.orangeAccent;
+      } else {
+        _passwordStrengthText = 'قوية جداً';
+        _passwordStrengthColor = Colors.greenAccent;
+      }
+    });
   }
 
   // دالة متقدمة للتحقق من صحة البريد الإلكتروني باحترافية
@@ -41,7 +84,6 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
     if (value == null || value.trim().isEmpty) {
       return 'الرجاء إدخال البريد الإلكتروني';
     }
-    // تعبير حقيقي وموثوق للتحقق من صيغة البريد الإلكتروني
     final emailRegExp = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
     if (!emailRegExp.hasMatch(value.trim())) {
       return 'الرجاء إدخال بريد إلكتروني صحيح (مثال: name@domain.com)';
@@ -71,7 +113,6 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
     setState(() => _isLoading = true);
     try {
       // إرسال البيانات وتسجيل الحساب عبر فايربيس ومزود الخدمة
-      // سيقوم المزود بإنشاء الحساب وإرسال رابط التحقق للبريد تلقائياً بناءً على إعدادات Firebase
       await ref.read(authServiceProvider).signUpCustomer(
         name: _nameController.text.trim(),
         email: _emailController.text.trim(),
@@ -83,7 +124,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
       if (!mounted) return;
 
       _showCustomSnackBar(
-        'تم إنشاء الحساب بنجاح! يجدر التحقق من بريدك الإلكتروني لتفعيل الحساب.',
+        'تم إنشاء الحساب بنجاح! يرجى التحقق من بريدك الإلكتروني لتفعيل الحساب.',
         AppColors.success,
       );
 
@@ -92,14 +133,12 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
       Future.delayed(const Duration(seconds: 3), () {
         if (mounted) {
           ref.read(forcedSplashProvider.notifier).state = false;
-          // يمكنك هنا توجيهه مباشرة لشاشة تطلب منه التحقق من بريده إن أردت
           context.go('/login');
         }
       });
     } catch (e) {
       if (mounted) {
         String errorMessage = e.toString().replaceAll('Exception: ', '');
-        // ترجمة رسائل أخطاء فايربيس الشهيرة لاحترافية أعلى
         if (errorMessage.contains('email-already-in-use')) {
           errorMessage = 'البريد الإلكتروني مستخدم مسبقاً لحساب آخر.';
         } else if (errorMessage.contains('invalid-email')) {
@@ -164,6 +203,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
               child: Form(
                 key: _formKey,
                 child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const SizedBox(height: 10),
                     // Back Button
@@ -179,6 +219,8 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                       ),
                     ),
                     
+                    const SizedBox(height: 20),
+
                     // Logo with glowing border
                     Center(
                       child: Container(
@@ -308,6 +350,36 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                             toggleObscure: () => setState(() => _obscurePassword = !_obscurePassword),
                             validator: _validatePassword,
                           ),
+                          
+                          // Password Strength Indicator Row
+                          if (_passwordController.text.isNotEmpty) ...[
+                            const SizedBox(height: 8),
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: ClipRRect(
+                                    borderRadius: BorderRadius.circular(4),
+                                    child: LinearProgressIndicator(
+                                      value: _passwordStrength,
+                                      backgroundColor: Colors.white.withValues(alpha: 0.1),
+                                      valueColor: AlwaysStoppedAnimation<Color>(_passwordStrengthColor),
+                                      minHeight: 6,
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                Text(
+                                  _passwordStrengthText,
+                                  style: GoogleFonts.plusJakartaSans(
+                                    color: _passwordStrengthColor,
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+
                           const SizedBox(height: 16),
                           _buildTextField(
                             ctrl: _confirmPasswordController, 

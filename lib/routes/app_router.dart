@@ -12,6 +12,7 @@ import '../screens/developer_profile_screen.dart';
 import '../features/auth/welcome_screen.dart';
 import '../features/auth/login_screen.dart';
 import '../features/auth/signup_screen.dart';
+import '../features/auth/verify_email_screen.dart'; // <--- تم إضافة استيراد شاشة التحقق من البريد الإلكتروني الجديدة
 import '../features/admin/admin_dashboard.dart';
 import '../features/admin/add_vendor_screen.dart';
 import '../features/admin/add_rider_screen.dart';
@@ -108,7 +109,8 @@ final routerProvider = Provider<GoRouter>((ref) {
 
       final loggingIn = state.matchedLocation == '/login' ||
           state.matchedLocation == '/welcome' ||
-          state.matchedLocation == '/signup';
+          state.matchedLocation == '/signup' ||
+          state.matchedLocation == '/verify-email';
 
       if (settings?.maintenanceMode == true) {
         final isSuperAdmin = userModel.valueOrNull?.role == UserRole.superAdmin;
@@ -194,6 +196,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(path: '/welcome', builder: (context, state) => const WelcomeScreen()),
       GoRoute(path: '/login', builder: (context, state) => const LoginScreen()),
       GoRoute(path: '/signup', builder: (context, state) => const SignupScreen()),
+      GoRoute(path: '/verify-email', builder: (context, state) => const VerifyEmailScreen()), // <--- تم إضافة مسار الـ Route الخاص بالتحقق من البريد الإلكتروني هنا بنجاح
       GoRoute(path: '/admin', builder: (context, state) => const AdminDashboard()),
       GoRoute(path: '/admin/add-vendor', builder: (context, state) => const AddVendorScreen()),
       GoRoute(path: '/admin/add-rider', builder: (context, state) => const AddRiderScreen()),
