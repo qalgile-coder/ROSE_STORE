@@ -12,7 +12,7 @@ import '../screens/developer_profile_screen.dart';
 import '../features/auth/welcome_screen.dart';
 import '../features/auth/login_screen.dart';
 import '../features/auth/signup_screen.dart';
-import '../features/auth/verify_email_screen.dart'; // <--- تم إضافة استيراد شاشة التحقق من البريد الإلكتروني الجديدة
+import '../screens/verify_email_screen.dart'; // <--- تم تعديل المسار هنا ليطابق مكان الملف في lib/screens/
 import '../features/admin/admin_dashboard.dart';
 import '../features/admin/add_vendor_screen.dart';
 import '../features/admin/add_rider_screen.dart';
