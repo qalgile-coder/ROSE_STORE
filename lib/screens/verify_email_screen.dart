@@ -2,12 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../core/providers.dart';
-import '../theme/app_colors.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import '../../core/providers.dart';
+import '../../theme/app_colors.dart';
 
 class VerifyEmailScreen extends ConsumerStatefulWidget {
-  final String email;
-  const VerifyEmailScreen({super.key, required this.email});
+  final String? email;
+  const VerifyEmailScreen({super.key, this.email});
 
   @override
   ConsumerState<VerifyEmailScreen> createState() => _VerifyEmailScreenState();
@@ -17,208 +18,186 @@ class _VerifyEmailScreenState extends ConsumerState<VerifyEmailScreen> {
   bool _isChecking = false;
   bool _isResending = false;
 
-  // دالة للتحقق مما إذا قام المستخدم بالضغط على رابط التفعيل في إيميله
   Future<void> _checkVerificationStatus() async {
     setState(() => _isChecking = true);
     try {
-      final authService = ref.read(authServiceProvider);
-      
-      // إذا كان المستخدم غير مسجل دخول حالياً، نحاول تسجيل دخوله مؤقتاً عبر الجلسة أو توجيهه لتسجيل الدخول
-      var user = authService.currentUser;
-      
+      var user = FirebaseAuth.instance.currentUser;
       if (user != null) {
-        // تحديث معلومات المستخدم من سيرفر فايربيس لمعرفة حالة emailVerified الحالية
         await user.reload();
-        user = authService.currentUser; // جلب النسخة المحدثة
+        user = FirebaseAuth.instance.currentUser;
 
         if (user != null && user.emailVerified) {
           if (!mounted) return;
-          _showSnackBar('تم تفعيل البريد الإلكتروني بنجاح!', AppColors.success);
-          context.go('/home'); // الانتقال للشاشة الرئيسية بعد التفعيل الكامل
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('تم التحقق من البريد بنجاح!', style: GoogleFonts.plusJakartaSans(color: Colors.white, fontWeight: FontWeight.w600)),
+              backgroundColor: AppColors.success,
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            ),
+          );
+          context.go('/customer');
         } else {
           if (!mounted) return;
-          _showSnackBar(
-            'لم يتم تفعيل البريد بعد. يرجى فتح بريدك الإلكتروني والضغط على رابط التحقق.',
-            Colors.orange,
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('لم يتم التحقق بعد. يرجى مراجعة بريدك والضغط على الرابط.', style: GoogleFonts.plusJakartaSans(color: Colors.white, fontWeight: FontWeight.w600)),
+              backgroundColor: Colors.orange,
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            ),
           );
         }
-      } else {
-        if (!mounted) return;
-        _showSnackBar('انتهت الجلسة، يرجى تسجيل الدخول مرة أخرى.', AppColors.error);
-        context.go('/login');
       }
     } catch (e) {
       if (!mounted) return;
-      _showSnackBar('حدث خطأ أثناء التحقق: ${e.toString().replaceAll('Exception: ', '')}', AppColors.error);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('حدث خطأ: ${e.toString()}', style: GoogleFonts.plusJakartaSans(color: Colors.white, fontWeight: FontWeight.w600)),
+          backgroundColor: AppColors.error,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        ),
+      );
     } finally {
       if (mounted) setState(() => _isChecking = false);
     }
   }
 
-  // دالة لإعادة إرسال رسالة التحقق
   Future<void> _resendVerificationEmail() async {
     setState(() => _isResending = true);
     try {
-      final user = ref.read(authServiceProvider).currentUser;
+      final user = FirebaseAuth.instance.currentUser;
       if (user != null && !user.emailVerified) {
         await user.sendEmailVerification();
         if (!mounted) return;
-        _showSnackBar('تم إعادة إرسال رسالة التحقق إلى بريدك بنجاح.', AppColors.success);
-      } else {
-        if (!mounted) return;
-        _showSnackBar('البريد مفعل مسبقاً أو أن الجلسة منتهية.', Colors.orange);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('تم إعادة إرسال رابط التحقق بنجاح', style: GoogleFonts.plusJakartaSans(color: Colors.white, fontWeight: FontWeight.w600)),
+            backgroundColor: AppColors.success,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          ),
+        );
       }
     } catch (e) {
       if (!mounted) return;
-      _showSnackBar('فشل الإرسال: حاول مرة أخرى لاحقاً.', AppColors.error);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('فشل الإرسال: ${e.toString()}', style: GoogleFonts.plusJakartaSans(color: Colors.white, fontWeight: FontWeight.w600)),
+          backgroundColor: AppColors.error,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        ),
+      );
     } finally {
       if (mounted) setState(() => _isResending = false);
     }
   }
 
-  void _showSnackBar(String message, Color bgColor) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          message,
-          style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w600, color: Colors.white),
-        ),
-        backgroundColor: bgColor,
-        behavior: SnackBarBehavior.floating,
-        margin: const EdgeInsets.all(20),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
-    const bgColor = Color(0xFF0B1120);
-    const surfaceColor = Color(0xFF1E293B);
     const accentColor = Color(0xFF38BDF8);
+    const surfaceColor = Color(0xFF1E293B);
+    const bgColor = Color(0xFF0B1120);
 
     return Scaffold(
       backgroundColor: bgColor,
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(28.0),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 28),
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.center,
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const SizedBox(height: 40),
-              // Icon Container with Glow
               Container(
-                width: 100,
-                height: 100,
+                padding: const EdgeInsets.all(24),
                 decoration: BoxDecoration(
+                  color: surfaceColor.withValues(alpha: 0.4),
                   shape: BoxShape.circle,
-                  color: surfaceColor.withValues(alpha: 0.5),
-                  border: Border.all(color: accentColor.withValues(alpha: 0.3)),
+                  border: Border.all(color: accentColor.withValues(alpha: 0.2)),
                 ),
-                child: const Icon(Icons.mark_email_unread_rounded, size: 48, color: accentColor),
+                child: const Icon(
+                  Icons.mark_email_unread_rounded,
+                  size: 64,
+                  color: accentColor,
+                ),
               ),
               const SizedBox(height: 32),
-              
               Text(
                 'تحقق من بريدك الإلكتروني',
                 style: GoogleFonts.plusJakartaSans(
-                  fontSize: 28,
+                  fontSize: 26,
                   fontWeight: FontWeight.w800,
                   color: Colors.white,
-                  letterSpacing: -0.5,
-                ),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 16),
-              
-              Text(
-                'لقد أرسلنا رابط تحقق إلى بريدك الإلكتروني:\n',
-                style: GoogleFonts.plusJakartaSans(fontSize: 14, color: Colors.white70),
-                textAlign: TextAlign.center,
-              ),
-              Text(
-                widget.email,
-                style: GoogleFonts.plusJakartaSans(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w700,
-                  color: accentColor,
                 ),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 12),
               Text(
-                'يرجى فتح بريدك، الضغط على الرابط لتفعيل الحساب، ثم العودة والضغط على الزر أدناه.',
-                style: GoogleFonts.plusJakartaSans(fontSize: 13, color: Colors.white60, height: 1.5),
+                widget.email != null 
+                    ? 'لقد أرسلنا رابط تحقق إلى:\n${widget.email}' 
+                    : 'لقد أرسلنا رابط تحقق إلى بريدك الإلكتروني. يرجى النقر على الرابط لتفعيل حسابك.',
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 15,
+                  color: Colors.white.withValues(alpha: 0.6),
+                  height: 1.5,
+                ),
                 textAlign: TextAlign.center,
               ),
-              const SizedBox(height: 48),
-
-              // Action Card Container
-              Container(
-                padding: const EdgeInsets.all(24),
-                decoration: BoxDecoration(
-                  color: surfaceColor.withValues(alpha: 0.3),
-                  borderRadius: BorderRadius.circular(24),
-                  border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
-                ),
-                child: Column(
-                  children: [
-                    // Check Status Button
-                    ElevatedButton(
-                      onPressed: _isChecking ? null : _checkVerificationStatus,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: accentColor,
-                        foregroundColor: Colors.black,
-                        minimumSize: const Size(double.infinity, 56),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                        elevation: 4,
-                      ),
-                      child: _isChecking
-                          ? const SizedBox(
-                              width: 24,
-                              height: 24,
-                              child: CircularProgressIndicator(color: Colors.black, strokeWidth: 2.5),
-                            )
-                          : Text(
-                              'تحقق من تفعيل الحساب',
-                              style: GoogleFonts.plusJakartaSans(
-                                fontSize: 15,
-                                fontWeight: FontWeight.w800,
-                              ),
-                            ),
-                    ),
-                    const SizedBox(height: 16),
-
-                    // Resend Email Button
-                    TextButton.icon(
-                      onPressed: _isResending ? null : _resendVerificationEmail,
-                      icon: _isResending
-                          ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))
-                          : const Icon(Icons.refresh_rounded, size: 18, color: accentColor),
-                      label: Text(
-                        _isResending ? 'جاري الإرسال...' : 'إعادة إرسال رسالة التحقق',
-                        style: GoogleFonts.plusJakartaSans(
-                          color: accentColor,
-                          fontWeight: FontWeight.w600,
-                          fontSize: 14,
+              const SizedBox(height: 40),
+              SizedBox(
+                width: double.infinity,
+                height: 56,
+                child: ElevatedButton(
+                  onPressed: _isChecking ? null : _checkVerificationStatus,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: accentColor,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                    elevation: 4,
+                  ),
+                  child: _isChecking
+                      ? const CircularProgressIndicator(color: Colors.white)
+                      : Text(
+                          'لقد قمت بالتحقق، متابعة',
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w800,
+                            color: Colors.black87,
+                          ),
                         ),
-                      ),
-                    ),
-                  ],
                 ),
               ),
-
-              const SizedBox(height: 40),
-
-              // Back to Login
+              const SizedBox(height: 16),
+              SizedBox(
+                width: double.infinity,
+                height: 56,
+                child: OutlinedButton(
+                  onPressed: _isResending ? null : _resendVerificationEmail,
+                  style: OutlinedButton.styleFrom(
+                    side: const BorderSide(color: accentColor),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  ),
+                  child: _isResending
+                      ? const CircularProgressIndicator(color: accentColor)
+                      : Text(
+                          'إعادة إرسال البريد',
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w700,
+                            color: accentColor,
+                          ),
+                        ),
+                ),
+              ),
+              const SizedBox(height: 16),
               TextButton(
                 onPressed: () => context.go('/login'),
                 child: Text(
                   'العودة إلى تسجيل الدخول',
                   style: GoogleFonts.plusJakartaSans(
-                    color: Colors.white38,
-                    fontSize: 13,
-                    fontWeight: FontWeight.w500,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.white70,
                   ),
                 ),
               ),
