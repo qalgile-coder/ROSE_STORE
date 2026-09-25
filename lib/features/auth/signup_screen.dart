@@ -1,12 +1,8 @@
-import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:mailer/mailer.dart';
-import 'package:mailer/smtp_server.dart';
 import '../../core/providers.dart';
-import '../../core/secrets.dart';
 import '../../theme/app_colors.dart';
 
 class SignupScreen extends ConsumerStatefulWidget {
@@ -23,13 +19,10 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
   final _phoneController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
-  final _otpController = TextEditingController();
   final _referralController = TextEditingController();
   
   bool _isLoading = false;
-  bool _isOtpSent = false;
   bool _obscurePassword = true;
-  String? _generatedOtp;
 
   @override
   void dispose() {
@@ -38,84 +31,11 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
     _phoneController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
-    _otpController.dispose();
     _referralController.dispose();
     super.dispose();
   }
 
-  Future<void> _sendOtp() async {
-    final email = _emailController.text.trim();
-    final emailRegex = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
-    
-    if (email.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Enter your email'), backgroundColor: AppColors.error));
-      return;
-    }
-    
-    if (!emailRegex.hasMatch(email)) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Invalid email format'), backgroundColor: AppColors.error));
-      return;
-    }
-
-    setState(() => _isLoading = true);
-    final random = Random();
-    _generatedOtp = (100000 + random.nextInt(900000)).toString();
-
-    final smtpServer = gmail(AppSecrets.smtpEmail, AppSecrets.smtpPassword);
-    final message = Message()
-      ..from = const Address(AppSecrets.smtpEmail, 'ROOZ Store')
-      ..recipients.add(email)
-      ..subject = 'Verify Your Account - ROOZ Store'
-      ..html = '''
-        <div style="font-family: sans-serif; background-color: #0B1120; padding: 40px; color: #FFFFFF; text-align: center;">
-          <div style="max-width: 500px; margin: auto; background: #1E293B; border-radius: 24px; padding: 40px; border: 1px solid rgba(255,255,255,0.05);">
-            <h1 style="margin: 0; font-size: 24px; color: #38BDF8;">ROOZ Store</h1>
-            <p style="color: #C5CBD8; font-size: 16px; margin: 20px 0;">Use the code below to verify your account</p>
-            <div style="background: #0B1120; padding: 20px; border-radius: 12px; display: inline-block;">
-              <span style="font-size: 32px; font-weight: 800; letter-spacing: 5px; color: #FFFFFF;">$_generatedOtp</span>
-            </div>
-            <p style="color: #6B7280; font-size: 12px; margin-top: 30px;">Valid for 10 minutes.</p>
-          </div>
-        </div>
-      ''';
-
-    try {
-      await send(message, smtpServer);
-      setState(() { _isLoading = false; _isOtpSent = true; });
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              'Verification code sent to your email.',
-              style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w600, color: Colors.white),
-            ),
-            backgroundColor: AppColors.success,
-            behavior: SnackBarBehavior.floating,
-            margin: const EdgeInsets.all(20),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          ),
-        );
-      }
-    } catch (e) {
-      setState(() => _isLoading = false);
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              'Failed to send code. Please check your email and try again.',
-              style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w600, color: Colors.white),
-            ),
-            backgroundColor: AppColors.error,
-            behavior: SnackBarBehavior.floating,
-            margin: const EdgeInsets.all(20),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          ),
-        );
-      }
-    }
-  }
-
-  Future<void> _verifyAndSignup() async {
+  Future<void> _registerUser() async {
     if (!_formKey.currentState!.validate()) return;
     
     if (_passwordController.text != _confirmPasswordController.text) {
@@ -124,17 +44,11 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
       );
       return;
     }
-    
-    if (_otpController.text.trim().isEmpty || _otpController.text.trim() != _generatedOtp) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Invalid OTP verification code'), backgroundColor: AppColors.error),
-      );
-      return;
-    }
 
     setState(() => _isLoading = true);
     try {
-      // Execute professional customer registration through authentication provider
+      // إرسال البيانات وتسجيل الحساب عبر فايربيس ومزود الخدمة لديك
+      // سيقوم فايربيس تلقائياً بإنشاء الحساب وإرسال رسالة التحقق للبريد الإلكتروني
       await ref.read(authServiceProvider).signUpCustomer(
         name: _nameController.text.trim(),
         email: _emailController.text.trim(),
@@ -145,7 +59,20 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
 
       if (!mounted) return;
 
-      // Trigger splash / routing state successfully
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Account created successfully! Please check your email to verify your account.',
+            style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w600, color: Colors.white),
+          ),
+          backgroundColor: AppColors.success,
+          behavior: SnackBarBehavior.floating,
+          margin: const EdgeInsets.all(20),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        ),
+      );
+
+      // تفعيل حالة الانتقال أو التوجيه للشاشة الرئيسية أو تسجيل الدخول
       ref.read(forcedSplashProvider.notifier).state = true;
       Future.delayed(const Duration(seconds: 3), () {
         if (mounted) {
@@ -157,7 +84,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              'Account creation failed: ${e.toString().replaceAll('Exception: ', '')}',
+              'Registration failed: ${e.toString().replaceAll('Exception: ', '')}',
               style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w600, color: Colors.white),
             ),
             backgroundColor: AppColors.error,
@@ -321,7 +248,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                         children: [
                           _buildTextField(_nameController, 'Full Name', Icons.person_rounded),
                           const SizedBox(height: 16),
-                          _buildTextField(_emailController, 'Email Address', Icons.email_rounded, enabled: !_isOtpSent, type: TextInputType.emailAddress),
+                          _buildTextField(_emailController, 'Email Address', Icons.email_rounded, type: TextInputType.emailAddress),
                           const SizedBox(height: 16),
                           _buildTextField(_phoneController, 'Phone Number', Icons.phone_rounded, type: TextInputType.phone),
                           const SizedBox(height: 16),
@@ -345,23 +272,11 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                           const SizedBox(height: 16),
                           _buildTextField(_referralController, 'Referral Code (Optional)', Icons.card_giftcard_rounded, required: false),
                           
-                          if (_isOtpSent) ...[
-                            const SizedBox(height: 24),
-                            const Divider(color: Colors.white10),
-                            const SizedBox(height: 24),
-                            _buildTextField(_otpController, 'Enter 6-Digit OTP', Icons.verified_rounded, type: TextInputType.number),
-                            const SizedBox(height: 12),
-                            Text(
-                              "Check your email for the verification code.",
-                              style: GoogleFonts.plusJakartaSans(color: Colors.white.withValues(alpha: 0.4), fontSize: 12, fontStyle: FontStyle.italic),
-                            ),
-                          ],
-                          
                           const SizedBox(height: 32),
                           
-                          // Continue Button
+                          // Register Button
                           InkWell(
-                            onTap: _isLoading ? null : (_isOtpSent ? _verifyAndSignup : _sendOtp),
+                            onTap: _isLoading ? null : _registerUser,
                             borderRadius: BorderRadius.circular(20),
                             child: Container(
                               height: 64,
@@ -388,7 +303,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                                   else ...[
                                     const Spacer(flex: 2),
                                     Text(
-                                      _isOtpSent ? 'VERIFY & REGISTER' : 'CONTINUE',
+                                      'REGISTER',
                                       style: GoogleFonts.plusJakartaSans(
                                         color: Colors.white,
                                         fontSize: 16,
@@ -548,7 +463,7 @@ class _FeatureItem extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext codeContext) {
     return Expanded(
       child: Column(
         children: [
