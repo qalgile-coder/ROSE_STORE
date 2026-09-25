@@ -23,6 +23,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
   
   bool _isLoading = false;
   bool _obscurePassword = true;
+  bool _obscureConfirmPassword = true;
 
   @override
   void dispose() {
@@ -35,20 +36,42 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
     super.dispose();
   }
 
+  // دالة متقدمة للتحقق من صحة البريد الإلكتروني باحترافية
+  String? _validateEmail(String? value) {
+    if (value == null || value.trim().isEmpty) {
+      return 'الرجاء إدخال البريد الإلكتروني';
+    }
+    // تعبير حقيقي وموثوق للتحقق من صيغة البريد الإلكتروني
+    final emailRegExp = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
+    if (!emailRegExp.hasMatch(value.trim())) {
+      return 'الرجاء إدخال بريد إلكتروني صحيح (مثال: name@domain.com)';
+    }
+    return null;
+  }
+
+  // دالة متقدمة للتحقق من قوة كلمة المرور
+  String? _validatePassword(String? value) {
+    if (value == null || value.isEmpty) {
+      return 'الرجاء إدخال كلمة المرور';
+    }
+    if (value.length < 6) {
+      return 'كلمة المرور يجب أن تكون 6 أحرف على الأقل';
+    }
+    return null;
+  }
+
   Future<void> _registerUser() async {
     if (!_formKey.currentState!.validate()) return;
     
     if (_passwordController.text != _confirmPasswordController.text) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Passwords do not match'), backgroundColor: AppColors.error),
-      );
+      _showCustomSnackBar('كلمات المرور غير متطابقة', AppColors.error);
       return;
     }
 
     setState(() => _isLoading = true);
     try {
-      // إرسال البيانات وتسجيل الحساب عبر فايربيس ومزود الخدمة لديك
-      // سيقوم فايربيس تلقائياً بإنشاء الحساب وإرسال رسالة التحقق للبريد الإلكتروني
+      // إرسال البيانات وتسجيل الحساب عبر فايربيس ومزود الخدمة
+      // سيقوم المزود بإنشاء الحساب وإرسال رابط التحقق للبريد تلقائياً بناءً على إعدادات Firebase
       await ref.read(authServiceProvider).signUpCustomer(
         name: _nameController.text.trim(),
         email: _emailController.text.trim(),
@@ -59,44 +82,51 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
 
       if (!mounted) return;
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            'Account created successfully! Please check your email to verify your account.',
-            style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w600, color: Colors.white),
-          ),
-          backgroundColor: AppColors.success,
-          behavior: SnackBarBehavior.floating,
-          margin: const EdgeInsets.all(20),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        ),
+      _showCustomSnackBar(
+        'تم إنشاء الحساب بنجاح! يجدر التحقق من بريدك الإلكتروني لتفعيل الحساب.',
+        AppColors.success,
       );
 
-      // تفعيل حالة الانتقال أو التوجيه للشاشة الرئيسية أو تسجيل الدخول
+      // تفعيل حالة الانتقال أو التوجيه للشاشة الرئيسية أو شاشة انتظار التحقق
       ref.read(forcedSplashProvider.notifier).state = true;
       Future.delayed(const Duration(seconds: 3), () {
         if (mounted) {
           ref.read(forcedSplashProvider.notifier).state = false;
+          // يمكنك هنا توجيهه مباشرة لشاشة تطلب منه التحقق من بريده إن أردت
+          context.go('/login');
         }
       });
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              'Registration failed: ${e.toString().replaceAll('Exception: ', '')}',
-              style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w600, color: Colors.white),
-            ),
-            backgroundColor: AppColors.error,
-            behavior: SnackBarBehavior.floating,
-            margin: const EdgeInsets.all(20),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          ),
-        );
+        String errorMessage = e.toString().replaceAll('Exception: ', '');
+        // ترجمة رسائل أخطاء فايربيس الشهيرة لاحترافية أعلى
+        if (errorMessage.contains('email-already-in-use')) {
+          errorMessage = 'البريد الإلكتروني مستخدم مسبقاً لحساب آخر.';
+        } else if (errorMessage.contains('invalid-email')) {
+          errorMessage = 'صيغة البريد الإلكتروني غير صالحة.';
+        } else if (errorMessage.contains('weak-password')) {
+          errorMessage = 'كلمة المرور ضعيفة جداً.';
+        }
+        _showCustomSnackBar('فشل التسجيل: $errorMessage', AppColors.error);
       }
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
+  }
+
+  void _showCustomSnackBar(String message, Color bgColor) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          message,
+          style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w600, color: Colors.white),
+        ),
+        backgroundColor: bgColor,
+        behavior: SnackBarBehavior.floating,
+        margin: const EdgeInsets.all(20),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      ),
+    );
   }
 
   @override
@@ -246,31 +276,59 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                       ),
                       child: Column(
                         children: [
-                          _buildTextField(_nameController, 'Full Name', Icons.person_rounded),
-                          const SizedBox(height: 16),
-                          _buildTextField(_emailController, 'Email Address', Icons.email_rounded, type: TextInputType.emailAddress),
-                          const SizedBox(height: 16),
-                          _buildTextField(_phoneController, 'Phone Number', Icons.phone_rounded, type: TextInputType.phone),
-                          const SizedBox(height: 16),
                           _buildTextField(
-                            _passwordController, 
-                            'Password', 
-                            Icons.lock_rounded, 
-                            isPassword: true,
-                            isObscured: _obscurePassword,
-                            toggleObscure: () => setState(() => _obscurePassword = !_obscurePassword),
+                            ctrl: _nameController, 
+                            hint: 'Full Name', 
+                            icon: Icons.person_rounded,
+                            validator: (v) => (v == null || v.trim().isEmpty) ? 'الرجاء إدخال الاسم الكامل' : null,
                           ),
                           const SizedBox(height: 16),
                           _buildTextField(
-                            _confirmPasswordController, 
-                            'Confirm Password', 
-                            Icons.verified_user_outlined, 
+                            ctrl: _emailController, 
+                            hint: 'Email Address', 
+                            icon: Icons.email_rounded, 
+                            type: TextInputType.emailAddress,
+                            validator: _validateEmail,
+                          ),
+                          const SizedBox(height: 16),
+                          _buildTextField(
+                            ctrl: _phoneController, 
+                            hint: 'Phone Number', 
+                            icon: Icons.phone_rounded, 
+                            type: TextInputType.phone,
+                            validator: (v) => (v == null || v.trim().isEmpty) ? 'الرجاء إدخال رقم الهاتف' : null,
+                          ),
+                          const SizedBox(height: 16),
+                          _buildTextField(
+                            ctrl: _passwordController, 
+                            hint: 'Password', 
+                            icon: Icons.lock_rounded, 
                             isPassword: true, 
                             isObscured: _obscurePassword,
                             toggleObscure: () => setState(() => _obscurePassword = !_obscurePassword),
+                            validator: _validatePassword,
                           ),
                           const SizedBox(height: 16),
-                          _buildTextField(_referralController, 'Referral Code (Optional)', Icons.card_giftcard_rounded, required: false),
+                          _buildTextField(
+                            ctrl: _confirmPasswordController, 
+                            hint: 'Confirm Password', 
+                            icon: Icons.verified_user_outlined, 
+                            isPassword: true, 
+                            isObscured: _obscureConfirmPassword,
+                            toggleObscure: () => setState(() => _obscureConfirmPassword = !_obscureConfirmPassword),
+                            validator: (v) {
+                              if (v == null || v.isEmpty) return 'الرجاء تأكيد كلمة المرور';
+                              if (v != _passwordController.text) return 'كلمتا المرور غير متطابقتين';
+                              return null;
+                            },
+                          ),
+                          const SizedBox(height: 16),
+                          _buildTextField(
+                            ctrl: _referralController, 
+                            hint: 'Referral Code (Optional)', 
+                            icon: Icons.card_giftcard_rounded, 
+                            required: false,
+                          ),
                           
                           const SizedBox(height: 32),
                           
@@ -395,16 +453,17 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
     );
   }
 
-  Widget _buildTextField(
-    TextEditingController ctrl, 
-    String hint, 
-    IconData icon, {
+  Widget _buildTextField({
+    required TextEditingController ctrl, 
+    required String hint, 
+    required IconData icon, 
     bool isPassword = false, 
     bool isObscured = false,
     VoidCallback? toggleObscure,
     TextInputType? type, 
     bool enabled = true,
     bool required = true,
+    String? Function(String?)? validator,
   }) {
     const accentColor = Color(0xFF38BDF8);
 
@@ -441,12 +500,20 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
           borderRadius: BorderRadius.circular(20),
           borderSide: const BorderSide(color: accentColor, width: 1.5),
         ),
+        errorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(20),
+          borderSide: const BorderSide(color: Colors.redAccent, width: 1),
+        ),
+        focusedErrorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(20),
+          borderSide: const BorderSide(color: Colors.redAccent, width: 1.5),
+        ),
         disabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(20),
           borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.02)),
         ),
       ),
-      validator: (v) => (required && (v == null || v.isEmpty)) ? 'Field required' : null,
+      validator: validator ?? (v) => (required && (v == null || v.isEmpty)) ? 'Field required' : null,
     );
   }
 }
