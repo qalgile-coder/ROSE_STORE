@@ -100,7 +100,7 @@ class PdfService {
               
               pw.Spacer(),
               pw.Center(child: pw.Text('Thank you for shopping with ROOZ Store!')),
-              pw.Center(child: pw.Text('Powered by Zenvyro Labs', style: pw.TextStyle(fontSize: 10, color: PdfColors.grey))),
+              pw.Center(child: pw.Text('Powered by OSI', style: pw.TextStyle(fontSize: 10, color: PdfColors.grey))),
             ],
           );
         },

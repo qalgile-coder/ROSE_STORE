@@ -504,7 +504,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                           ),
                           const SizedBox(height: 4),
                           Text(
-                            'Zenvyro Labs',
+                            'OSI',
                             style: GoogleFonts.plusJakartaSans(
                               color: Colors.white.withValues(alpha: 0.7),
                               fontWeight: FontWeight.w800,
