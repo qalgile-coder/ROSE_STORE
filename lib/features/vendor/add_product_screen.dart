@@ -11,10 +11,8 @@ import '../../theme/app_colors.dart';
 // مزود لتحديث حالة تدفق المنتجات لضمان التزامن الفوري مع شاشة العميل (CustomerHome)
 // -----------------------------------------------------------------------------
 final realTimeProductsStreamProvider = StreamProvider.autoDispose<List<ProductModel>>((ref) {
-  // تم استبدال الـ repository المفقود بالخدمة المعتمدة في providers.dart
-  return ref.watch(customerServiceProvider).getAllCategories().asyncMap((categories) async {
-    return [];
-  });
+  // تم تصحيح المزود لجلب تدفق المنتجات الحقيقي من خدمة العميل بدلاً من إرجاع قائمة فارغة
+  return ref.watch(customerServiceProvider).getProductsStream();
 });
 
 class AddProductScreen extends ConsumerStatefulWidget {
@@ -36,7 +34,7 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
   // متغير القسم المحدد (يحفظ الـ key الخاص بالقسم المتوافق مع الفلاتر الرئيسية)
   String? _selectedCategoryKey;
 
-  // قائمة الأقسام الـ 9 المعتمدة بالعربية مع المفاتيح البرمجية المرتبطة بشاشة العميل
+  // قائمة الأقسام الـ 9 المعتمدة بلغة سليمة ومفاتيح برمجية ثابتة وموثوقة لضمان عدم تلف الترميز
   final List<Map<String, String>> _categories = [
     {'name': 'ملابس رجالية', 'key': 'mens_clothing'},
     {'name': 'ملابس نسائية', 'key': 'womens_clothing'},
@@ -337,7 +335,7 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
               _buildModernField(_descriptionController, 'Description', Icons.description_rounded, colorScheme, isLight, maxLines: 4),
               const SizedBox(height: 16),
               
-              // خانة اختيار الأقسام الـ 9 باللغة العربية
+              // خانة اختيار الأقسام الـ 9 المحدثة والآمنة
               _buildCategoryDropdown(colorScheme, isLight),
               
               const SizedBox(height: 32),
@@ -418,7 +416,7 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
     );
   }
 
-  // ويدجت قائمة اختيار القسم الـ 9 بتصميم متناسق مع الحقول وبدون أخطاء مطابقة القيم
+  // ويدجت قائمة اختيار القسم الآمنة والمستقرة
   Widget _buildCategoryDropdown(ColorScheme colorScheme, bool isLight) {
     return Container(
       decoration: BoxDecoration(

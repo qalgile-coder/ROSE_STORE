@@ -10,14 +10,8 @@ import './widgets/customer_bottom_nav.dart';
 import '../../core/localization.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 
-// -----------------------------------------------------------------------------
-// Stream Provider للتحديث اللحظي للمنتجات المضافة حديثاً
-// -----------------------------------------------------------------------------
 final realTimeProductsStreamProvider = StreamProvider.autoDispose<List<ProductModel>>((ref) {
-  // تم تصحيح المزود ليتوافق مع بنية الخدمات المعتمدة في providers.dart
-  return ref.watch(customerServiceProvider).getAllCategories().asyncMap((categories) async {
-    return [];
-  });
+  return ref.watch(customerServiceProvider).getProductsStream();
 });
 
 class CustomerHome extends ConsumerWidget {
@@ -29,12 +23,12 @@ class CustomerHome extends ConsumerWidget {
     final isLight = theme.brightness == Brightness.light;
     final connectivity = ref.watch(connectivityProvider).asData?.value;
     final isOffline = connectivity == ConnectivityResult.none;
-    
+
     // Dynamic Theme Mapping
     final bgColor = isLight ? AppColors.lightBackground : AppColors.premiumDarkBackground;
     final primaryColor = isLight ? AppColors.lightPrimary : AppColors.premiumDarkPrimary;
     final textColor = isLight ? AppColors.lightTextPrimary : AppColors.premiumDarkTextPrimary;
-
+    
     return Scaffold(
       backgroundColor: bgColor,
       body: Stack(
@@ -120,6 +114,7 @@ class CustomerHome extends ConsumerWidget {
                   ),
                 ),
               ),
+              // قسم جميع المنتجات مرتب ومنسق بشبكة رأسية مرنة واحترافية متوافقة مع الـ CustomScrollView
               const _AllMerchantProductsGridList(),
               SliverToBoxAdapter(
                 child: Padding(
@@ -507,6 +502,7 @@ class _CategoryGrid extends StatelessWidget {
     final cardColor = isLight ? AppColors.lightSurface : AppColors.premiumDarkSurface;
     final secondaryTextColor = isLight ? AppColors.lightTextSecondary : AppColors.premiumDarkTextSecondary;
 
+    // الأقسام الـ 9 المتوافقة تماماً مع شاشة الإضافة
     final categories = [
       {'name': 'ملابس رجالية', 'key': 'mens_clothing', 'icon': Icons.man_rounded, 'color': const Color(0xFF3B82F6)},
       {'name': 'ملابس نسائية', 'key': 'womens_clothing', 'icon': Icons.woman_rounded, 'color': const Color(0xFFEC4899)},
@@ -560,7 +556,6 @@ class _AllMerchantProductsGridList extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // ربط الشبكة بـ Stream لضمان التحديث اللحظي الفوري
     final allProductsAsync = ref.watch(realTimeProductsStreamProvider);  
     final isLight = Theme.of(context).brightness == Brightness.light;
     final primaryColor = isLight ? AppColors.lightPrimary : AppColors.premiumDarkPrimary;
