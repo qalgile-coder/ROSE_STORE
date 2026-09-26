@@ -11,6 +11,16 @@ import '../models/review_model.dart';
 class CustomerService {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
 
+  /// Get all products as a stream for real-time updates
+  Stream<List<ProductModel>> getProductsStream() {
+    return _db
+        .collection('products')
+        .snapshots()
+        .map((snapshot) => snapshot.docs
+            .map((doc) => ProductModel.fromFirestore(doc))
+            .toList());
+  }
+
   /// Get all active promotional offers
   Stream<List<OfferModel>> getActiveOffers() {
     return _db
@@ -175,13 +185,6 @@ class CustomerService {
 
   /// Get existing review for an order
   Future<ReviewModel?> getExistingReview(String orderId) async {
-    final querySnapshot = await _db
-        .collection('shops')
-        .doc() // سيتم البحث في ريفيوز المتاجر أو كولكشن عام حسب الهيكل
-        .collection('reviews')
-        .where('orderId', isEqualTo: orderId)
-        .get();
-    
     // بديل آمن: البحث في مراجعات المتجر العام أو استخدام method بديلة
     final reviewDocs = await _db
         .collectionGroup('reviews')
@@ -302,7 +305,7 @@ class CustomerService {
     }, maxAttempts: 5);
   }
 
-  /// Delete a review and update aggregate ratings (متوافقة الآن مع بارامترين: orderId و reviewId أو shopId)
+  /// Delete a review and update aggregate ratings
   Future<void> deleteReview(String orderId, String reviewId) async {
     final reviewDoc = await _db.collectionGroup('reviews').where('orderId', isEqualTo: orderId).limit(1).get();
     if (reviewDoc.docs.isEmpty) return;
