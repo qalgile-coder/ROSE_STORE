@@ -236,7 +236,8 @@ class _NextStepButton extends StatelessWidget {
     String text = 'Next Step';
     OrderStatus next;
     
-    if (order.status == OrderStatus.accepted) {
+    // دعم حالة القبول أو التأكيد القادمة من لوحة تحكم التاجر (Accepted أو Confirmed)
+    if (order.status == OrderStatus.accepted || order.status.name == 'confirmed') {
       text = 'I HAVE REACHED VENDOR';
       next = OrderStatus.reachedVendor;
     } else if (order.status == OrderStatus.reachedVendor) {

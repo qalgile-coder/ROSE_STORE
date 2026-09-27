@@ -25,19 +25,16 @@ class RiderService {
     await _db.collection('users').doc(uid).update({'isOnline': isOnline});
   }
 
-  /// Get available orders for riders (filtered automatically by rider's shopId)
+  /// Get available orders for riders (filtered automatically by rider's shopId and unassigned)
   Stream<List<OrderModel>> getAvailableOrders(String riderId) async* {
-    // 1. جلب بيانات السائق أولاً لمعرفة المتجر المرتبط به (shopId)
     final riderDoc = await _db.collection('users').doc(riderId).get();
     final shopId = riderDoc.data()?['shopId'];
 
-    // إذا لم يكن السائق مرتبطاً بمتجر بعد، نعيد قائمة فارغة لتجنب الأخطاء
     if (shopId == null || shopId.toString().isEmpty) {
       yield [];
       return;
     }
 
-    // 2. الاستماع للطلبات الخاصة بذلك المتجر فقط وبدون تقييد مسبق لحالة السيرفر لتفادي أي مشاكل في الفلترة أو الـ Indexes
     yield* _db
         .collection('orders')
         .where('shopId', isEqualTo: shopId)
@@ -45,14 +42,14 @@ class RiderService {
         .map((snapshot) {
       final orders = snapshot.docs.map((doc) => OrderModel.fromFirestore(doc)).toList();
       
-      // 3. فلترة الطلبات برمجياً (استبعاد ما رفضه السائق، الطلبات المكتملة/الملغاة، والتحقق من إتاحتها أو تخصيصها للسائق)
       return orders.where((o) {
+        // الطلب متاح إذا لم يتم تعيين سائق له بعد (أو فارغ) ولم يرفضه هذا السائق
+        final isUnassigned = o.riderId == null || o.riderId!.isEmpty;
         final isNotRejected = o.rejectedBy == null || !o.rejectedBy!.contains(riderId);
-        final isAvailableOrAssignedToMe = (o.riderId == null || o.riderId!.isEmpty || o.riderId == riderId);
         final isActiveStatus = o.status != OrderStatus.delivered && 
                                o.status != OrderStatus.cancelled && 
                                o.status != OrderStatus.rejected;
-        return isNotRejected && isAvailableOrAssignedToMe && isActiveStatus;
+        return isUnassigned && isNotRejected && isActiveStatus;
       }).toList();
     });
   }
@@ -94,12 +91,12 @@ class RiderService {
         batch.update(_db.collection('products').doc(productId), {
           'stock': FieldValue.increment(-quantity),
           'soldQuantity': FieldValue.increment(quantity),
-          'orderCount': FieldValue.increment(1), // Total times this product was ordered
+          'orderCount': FieldValue.increment(1),
         });
       }
     }
 
-    // 3. Handle Logic when order is CANCELLED/REJECTED (if it was previously active)
+    // 3. Handle Logic when order is CANCELLED/REJECTED
     if (status == OrderStatus.cancelled || status == OrderStatus.rejected) {
       if (order.status != OrderStatus.delivered && 
           order.status != OrderStatus.cancelled && 
@@ -113,26 +110,15 @@ class RiderService {
     await batch.commit();
   }
 
-  /// Get active tasks for a rider (Filtered by shopId and rider assignment)
-  Stream<List<OrderModel>> getActiveRiderOrders(String riderId) async* {
-    // 1. جلب بيانات السائق لمعرفة الـ shopId الخاص به
-    final riderDoc = await _db.collection('users').doc(riderId).get();
-    final shopId = riderDoc.data()?['shopId'];
-
-    if (shopId == null || shopId.toString().isEmpty) {
-      yield [];
-      return;
-    }
-
-    // 2. الاستماع للطلبات الخاصة بالمتجر وتصفتها برمجياً لضمان ظهور المهام النشطة بدقة
-    yield* _db
+  /// Get active tasks for a rider (Strictly orders assigned to this specific rider by merchant)
+  Stream<List<OrderModel>> getActiveRiderOrders(String riderId) {
+    return _db
         .collection('orders')
-        .where('shopId', isEqualTo: shopId)
+        .where('riderId', isEqualTo: riderId)
         .snapshots()
         .map((snapshot) {
       final all = snapshot.docs.map((doc) => OrderModel.fromFirestore(doc)).toList();
       return all.where((o) => 
-        (o.riderId == riderId || o.riderId == null || o.riderId!.isEmpty) &&
         o.status != OrderStatus.delivered && 
         o.status != OrderStatus.cancelled && 
         o.status != OrderStatus.rejected
@@ -149,7 +135,6 @@ class RiderService {
         .snapshots()
         .map((snapshot) {
       final orders = snapshot.docs.map((doc) => OrderModel.fromFirestore(doc)).toList();
-      // Sort in-memory to avoid index requirement
       orders.sort((a, b) => (b.deliveredAt ?? b.createdAt).compareTo(a.deliveredAt ?? a.createdAt));
       return orders;
     });
@@ -170,7 +155,6 @@ class RiderService {
           .map((doc) => OrderModel.fromFirestore(doc))
           .where((o) => o.deliveredAt != null && o.deliveredAt!.isAfter(startOfDay))
           .toList();
-      // Sort in-memory
       orders.sort((a, b) => b.deliveredAt!.compareTo(a.deliveredAt!));
       return orders;
     });
@@ -184,7 +168,6 @@ class RiderService {
         .snapshots()
         .map((snapshot) {
           final reviews = snapshot.docs.map((doc) => ReviewModel.fromFirestore(doc)).toList();
-          // Sort in-memory by date descending
           reviews.sort((a, b) => b.createdAt.compareTo(a.createdAt));
           return reviews;
         });
@@ -203,14 +186,13 @@ class RiderService {
   /// Upload document
   Future<void> uploadDocument(String uid, String type, String url) async {
     await _db.collection('users').doc(uid).update({
-      'documents.$type': 'pending', // Mark as pending review
+      'documents.$type': 'pending',
       'documentUrls.$type': url,
     });
   }
 
   /// Submit all uploaded documents for Admin approval
   Future<void> submitDocumentsForApproval(String uid, String name, Map<String, String> documentUrls) async {
-    // 1. Create a verification request in approvals collection
     await _db.collection('approvals').add({
       'applicantId': uid,
       'applicantName': name,
@@ -223,7 +205,6 @@ class RiderService {
       },
     });
 
-    // 2. Mark user status as pending_verification if not already
     await _db.collection('users').doc(uid).update({
       'verificationStatus': 'pending',
     });
@@ -255,7 +236,6 @@ class RiderService {
       throw Exception('Insufficient balance');
     }
 
-    // 1. Create payout request
     await _db.collection('payouts').add({
       'userId': riderId,
       'userName': userDoc.data()?['name'] ?? 'Rider',
@@ -266,7 +246,6 @@ class RiderService {
       'bankDetails': userDoc.data()?['bankDetails'] ?? {},
     });
 
-    // 2. Deduct from totalEarnings immediately (escrow)
     await _db.collection('users').doc(riderId).update({
       'totalEarnings': FieldValue.increment(-amount),
     });
