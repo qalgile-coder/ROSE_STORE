@@ -11,7 +11,6 @@ import '../../theme/app_colors.dart';
 // مزود لتحديث حالة تدفق المنتجات لضمان التزامن الفوري مع شاشة العميل (CustomerHome)
 // -----------------------------------------------------------------------------
 final realTimeProductsStreamProvider = StreamProvider.autoDispose<List<ProductModel>>((ref) {
-  // تم تصحيح المزود لجلب تدفق المنتجات الحقيقي من خدمة العميل بدلاً من إرجاع قائمة فارغة
   return ref.watch(customerServiceProvider).getProductsStream();
 });
 
@@ -31,10 +30,8 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
   final _stockController = TextEditingController();
   final _unitController = TextEditingController(text: 'pcs');
   
-  // متغير القسم المحدد (يحفظ الـ key الخاص بالقسم المتوافق مع الفلاتر الرئيسية)
   String? _selectedCategoryKey;
 
-  // قائمة الأقسام الـ 9 المعتمدة بلغة سليمة ومفاتيح برمجية ثابتة وموثوقة لضمان عدم تلف الترميز
   final List<Map<String, String>> _categories = [
     {'name': 'ملابس رجالية', 'key': 'mens_clothing'},
     {'name': 'ملابس نسائية', 'key': 'womens_clothing'},
@@ -47,10 +44,8 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
     {'name': 'عطور', 'key': 'perfumes'},
   ];
   
-  // متغير العملة المختارة الافتراضي (السودان)
   String _selectedCurrency = 'ج.س';
 
-  // قائمة العملات المدعومة للدول الثلاث
   final List<Map<String, String>> _currencies = [
     {'label': 'السودان (ج.س)', 'symbol': 'ج.س'},
     {'label': 'مصر (ج.م)', 'symbol': 'ج.م'},
@@ -60,7 +55,6 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
   bool _isLoading = false;
   bool _isAvailable = true;
   
-  // قائمة الصور المحلية بدلاً من صورة واحدة مفردة
   final List<File> _pickedImages = [];
 
   @override
@@ -74,7 +68,6 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
     super.dispose();
   }
 
-  // دالة لاختيار صور متعددة من المعرض
   Future<void> _pickImages() async {
     final picker = ImagePicker();
     final pickedFiles = await picker.pickMultiImage(imageQuality: 80);
@@ -88,7 +81,6 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
     }
   }
 
-  // دالة لحذف صورة معينة من القائمة المحلية
   void _removeImage(int index) {
     setState(() {
       _pickedImages.removeAt(index);
@@ -113,7 +105,6 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
       final user = ref.read(userModelProvider).value;
       if (user == null || user.shopId == null) throw Exception('Session error. Please log in again.');
 
-      // رفع جميع الصور المحددة محلياً للحصول على روابط سحابية
       List<String> uploadedImageUrls = [];
       for (var imageFile in _pickedImages) {
         final uploadedUrl = await ref.read(uploadServiceProvider).uploadFile(
@@ -140,14 +131,13 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
         discount: double.parse(_discountController.text.trim()),
         stock: int.parse(_stockController.text.trim()),
         unit: _unitController.text.trim(),
-        imageUrls: uploadedImageUrls, // إرسال قائمة روابط الصور السحابية
-        imageUrl: uploadedImageUrls.first, // الصورة الرئيسية الأولى للتوافق العكسي
-        category: _selectedCategoryKey ?? 'General', // إرسال المفتاح البرمجي المختار للقسم ليتطابق مع شاشة العميل
+        imageUrls: uploadedImageUrls,
+        imageUrl: uploadedImageUrls.first,
+        category: _selectedCategoryKey ?? 'General',
         isAvailable: _isAvailable,
         createdAt: DateTime.now(),
       );
 
-      // حفظ المنتج عبر خدمة التاجر وتحديث الـ Provider المرتبط بشاشة العميل لحظياً
       await ref.read(vendorServiceProvider).addProduct(product);
       ref.invalidate(realTimeProductsStreamProvider);
       
@@ -203,15 +193,13 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
               _buildSectionHeader('PRODUCT VISUALS (MULTIPLE)', colorScheme),
               const SizedBox(height: 16),
               
-              // القائمة الأفقية المتجاورة الاحترافية للصور
               SizedBox(
                 height: 140,
                 child: ListView.builder(
                   scrollDirection: Axis.horizontal,
                   physics: const BouncingScrollPhysics(),
-                  itemCount: _pickedImages.length + 1, // الزر الإضافي لإضافة صورة جديدة
+                  itemCount: _pickedImages.length + 1,
                   itemBuilder: (context, index) {
-                    // زر إضافة صورة جديدة في أول القائمة
                     if (index == 0) {
                       return Padding(
                         padding: const EdgeInsets.only(right: 12),
@@ -256,7 +244,6 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
                       );
                     }
 
-                    // عرض الصور المختارة محلياً مع زر الحذف
                     final imageIndex = index - 1;
                     final file = _pickedImages[imageIndex];
 
@@ -276,7 +263,6 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
                               boxShadow: isLight ? [BoxShadow(color: Colors.black.withOpacity(0.06), blurRadius: 10)] : null,
                             ),
                           ),
-                          // زر الحذف (أيقونة X في الزاوية)
                           Positioned(
                             top: 8,
                             right: 8,
@@ -296,7 +282,6 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
                               ),
                             ),
                           ),
-                          // شارة تدل على الصورة الرئيسية الأولى
                           if (imageIndex == 0)
                             Positioned(
                               bottom: 8,
@@ -335,14 +320,12 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
               _buildModernField(_descriptionController, 'Description', Icons.description_rounded, colorScheme, isLight, maxLines: 4),
               const SizedBox(height: 16),
               
-              // خانة اختيار الأقسام الـ 9 المحدثة والآمنة
               _buildCategoryDropdown(colorScheme, isLight),
               
               const SizedBox(height: 32),
               _buildSectionHeader('PRICING & STOCK', colorScheme),
               const SizedBox(height: 16),
               
-              // سطر السعر وقائمة اختيار العملة
               Row(
                 children: [
                   Expanded(
@@ -416,7 +399,6 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
     );
   }
 
-  // ويدجت قائمة اختيار القسم الآمنة والمستقرة
   Widget _buildCategoryDropdown(ColorScheme colorScheme, bool isLight) {
     return Container(
       decoration: BoxDecoration(
@@ -467,7 +449,6 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
     );
   }
 
-  // ويدجت قائمة اختيار العملة بتصميم متوافق تماماً مع حقول الإدخال
   Widget _buildCurrencyDropdown(ColorScheme colorScheme, bool isLight) {
     return Container(
       height: 60,

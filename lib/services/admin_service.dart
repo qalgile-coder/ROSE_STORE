@@ -24,8 +24,8 @@ class AdminService {
           taxPercentage: 5.0,
           platformCommission: 15.0,
           appVersion: '1.2.0',
-          supportEmail: 'support@zenmartpro.com',
-          supportPhone: '+92 300 1234567',
+          supportEmail: 'qalgile@gmail.com',
+          supportPhone: '+249120426208',
         );
       }
       return SystemSettingsModel.fromFirestore(doc);

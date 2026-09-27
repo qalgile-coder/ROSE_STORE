@@ -14,6 +14,23 @@ final realTimeProductsStreamProvider = StreamProvider.autoDispose<List<ProductMo
   return ref.watch(customerServiceProvider).getProductsStream();
 });
 
+// دالة تحويل الكود الإنجليزي للأقسام إلى الاسم العربي المناسب
+String getCategoryArabicName(String categoryKey) {
+  final Map<String, String> categoryNames = {
+    'mens_clothing': 'ملابس رجالية',
+    'womens_clothing': 'ملابس نسائية',
+    'accessories': 'إكسسوارات',
+    'cosmetics': 'مستحضرات تجميل',
+    'mens_shoes': 'أحذية رجالية',
+    'womens_shoes': 'أحذية نسائية',
+    'kids_clothing': 'ملابس أطفال',
+    'bags_wallets': 'حقائب ومحافظ',
+    'perfumes': 'عطور',
+  };
+  
+  return categoryNames[categoryKey.toLowerCase().trim()] ?? categoryKey;
+}
+
 class CustomerHome extends ConsumerWidget {
   const CustomerHome({super.key});
 
@@ -644,12 +661,13 @@ class _GridProductCard extends ConsumerWidget {
               overflow: TextOverflow.ellipsis,
             ),
             const SizedBox(height: 2),
+            // استخدام دالة تحويل اسم القسم إلى العربية بدلاً من عرض الكود البرمجي بالإنجليزية
             Text(
-              product.description.isNotEmpty ? product.description : 'منتج مميز', 
+              getCategoryArabicName(product.category), 
               style: TextStyle(
-                color: secondaryTextColor.withOpacity(0.7), 
+                color: primaryColor, 
                 fontSize: 11, 
-                fontWeight: FontWeight.w600
+                fontWeight: FontWeight.w700
               ),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,

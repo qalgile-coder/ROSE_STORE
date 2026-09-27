@@ -27,8 +27,8 @@ class SystemSettingsModel {
       platformCommission: (data['platformCommission'] ?? 15.0).toDouble(),
       maintenanceMode: data['maintenanceMode'] ?? false,
       appVersion: data['appVersion'] ?? '1.0.0',
-      supportEmail: data['supportEmail'] ?? 'support@zenmartpro.com',
-      supportPhone: data['supportPhone'] ?? '+920000000000',
+      supportEmail: data['supportEmail'] ?? 'qalgile@gmail.com',
+      supportPhone: data['supportPhone'] ?? '+249120426208',
     );
   }
 
