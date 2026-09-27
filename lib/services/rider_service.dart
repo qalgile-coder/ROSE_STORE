@@ -25,10 +25,22 @@ class RiderService {
     await _db.collection('users').doc(uid).update({'isOnline': isOnline});
   }
 
-  /// Get available orders for riders
-  Stream<List<OrderModel>> getAvailableOrders(String riderId) {
-    return _db
+  /// Get available orders for riders (filtered automatically by rider's shopId)
+  Stream<List<OrderModel>> getAvailableOrders(String riderId) async* {
+    // 1. جلب بيانات السائق أولاً لمعرفة المتجر المرتبط به (shopId)
+    final riderDoc = await _db.collection('users').doc(riderId).get();
+    final shopId = riderDoc.data()?['shopId'];
+
+    // إذا لم يكن السائق مرتبطاً بمتجر بعد، نعيد قائمة فارغة لتجنب الأخطاء
+    if (shopId == null || shopId.toString().isEmpty) {
+      yield [];
+      return;
+    }
+
+    // 2. الاستماع للطلبات الخاصة بذلك المتجر فقط وبحالة confirmed
+    yield* _db
         .collection('orders')
+        .where('shopId', isEqualTo: shopId)
         .where('status', isEqualTo: OrderStatus.confirmed.name)
         .snapshots()
         .map((snapshot) {
