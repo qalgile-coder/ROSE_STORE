@@ -37,16 +37,22 @@ class RiderService {
       return;
     }
 
-    // 2. الاستماع للطلبات الخاصة بذلك المتجر فقط وبحالة confirmed
+    // 2. الاستماع للطلبات الخاصة بذلك المتجر فقط وبدون تقييد حالة السيرفر لتفادي أي مشاكل في الفلترة أو الـ Indexes
     yield* _db
         .collection('orders')
         .where('shopId', isEqualTo: shopId)
-        .where('status', isEqualTo: OrderStatus.confirmed.name)
         .snapshots()
         .map((snapshot) {
       final orders = snapshot.docs.map((doc) => OrderModel.fromFirestore(doc)).toList();
-      // Remove orders already rejected by this rider
-      return orders.where((o) => o.rejectedBy == null || !o.rejectedBy!.contains(riderId)).toList();
+      
+      // 3. فلترة الطلبات برمجياً (استبعاد ما رفضه السائق أو الطلبات المكتملة/الملغاة)
+      return orders.where((o) {
+        final isNotRejected = o.rejectedBy == null || !o.rejectedBy!.contains(riderId);
+        final isActiveStatus = o.status != OrderStatus.delivered && 
+                               o.status != OrderStatus.cancelled && 
+                               o.status != OrderStatus.rejected;
+        return isNotRejected && isActiveStatus;
+      }).toList();
     });
   }
 
