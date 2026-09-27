@@ -125,7 +125,6 @@ class VendorService {
       return snapshot.docs.map((doc) => OrderModel.fromFirestore(doc)).toList();
     }).handleError((e) {
       debugPrint('Firestore Error (Incoming Orders): $e');
-      // On error, we emit an empty list so the UI doesn't hang
     });
   }
 
@@ -142,9 +141,42 @@ class VendorService {
     });
   }
 
-  /// Update Order Status (Accept/Reject/Complete)
+  /// Update Order Status (Accept/Reject/Complete) with Auto-Rider Assignment
   Future<void> updateOrderStatus(String orderId, OrderStatus status) async {
-    await _db.collection('orders').doc(orderId).update({'status': status.name});
+    try {
+      // 1. جلب معلومات الطلب لمعرفة الـ shopId الخاص به
+      final orderDoc = await _db.collection('orders').doc(orderId).get();
+      if (!orderDoc.exists) return;
+
+      final orderData = orderDoc.data() as Map<String, dynamic>;
+      final String? shopId = orderData['shopId'];
+
+      Map<String, dynamic> updateData = {
+        'status': status.name,
+      };
+
+      // 2. إذا وافق التاجر على الطلب (Confirmed)، نقوم تلقائياً بالبحث عن السائق المخصص لهذا المتجر وإسناده
+      if (status == OrderStatus.confirmed && shopId != null && shopId.isNotEmpty) {
+        final riderQuery = await _db
+            .collection('users')
+            .where('role', isEqualTo: 'rider')
+            .where('shopId', isEqualTo: shopId)
+            .limit(1)
+            .get();
+
+        if (riderQuery.docs.isNotEmpty) {
+          // جلب الـ UID الحقيقي للسائق المرتبط بهذا المتجر
+          final String assignedRiderId = riderQuery.docs.first.id;
+          updateData['riderId'] = assignedRiderId;
+        }
+      }
+
+      // 3. تحديث الطلب في قاعدة البيانات بالبيانات الجديدة
+      await _db.collection('orders').doc(orderId).update(updateData);
+    } catch (e) {
+      debugPrint('Error updating order status & auto-assigning rider: $e');
+      rethrow;
+    }
   }
 
   /// Get a single order
@@ -229,7 +261,7 @@ class VendorService {
     await _db.collection('payouts').add({
       'userId': vendorId,
       'userName': userDoc.data()?['name'] ?? 'Unknown',
-      'userType': 'vendor',
+      * 'userType': 'vendor',
       'amount': amount,
       'status': 'pending',
       'createdAt': FieldValue.serverTimestamp(),
