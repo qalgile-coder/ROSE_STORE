@@ -261,7 +261,7 @@ class VendorService {
     await _db.collection('payouts').add({
       'userId': vendorId,
       'userName': userDoc.data()?['name'] ?? 'Unknown',
-      * 'userType': 'vendor',
+      'userType': 'vendor', // تم تصحيح وإزالة علامة النجمة هنا
       'amount': amount,
       'status': 'pending',
       'createdAt': FieldValue.serverTimestamp(),
