@@ -37,7 +37,7 @@ class RiderService {
       return;
     }
 
-    // 2. الاستماع للطلبات الخاصة بذلك المتجر فقط وبدون تقييد حالة السيرفر لتفادي أي مشاكل في الفلترة أو الـ Indexes
+    // 2. الاستماع للطلبات الخاصة بذلك المتجر فقط وبدون تقييد مسبق لحالة السيرفر لتفادي أي مشاكل في الفلترة أو الـ Indexes
     yield* _db
         .collection('orders')
         .where('shopId', isEqualTo: shopId)
@@ -45,13 +45,14 @@ class RiderService {
         .map((snapshot) {
       final orders = snapshot.docs.map((doc) => OrderModel.fromFirestore(doc)).toList();
       
-      // 3. فلترة الطلبات برمجياً (استبعاد ما رفضه السائق أو الطلبات المكتملة/الملغاة)
+      // 3. فلترة الطلبات برمجياً (استبعاد ما رفضه السائق، الطلبات المكتملة/الملغاة، والتحقق من إتاحتها أو تخصيصها للسائق)
       return orders.where((o) {
         final isNotRejected = o.rejectedBy == null || !o.rejectedBy!.contains(riderId);
+        final isAvailableOrAssignedToMe = (o.riderId == null || o.riderId!.isEmpty || o.riderId == riderId);
         final isActiveStatus = o.status != OrderStatus.delivered && 
                                o.status != OrderStatus.cancelled && 
                                o.status != OrderStatus.rejected;
-        return isNotRejected && isActiveStatus;
+        return isNotRejected && isAvailableOrAssignedToMe && isActiveStatus;
       }).toList();
     });
   }
@@ -112,15 +113,26 @@ class RiderService {
     await batch.commit();
   }
 
-  /// Get active tasks for a rider
-  Stream<List<OrderModel>> getActiveRiderOrders(String riderId) {
-    return _db
+  /// Get active tasks for a rider (Filtered by shopId and rider assignment)
+  Stream<List<OrderModel>> getActiveRiderOrders(String riderId) async* {
+    // 1. جلب بيانات السائق لمعرفة الـ shopId الخاص به
+    final riderDoc = await _db.collection('users').doc(riderId).get();
+    final shopId = riderDoc.data()?['shopId'];
+
+    if (shopId == null || shopId.toString().isEmpty) {
+      yield [];
+      return;
+    }
+
+    // 2. الاستماع للطلبات الخاصة بالمتجر وتصفتها برمجياً لضمان ظهور المهام النشطة بدقة
+    yield* _db
         .collection('orders')
-        .where('riderId', isEqualTo: riderId)
+        .where('shopId', isEqualTo: shopId)
         .snapshots()
         .map((snapshot) {
       final all = snapshot.docs.map((doc) => OrderModel.fromFirestore(doc)).toList();
       return all.where((o) => 
+        (o.riderId == riderId || o.riderId == null || o.riderId!.isEmpty) &&
         o.status != OrderStatus.delivered && 
         o.status != OrderStatus.cancelled && 
         o.status != OrderStatus.rejected
