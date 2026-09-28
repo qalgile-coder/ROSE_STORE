@@ -31,6 +31,18 @@ void main() async {
     // 2. تسجيل معالج الخلفية الخاص بـ Firebase Messaging
     FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
 
+    // **الإضافة الاحترافية لحل المشكلة:** طلب صلاحيات الإشعارات صراحةً من النظام
+    NotificationSettings settings = await FirebaseMessaging.instance.requestPermission(
+      alert: true,
+      announcement: false,
+      badge: true,
+      carPlay: false,
+      criticalAlert: false,
+      provisional: false,
+      sound: true,
+    );
+    debugPrint('Notification Permission Status: ${settings.authorizationStatus}');
+
     await CacheService.initialize();
     
     // 3. تهيئة خدمة الإشعارات بشكل صحيح وسليم

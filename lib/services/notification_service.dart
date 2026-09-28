@@ -25,6 +25,13 @@ class NotificationService {
       return;
     }
 
+    // السماح بعرض الإشعارات في الواجهة الأمامية لنظام أجهزة Apple
+    await _fcm.setForegroundNotificationPresentationOptions(
+      alert: true,
+      badge: true,
+      sound: true,
+    );
+
     // 2. Local Notifications Initialization
     const AndroidInitializationSettings androidSettings = AndroidInitializationSettings('@mipmap/ic_launcher');
     const DarwinInitializationSettings iosSettings = DarwinInitializationSettings();
@@ -34,10 +41,10 @@ class NotificationService {
 
     AndroidNotificationChannel? channel;
 
-    // 3. Create Android Notification Channel
+    // 3. Create Android Notification Channel (تم توحيد الـ ID ليطابق AndroidManifest.xml تماماً)
     if (!kIsWeb && Platform.isAndroid) {
       channel = const AndroidNotificationChannel(
-        'rooz_store_high_channel', // معرف القناة المتوافق مع مشروعك
+        'high_importance_channel', 
         'High Importance Notifications',
         description: 'Used for critical order and system updates.',
         importance: Importance.high,
@@ -84,7 +91,6 @@ class NotificationService {
             priority: Priority.high,
             importance: Importance.max,
           ),
-          // تم تصحيح الكلاس هنا إلى DarwinNotificationDetails لضمان عدم حدوث خطأ أثناء الترجمة
           iOS: const DarwinNotificationDetails(
             presentAlert: true,
             presentBadge: true,
