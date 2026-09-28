@@ -5,7 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:cloudinary_public/cloudinary_public.dart';
 import '../../core/providers.dart';
-import '../../core/app_secrets.dart';
+import '../../core/secrets.dart';
 import '../../models/offer_model.dart';
 import '../../models/user_model.dart';
 import '../../theme/app_colors.dart';
