@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -113,11 +114,12 @@ class CustomerHome extends ConsumerWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       const SizedBox(height: 10),
-                      const _PromoBanner(),
-                      const SizedBox(height: 32),
                       _SectionHeader(title: 'الأقسام الرئيسية', showSeeAll: false, textColor: textColor, primaryColor: primaryColor),
                       const SizedBox(height: 16),
                       const _CategoryGrid(),
+                      const SizedBox(height: 24),
+                      // سلايدر البنرات الترويجية أصبح هنا أسفل الأقسام الرئيسية مباشرة
+                      const _PromoBannersSlider(),
                       const SizedBox(height: 32),
                       _SectionHeader(
                         title: 'جميع المنتجات', 
@@ -367,11 +369,50 @@ class _SearchBar extends ConsumerWidget {
   }
 }
 
-class _PromoBanner extends ConsumerWidget {
-  const _PromoBanner();
+// سلايدر البنرات الترويجية الاحترافي الداعم لأكثر من صورة مع السحب الأفقي ومقاس مستطيل متناسق
+class _PromoBannersSlider extends ConsumerStatefulWidget {
+  const _PromoBannersSlider();
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<_PromoBannersSlider> createState() => _PromoBannersSliderState();
+}
+
+class _PromoBannersSliderState extends ConsumerState<_PromoBannersSlider> {
+  final PageController _pageController = PageController();
+  int _currentIndex = 0;
+  Timer? _timer;
+
+  @override
+  void initState() {
+    super.initState();
+    _timer = Timer.periodic(const Duration(seconds: 4), (timer) {
+      final offersAsync = ref.read(activeOffersProvider);
+      offersAsync.whenData((offers) {
+        if (offers.length > 1 && _pageController.hasClients) {
+          if (_currentIndex < offers.length - 1) {
+            _currentIndex++;
+          } else {
+            _currentIndex = 0;
+          }
+          _pageController.animateToPage(
+            _currentIndex,
+            duration: const Duration(milliseconds: 500),
+            curve: Curves.easeInOut,
+          );
+        }
+      });
+    });
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    _pageController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final offersAsync = ref.watch(activeOffersProvider);
     final isLight = Theme.of(context).brightness == Brightness.light;
     final primaryColor = isLight ? AppColors.lightPrimary : AppColors.premiumDarkPrimary;
@@ -379,78 +420,115 @@ class _PromoBanner extends ConsumerWidget {
     return offersAsync.when(
       data: (offers) {
         if (offers.isEmpty) return const SizedBox.shrink();
-        final offer = offers.first;
 
-        return Container(
-          width: double.infinity,
-          height: 180,
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(28),
-            boxShadow: [
-              BoxShadow(
-                color: isLight ? primaryColor.withOpacity(0.12) : Colors.black.withOpacity(0.3), 
-                blurRadius: 30, 
-                offset: const Offset(0, 15)
-              ),
-            ],
-          ),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(28),
-            child: Stack(
-              children: [
-                Positioned.fill(
-                  child: Image.network(
-                    offer.imageUrl.isNotEmpty ? offer.imageUrl : 'https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?q=80&w=600',
-                    fit: BoxFit.cover,
-                  ),
-                ),
-                Positioned.fill(
-                  child: Container(
+        return Column(
+          children: [
+            SizedBox(
+              height: 180,
+              child: PageView.builder(
+                controller: _pageController,
+                physics: const BouncingScrollPhysics(),
+                onPageChanged: (index) {
+                  setState(() {
+                    _currentIndex = index;
+                  });
+                },
+                itemCount: offers.length,
+                itemBuilder: (context, index) {
+                  final offer = offers[index];
+                  return Container(
+                    margin: const EdgeInsets.symmetric(horizontal: 2),
                     decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [Colors.black.withOpacity(0.85), Colors.transparent],
-                        begin: Alignment.centerLeft,
-                        end: Alignment.centerRight,
+                      borderRadius: BorderRadius.circular(28),
+                      boxShadow: [
+                        BoxShadow(
+                          color: isLight ? primaryColor.withOpacity(0.12) : Colors.black.withOpacity(0.3), 
+                          blurRadius: 30, 
+                          offset: const Offset(0, 15)
+                        ),
+                      ],
+                    ),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(28),
+                      child: Stack(
+                        children: [
+                          Positioned.fill(
+                            child: Image.network(
+                              offer.imageUrl.isNotEmpty ? offer.imageUrl : 'https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?q=80&w=600',
+                              fit: BoxFit.cover,
+                            ),
+                          ),
+                          Positioned.fill(
+                            child: Container(
+                              decoration: BoxDecoration(
+                                gradient: LinearGradient(
+                                  colors: [Colors.black.withOpacity(0.85), Colors.transparent],
+                                  begin: Alignment.centerLeft,
+                                  end: Alignment.centerRight,
+                                ),
+                              ),
+                            ),
+                          ),
+                          Padding(
+                            padding: const EdgeInsets.all(28),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                  decoration: BoxDecoration(color: primaryColor, borderRadius: BorderRadius.circular(8)),
+                                  child: Text(
+                                    offer.offerType == 'percentage' ? '${offer.value.round()}% خصم' : 'عرض مميز',
+                                    style: TextStyle(color: isLight ? Colors.white : AppColors.premiumDarkBackground, fontSize: 10, fontWeight: FontWeight.w900, letterSpacing: 1),
+                                  ),
+                                ),
+                                const SizedBox(height: 12),
+                                Text(
+                                  offer.title,
+                                  style: const TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.w800, letterSpacing: -0.5),
+                                ),
+                                const SizedBox(height: 16),
+                                ElevatedButton(
+                                  onPressed: () => context.push('/customer/offer', extra: offer),
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: Colors.white,
+                                    foregroundColor: Colors.black,
+                                    minimumSize: const Size(100, 40),
+                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                  ),
+                                  child: const Text('تسوق الآن', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 12)),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
                       ),
+                    ),
+                  );
+                },
+              ),
+            ),
+            if (offers.length > 1) ...[
+              const SizedBox(height: 12),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: List.generate(
+                  offers.length,
+                  (index) => AnimatedContainer(
+                    duration: const Duration(milliseconds: 300),
+                    margin: const EdgeInsets.symmetric(horizontal: 4),
+                    width: _currentIndex == index ? 22 : 8,
+                    height: 8,
+                    decoration: BoxDecoration(
+                      color: _currentIndex == index ? primaryColor : primaryColor.withOpacity(0.2),
+                      borderRadius: BorderRadius.circular(4),
                     ),
                   ),
                 ),
-                Padding(
-                  padding: const EdgeInsets.all(28),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                        decoration: BoxDecoration(color: primaryColor, borderRadius: BorderRadius.circular(8)),
-                        child: Text(
-                          offer.offerType == 'percentage' ? '${offer.value.round()}% خصم' : 'عرض مميز',
-                          style: TextStyle(color: isLight ? Colors.white : AppColors.premiumDarkBackground, fontSize: 10, fontWeight: FontWeight.w900, letterSpacing: 1),
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      Text(
-                        offer.title,
-                        style: const TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.w800, letterSpacing: -0.5),
-                      ),
-                      const SizedBox(height: 16),
-                      ElevatedButton(
-                        onPressed: () => context.push('/customer/offer', extra: offer),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.white,
-                          foregroundColor: Colors.black,
-                          minimumSize: const Size(100, 40),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                        ),
-                        child: const Text('تسوق الآن', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 12)),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
+              ),
+            ],
+          ],
         );
       },
       loading: () => const _Skeleton(height: 180, radius: 28),

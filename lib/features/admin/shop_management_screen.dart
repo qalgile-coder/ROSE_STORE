@@ -1,7 +1,11 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:cloudinary_public/cloudinary_public.dart';
 import '../../core/providers.dart';
+import '../../core/app_secrets.dart';
 import '../../models/offer_model.dart';
 import '../../models/user_model.dart';
 import '../../theme/app_colors.dart';
@@ -58,7 +62,7 @@ class _PromoBannersSheet extends ConsumerWidget {
                           ClipRRect(
                             borderRadius: BorderRadius.circular(12),
                             child: Image.network(offer.imageUrl, width: 100, height: 60, fit: BoxFit.cover, 
-                               errorBuilder: (_,__,___) => Container(width: 100, height: 60, color: Colors.grey[800])),
+                                 errorBuilder: (_,__,___) => Container(width: 100, height: 60, color: Colors.grey[800])),
                           ),
                           const SizedBox(width: 16),
                           Expanded(
@@ -101,42 +105,121 @@ class _PromoBannersSheet extends ConsumerWidget {
   void _showAddOfferDialog(BuildContext context, WidgetRef ref) {
     final titleC = TextEditingController();
     final descC = TextEditingController();
-    final urlC = TextEditingController();
     final valueC = TextEditingController();
+    
+    File? selectedImageFile;
 
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Add Promo Banner'),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(controller: titleC, decoration: const InputDecoration(labelText: 'Title')),
-              TextField(controller: descC, decoration: const InputDecoration(labelText: 'Description')),
-              TextField(controller: urlC, decoration: const InputDecoration(labelText: 'Image URL')),
-              TextField(controller: valueC, decoration: const InputDecoration(labelText: 'Discount Value (%)'), keyboardType: TextInputType.number),
+      builder: (context) => StatefulBuilder(
+        builder: (context, setState) {
+          bool isUploading = false;
+
+          return AlertDialog(
+            title: const Text('Add Promo Banner'),
+            content: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TextField(controller: titleC, decoration: const InputDecoration(labelText: 'Title')),
+                  const SizedBox(height: 12),
+                  TextField(controller: descC, decoration: const InputDecoration(labelText: 'Description')),
+                  const SizedBox(height: 12),
+                  TextField(controller: valueC, decoration: const InputDecoration(labelText: 'Discount Value (%)'), keyboardType: TextInputType.number),
+                  const SizedBox(height: 16),
+                  
+                  // زر اختيار صورة البنر ومعاينتها
+                  GestureDetector(
+                    onTap: () async {
+                      final picker = ImagePicker();
+                      final pickedFile = await picker.pickImage(source: ImageSource.gallery);
+                      if (pickedFile != null) {
+                        setState(() {
+                          selectedImageFile = File(pickedFile.path);
+                        });
+                      }
+                    },
+                    child: Container(
+                      height: 120,
+                      width: double.infinity,
+                      decoration: BoxDecoration(
+                        color: Colors.grey[100],
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: Colors.grey[300]!, width: 1.5),
+                      ),
+                      child: selectedImageFile != null
+                          ? ClipRRect(
+                              borderRadius: BorderRadius.circular(12),
+                              child: Image.file(selectedImageFile!, fit: BoxFit.cover),
+                            )
+                          : Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: const [
+                                Icon(Icons.add_photo_alternate_rounded, size: 32, color: Colors.blueAccent),
+                                SizedBox(height: 6),
+                                Text('اختر صورة البنر من المعرض', style: TextStyle(color: Colors.grey, fontSize: 12)),
+                              ],
+                            ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            actions: [
+              TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
+              ElevatedButton(
+                onPressed: isUploading ? null : () async {
+                  if (titleC.text.isEmpty || selectedImageFile == null) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('الرجاء إدخال العنوان واختيار صورة البنر')),
+                    );
+                    return;
+                  }
+
+                  setState(() => isUploading = true);
+
+                  try {
+                    // رفع الصورة عبر Cloudinary باستخدام AppSecrets
+                    final cloudinary = CloudinaryPublic(
+                      AppSecrets.cloudinaryCloudName,
+                      AppSecrets.cloudinaryUploadPreset,
+                      cache: false,
+                    );
+
+                    CloudinaryResponse response = await cloudinary.uploadFile(
+                      CloudinaryFile.fromFile(
+                        selectedImageFile!.path,
+                        folder: 'promo_banners',
+                      ),
+                    );
+
+                    final imageUrl = response.secureUrl;
+
+                    // حفظ العرض في قاعدة البيانات
+                    await ref.read(adminServiceProvider).addOffer(OfferModel(
+                      id: '',
+                      title: titleC.text,
+                      description: descC.text,
+                      imageUrl: imageUrl,
+                      offerType: 'percentage',
+                      value: double.tryParse(valueC.text) ?? 0.0,
+                      expiryDate: DateTime.now().add(const Duration(days: 30)),
+                    ));
+
+                    if (context.mounted) Navigator.pop(context);
+                  } catch (e) {
+                    debugPrint('Error uploading banner: $e');
+                  } finally {
+                    if (context.mounted) setState(() => isUploading = false);
+                  }
+                },
+                child: isUploading
+                    ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                    : const Text('Add'),
+              ),
             ],
-          ),
-        ),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
-          ElevatedButton(
-            onPressed: () {
-               ref.read(adminServiceProvider).addOffer(OfferModel(
-                  id: '',
-                  title: titleC.text,
-                  description: descC.text,
-                  imageUrl: urlC.text,
-                  offerType: 'percentage',
-                  value: double.tryParse(valueC.text) ?? 0.0,
-                  expiryDate: DateTime.now().add(const Duration(days: 30)),
-               ));
-               Navigator.pop(context);
-            },
-            child: const Text('Add'),
-          ),
-        ],
+          );
+        },
       ),
     );
   }
@@ -211,7 +294,7 @@ class ShopManagementScreen extends ConsumerWidget {
             subtitle: 'Monitor stock levels across all stores',
             icon: Icons.inventory_2_rounded,
             color: const Color(0xFF10B981),
-            onTap: () => context.push('/admin/all-shops'), // Could link to a stock audit page
+            onTap: () => context.push('/admin/all-shops'), 
           ),
           _buildManagementCard(
             context,
