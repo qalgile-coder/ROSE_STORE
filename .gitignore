@@ -34,7 +34,7 @@ local.properties
 
 # Environment variables and secrets
 .env*
-lib/core/secrets.dart
+#lib/core/secrets.dart
 
 # Keystore / Signing (Sensitive)
 *.jks
