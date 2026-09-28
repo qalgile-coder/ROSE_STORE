@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart'; // <--- أُضيف لدعم فحص الـ emailVerified
 // تم تعديل الاستيراد ليكون بالمسار النسبي المباشر المتوافق مع توليد الترجمة الافتراضي
 import '../l10n/app_localizations.dart';
 
@@ -107,15 +108,18 @@ final routerProvider = Provider<GoRouter>((ref) {
       final splashWait = ref.read(splashDurationProvider);
       final settings = ref.read(systemSettingsProvider).valueOrNull;
 
-      final loggingIn = state.matchedLocation == '/login' ||
-          state.matchedLocation == '/welcome' ||
-          state.matchedLocation == '/signup' ||
-          state.matchedLocation == '/verify-email';
+      final currentPath = state.matchedLocation;
 
+      final loggingIn = currentPath == '/login' ||
+          currentPath == '/welcome' ||
+          currentPath == '/signup' ||
+          currentPath == '/verify-email';
+
+      // فحص وضع الصيانة أولاً
       if (settings?.maintenanceMode == true) {
         final isSuperAdmin = userModel.valueOrNull?.role == UserRole.superAdmin;
         if (!isSuperAdmin) {
-          return state.matchedLocation == '/maintenance' ? null : '/maintenance';
+          return currentPath == '/maintenance' ? null : '/maintenance';
         }
       }
 
@@ -124,8 +128,16 @@ final routerProvider = Provider<GoRouter>((ref) {
 
       final user = authState.valueOrNull;
 
+      // إذا لم يكن المستخدم مسجلاً دخولاً
       if (user == null) {
         return loggingIn ? null : '/welcome';
+      }
+
+      // 🛡️ [إضافة احترافية]: التحقق مما إذا كان البريد الإلكتروني غير مفعل
+      // يتم جلب الحالة المباشرة من FirebaseAuth لضمان دقة حالة التفعيل
+      final firebaseUser = FirebaseAuth.instance.currentUser;
+      if (firebaseUser != null && !firebaseUser.emailVerified) {
+        return currentPath == '/verify-email' ? null : '/verify-email';
       }
 
       if (userModel.isLoading) return null;
@@ -133,12 +145,12 @@ final routerProvider = Provider<GoRouter>((ref) {
       final model = userModel.valueOrNull;
 
       if (userModel.hasError || model == null) {
-        if (loggingIn || state.matchedLocation == '/') return null;
+        if (loggingIn || currentPath == '/') return null;
         if (userModel.hasError && userModel.error is! Exception) return null;
         return '/welcome';
       }
 
-      final isPublicScreen = loggingIn || state.matchedLocation == '/' || state.matchedLocation == '/welcome';
+      final isPublicScreen = loggingIn || currentPath == '/' || currentPath == '/welcome';
 
       if (isPublicScreen) {
         String target = '/welcome';
@@ -159,7 +171,7 @@ final routerProvider = Provider<GoRouter>((ref) {
             target = '/welcome';
         }
 
-        if (state.matchedLocation != target) {
+        if (currentPath != target) {
           return target;
         }
       }
@@ -196,7 +208,14 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(path: '/welcome', builder: (context, state) => const WelcomeScreen()),
       GoRoute(path: '/login', builder: (context, state) => const LoginScreen()),
       GoRoute(path: '/signup', builder: (context, state) => const SignupScreen()),
-      GoRoute(path: '/verify-email', builder: (context, state) => const VerifyEmailScreen()), // <--- تم إضافة مسار الـ Route الخاص بالتحقق من البريد الإلكتروني هنا بنجاح
+      GoRoute(
+        path: '/verify-email',
+        builder: (context, state) {
+          // تمرير البريد الإلكتروني بلطف في حال توفره عبر state.extra أو استخلاصه من المستخدم الحالي
+          final email = (state.extra as String?) ?? FirebaseAuth.instance.currentUser?.email ?? '';
+          return VerifyEmailScreen(email: email);
+        },
+      ), // <--- تم تحديث المسار ليدعم استقبال البريد الإلكتروني بشكل آمن
       GoRoute(path: '/admin', builder: (context, state) => const AdminDashboard()),
       GoRoute(path: '/admin/add-vendor', builder: (context, state) => const AddVendorScreen()),
       GoRoute(path: '/admin/add-rider', builder: (context, state) => const AddRiderScreen()),
@@ -298,7 +317,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/customer/all-products',
         builder: (context, state) => const CustomerAllProductsScreen(),
-      ), // <--- تم إضافة مسار الـ Route الخاص بجميع المنتجات هنا بنجاح
+      ),
       GoRoute(
         path: '/customer/category/:name',
         builder: (context, state) => CategoryShopsScreen(category: state.pathParameters['name']!),
