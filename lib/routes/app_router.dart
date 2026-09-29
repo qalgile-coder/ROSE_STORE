@@ -1,3 +1,117 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+
+// 🌐 استيراد حزم الترجمة والملفات والشاشات الخاصة بالمشروع
+// (تأكد من تعديل مسارات الاستيراد بحسب هيكل مشروعك الفعلي)
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+
+import '../features/auth/presentation/screens/welcome_screen.dart';
+import '../features/auth/presentation/screens/login_screen.dart';
+import '../features/auth/presentation/screens/signup_screen.dart';
+import '../features/auth/presentation/screens/verify_email_screen.dart';
+import '../features/splash/presentation/screens/splash_screen.dart';
+import '../features/developer/presentation/screens/developer_profile_screen.dart';
+
+// الشاشات الخاصة باللوحات المختلفة
+import '../features/admin/presentation/screens/admin_dashboard.dart';
+import '../features/admin/presentation/screens/add_vendor_screen.dart';
+import '../features/admin/presentation/screens/add_rider_screen.dart';
+import '../features/admin/presentation/screens/notifications_screen.dart';
+import '../features/admin/presentation/screens/admin_profile_screen.dart';
+import '../features/admin/presentation/screens/analytics_dashboard_screen.dart';
+import '../features/admin/presentation/screens/all_shops_screen.dart';
+import '../features/admin/presentation/screens/shop_management_screen.dart';
+import '../features/admin/presentation/screens/category_management_screen.dart';
+import '../features/admin/presentation/screens/coupon_management_screen.dart' as admin;
+import '../features/admin/presentation/screens/user_management_screen.dart';
+import '../features/admin/presentation/screens/rider_management_screen.dart';
+import '../features/admin/presentation/screens/pending_orders_screen.dart';
+import '../features/admin/presentation/screens/customer_management_screen.dart';
+import '../features/admin/presentation/screens/vendor_management_screen.dart';
+import '../features/admin/presentation/screens/approval_center_screen.dart';
+import '../features/admin/presentation/screens/payout_management_screen.dart';
+import '../features/admin/presentation/screens/system_settings_screen.dart';
+import '../features/admin/presentation/screens/system_info_screen.dart';
+import '../features/admin/presentation/screens/activity_log_screen.dart';
+import '../features/admin/presentation/screens/order_management_screen.dart';
+import '../features/admin/presentation/screens/order_map_screen.dart';
+import '../features/admin/presentation/screens/user_history_screen.dart';
+import '../features/admin/presentation/screens/support_list_screen.dart';
+import '../features/admin/presentation/screens/support_chat_detail_screen.dart';
+
+// شاشات البائع (Vendor)
+import '../features/vendor/presentation/screens/vendor_dashboard.dart';
+import '../features/vendor/presentation/screens/add_product_screen.dart';
+import '../features/vendor/presentation/screens/vendor_notifications_screen.dart';
+import '../features/vendor/presentation/screens/vendor_profile_screen.dart';
+import '../features/vendor/presentation/screens/edit_shop_screen.dart';
+import '../features/vendor/presentation/screens/vendor_sales_analytics_screen.dart';
+import '../features/vendor/presentation/screens/vendor_orders_screen.dart';
+import '../features/vendor/presentation/screens/vendor_order_details_screen.dart';
+import '../features/vendor/presentation/screens/product_management_screen.dart';
+import '../features/vendor/presentation/screens/low_stock_screen.dart';
+import '../features/vendor/presentation/screens/vendor_reviews_screen.dart';
+import '../features/vendor/presentation/screens/coupon_management_screen.dart';
+import '../features/vendor/presentation/screens/vendor_earnings_screen.dart';
+
+// شاشات العميل (Customer)
+import '../features/customer/presentation/screens/customer_home.dart';
+import '../features/customer/presentation/screens/customer_profile_screen.dart';
+import '../features/customer/presentation/screens/address_management_screen.dart';
+import '../features/customer/presentation/screens/customer_search_screen.dart';
+import '../features/customer/presentation/screens/wishlist_screen.dart';
+import '../features/customer/presentation/screens/cart_screen.dart';
+import '../features/customer/presentation/screens/checkout_screen.dart';
+import '../features/customer/presentation/screens/customer_orders_screen.dart';
+import '../features/customer/presentation/screens/customer_order_details_screen.dart';
+import '../features/customer/presentation/screens/order_success_screen.dart';
+import '../features/customer/presentation/screens/featured_shops_screen.dart';
+import '../features/customer/presentation/screens/nearby_shops_screen.dart';
+import '../features/customer/presentation/screens/trending_products_screen.dart';
+import '../features/customer/presentation/screens/customer_all_products_screen.dart';
+import '../features/customer/presentation/screens/category_shops_screen.dart';
+import '../features/customer/presentation/screens/offer_details_screen.dart';
+import '../features/customer/presentation/screens/product_details_screen.dart';
+import '../features/customer/presentation/screens/product_reviews_screen.dart';
+import '../features/customer/presentation/screens/shop_detail_screen.dart';
+import '../features/customer/presentation/screens/customer_notifications_screen.dart';
+
+// شاشات المندوب (Rider)
+import '../features/rider/presentation/screens/rider_dashboard.dart';
+import '../features/rider/presentation/screens/order_details_screen.dart';
+import '../features/rider/presentation/screens/active_tasks_screen.dart';
+import '../features/rider/presentation/screens/performance_details_screen.dart';
+import '../features/rider/presentation/screens/rider_reviews_screen.dart';
+import '../features/rider/presentation/screens/rider_profile_screen.dart';
+import '../features/rider/presentation/screens/rider_history_screen.dart';
+import '../features/rider/presentation/screens/rider_earnings_screen.dart';
+import '../features/rider/presentation/screens/vehicle_details_screen.dart';
+import '../features/rider/presentation/screens/support_center_screen.dart';
+import '../features/rider/presentation/screens/support_chat_screen.dart';
+import '../features/rider/presentation/screens/alerts_screen.dart';
+import '../features/rider/presentation/screens/documents_screen.dart';
+
+// شاشات الدعم والمحادثات العامة (Support & Chat)
+import '../features/support/presentation/screens/support_hub_screen.dart';
+import '../features/support/presentation/screens/create_ticket_screen.dart';
+import '../features/support/presentation/screens/ticket_chat_screen.dart';
+import '../features/support/presentation/screens/live_chat_screen.dart';
+import '../features/support/presentation/screens/emergency_report_screen.dart';
+import '../features/support/presentation/screens/emergency_details_screen.dart';
+import '../features/support/presentation/screens/my_tickets_screen.dart';
+import '../features/chat/presentation/screens/chat_screen.dart';
+
+// النماذج والـ Providers المطلوبة
+import '../core/enums/user_role.dart';
+import '../features/auth/providers/auth_provider.dart';
+import '../features/user/providers/user_model_provider.dart';
+import '../core/providers/splash_duration_provider.dart';
+import '../core/providers/system_settings_provider.dart';
+import '../features/customer/data/models/offer_model.dart';
+import '../features/customer/data/models/product_model.dart';
+
 final routerProvider = Provider<GoRouter>((ref) {
   final listenable = RouterRefreshNotifier(ref);
 
