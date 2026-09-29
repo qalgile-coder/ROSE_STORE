@@ -3,7 +3,6 @@ import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-// تم تعديل الاستيراد ليكون بالمسار النسبي المباشر المتوافق مع توليد الترجمة الافتراضي
 import '../l10n/app_localizations.dart';
 
 import '../core/providers.dart';
@@ -115,7 +114,6 @@ final routerProvider = Provider<GoRouter>((ref) {
           currentPath == '/signup' ||
           currentPath == '/verify-email';
 
-      // فحص وضع الصيانة أولاً
       if (settings?.maintenanceMode == true) {
         final isSuperAdmin = userModel.valueOrNull?.role == UserRole.superAdmin;
         if (!isSuperAdmin) {
@@ -128,15 +126,13 @@ final routerProvider = Provider<GoRouter>((ref) {
 
       final user = authState.valueOrNull;
 
-      // إذا لم يكن المستخدم مسجلاً دخولاً
       if (user == null) {
         return loggingIn ? null : '/welcome';
       }
 
-      // 🛡️ [تعديل احترافي متزامن]: الاعتماد على الفحص المباشر والسماح بالمرور الحر بين شاشات المصادقة والتحقق دون إجبار قسري
       final firebaseUser = FirebaseAuth.instance.currentUser;
       if (firebaseUser != null && !firebaseUser.emailVerified) {
-        if (currentPath == '/verify-email' || currentPath == '/login' || currentPath == '/signup' || currentPath == '/welcome') {
+        if (currentPath == '/verify-email' || currentPath == '/login' || currentPath == '/welcome' || currentPath == '/signup') {
           return null;
         }
       }
@@ -154,7 +150,6 @@ final routerProvider = Provider<GoRouter>((ref) {
       final isPublicScreen = loggingIn || currentPath == '/' || currentPath == '/welcome';
 
       if (isPublicScreen) {
-        // إذا كان البريد غير مؤكد، امنع إعادة التوجيه التلقائي وأبقِ المستخدم في صفحته الحالية
         if (firebaseUser != null && !firebaseUser.emailVerified) {
           return null;
         }
@@ -289,7 +284,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(path: '/vendor/notifications', builder: (context, state) => const VendorNotificationsScreen()),
       GoRoute(path: '/vendor/profile', builder: (context, state) => const VendorProfileScreen()),
       GoRoute(path: '/vendor/edit-shop', builder: (context, state) => const EditShopScreen()),
-      GoRoute(path: '/vendor/analytics', builder: (context, state) => const SalesAnalyticsScreen()),
+      GoRoute(path: '/vendor/analytics', builder: (context, state) => const VendorSalesAnalyticsScreen()),
       GoRoute(path: '/vendor/orders', builder: (context, state) => const VendorOrdersScreen()),
       GoRoute(
         path: '/vendor/order-details/:id',
@@ -303,7 +298,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(path: '/customer', builder: (context, state) => const CustomerHome()),
       GoRoute(path: '/customer/profile', builder: (context, state) => const CustomerProfileScreen()),
       GoRoute(path: '/customer/addresses', builder: (context, state) => const AddressManagementScreen()),
-      GoRoute(path: '/customer/search', builder: (context, state) => const SearchScreen()),
+      GoRoute(path: '/customer/search', builder: (context, state) => const CustomerSearchScreen()),
       GoRoute(path: '/customer/wishlist', builder: (context, state) => const WishlistScreen()),
       GoRoute(path: '/customer/cart', builder: (context, state) => const CartScreen()),
       GoRoute(path: '/customer/checkout', builder: (context, state) => const CheckoutScreen()),
@@ -351,8 +346,8 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(path: '/rider/performance', builder: (context, state) => const PerformanceDetailsScreen()),
       GoRoute(path: '/rider/reviews', builder: (context, state) => const RiderReviewsScreen()),
       GoRoute(path: '/rider/profile', builder: (context, state) => const RiderProfileScreen()),
-      GoRoute(path: '/rider/history', builder: (context, state) => const HistoryScreen()),
-      GoRoute(path: '/rider/earnings', builder: (context, state) => const EarningsScreen()),
+      GoRoute(path: '/rider/history', builder: (context, state) => const RiderHistoryScreen()),
+      GoRoute(path: '/rider/earnings', builder: (context, state) => const RiderEarningsScreen()),
       GoRoute(path: '/rider/vehicle', builder: (context, state) => const VehicleDetailsScreen()),
       GoRoute(path: '/rider/support', builder: (context, state) => const SupportCenterScreen()),
       GoRoute(path: '/rider/support-chat', builder: (context, state) => const SupportChatScreen()),
