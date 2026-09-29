@@ -133,13 +133,12 @@ final routerProvider = Provider<GoRouter>((ref) {
         return loggingIn ? null : '/welcome';
       }
 
-      // 🛡️ [تعديل احترافي]: السماح بالمرور إلى صفحات المصادقة (مثل تسجيل الدخول أو الترحيب) حتى لو لم يتم تفعيل البريد بعد
+      // 🛡️ [تعديل احترافي]: السماح بالمرور الحر لصفحات المصادقة والتحقق دون إجبار قسري مزعج
       final firebaseUser = FirebaseAuth.instance.currentUser;
       if (firebaseUser != null && !firebaseUser.emailVerified) {
-        if (currentPath == '/login' || currentPath == '/welcome' || currentPath == '/signup') {
+        if (currentPath == '/verify-email' || currentPath == '/login' || currentPath == '/welcome' || currentPath == '/signup') {
           return null;
         }
-        return currentPath == '/verify-email' ? null : '/verify-email';
       }
 
       if (userModel.isLoading) return null;
