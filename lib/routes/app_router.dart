@@ -1,101 +1,3 @@
-import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-// تم تعديل الاستيراد ليكون بالمسار النسبي المباشر المتوافق مع توليد الترجمة الافتراضي
-import '../l10n/app_localizations.dart';
-
-import '../core/providers.dart';
-import '../models/user_model.dart';
-import '../screens/splash_screen.dart';
-import '../screens/developer_profile_screen.dart';
-import '../features/auth/welcome_screen.dart';
-import '../features/auth/login_screen.dart';
-import '../features/auth/signup_screen.dart';
-import '../screens/verify_email_screen.dart';
-import '../features/admin/admin_dashboard.dart';
-import '../features/admin/add_vendor_screen.dart';
-import '../features/admin/add_rider_screen.dart';
-import '../features/admin/notifications_screen.dart';
-import '../features/admin/admin_profile_screen.dart';
-import '../features/admin/analytics_dashboard_screen.dart';
-import '../features/admin/all_shops_screen.dart';
-import '../features/admin/rider_management_screen.dart';
-import '../features/admin/pending_orders_screen.dart';
-import '../features/admin/customer_management_screen.dart';
-import '../features/admin/vendor_management_screen.dart';
-import '../features/admin/approval_center_screen.dart';
-import '../features/admin/payout_management_screen.dart';
-import '../features/admin/system_settings_screen.dart';
-import '../features/admin/system_info_screen.dart';
-import '../features/admin/activity_log_screen.dart';
-import '../features/admin/shop_management_screen.dart';
-import '../features/admin/category_management_screen.dart';
-import '../features/admin/coupon_management_screen.dart' as admin;
-import '../features/admin/user_management_screen.dart';
-import '../features/admin/support_list_screen.dart';
-import '../features/admin/support_chat_detail_screen.dart';
-import '../features/admin/order_management_screen.dart';
-import '../features/admin/user_history_screen.dart';
-import '../features/admin/order_map_screen.dart';
-import '../features/vendor/vendor_dashboard.dart';
-import '../features/vendor/add_product_screen.dart';
-import '../features/vendor/vendor_notifications_screen.dart';
-import '../features/vendor/vendor_profile_screen.dart';
-import '../features/vendor/sales_analytics_screen.dart';
-import '../features/vendor/vendor_orders_screen.dart';
-import '../features/vendor/vendor_order_details_screen.dart';
-import '../features/vendor/product_management_screen.dart';
-import '../features/vendor/low_stock_screen.dart';
-import '../features/vendor/vendor_reviews_screen.dart';
-import '../features/vendor/edit_shop_screen.dart';
-import '../features/vendor/coupon_management_screen.dart';
-import '../features/vendor/vendor_earnings_screen.dart';
-import '../features/customer/customer_home.dart';
-import '../features/customer/shop_detail_screen.dart';
-import '../features/customer/customer_profile_screen.dart';
-import '../features/customer/address_management_screen.dart';
-import '../features/customer/search_screen.dart';
-import '../features/customer/cart_screen.dart';
-import '../features/customer/checkout_screen.dart';
-import '../features/customer/order_success_screen.dart';
-import '../features/customer/customer_orders_screen.dart';
-import '../features/customer/customer_order_details_screen.dart';
-import '../features/customer/category_shops_screen.dart';
-import '../features/customer/featured_shops_screen.dart';
-import '../features/customer/nearby_shops_screen.dart';
-import '../features/customer/trending_products_screen.dart';
-import '../features/customer/customer_all_products_screen.dart';
-import '../features/customer/product_reviews_screen.dart';
-import '../features/customer/offer_details_screen.dart';
-import '../features/customer/product_details_screen.dart';
-import '../features/customer/notifications_screen.dart';
-import '../features/customer/wishlist_screen.dart';
-import '../models/offer_model.dart';
-import '../models/product_model.dart';
-import '../features/rider/rider_dashboard.dart';
-import '../features/rider/order_details_screen.dart';
-import '../features/rider/active_tasks_screen.dart';
-import '../features/rider/performance_details_screen.dart';
-import '../features/rider/rider_reviews_screen.dart';
-import '../features/rider/rider_profile_screen.dart';
-import '../features/rider/history_screen.dart';
-import '../features/rider/earnings_screen.dart';
-import '../features/rider/vehicle_details_screen.dart';
-import '../features/rider/support_center_screen.dart';
-import '../features/rider/alerts_screen.dart';
-import '../features/rider/documents_screen.dart';
-import '../features/chat/chat_screen.dart';
-import '../features/chat/support_chat_screen.dart';
-import '../features/support/screens/support_hub_screen.dart';
-import '../features/support/screens/create_ticket_screen.dart';
-import '../features/support/screens/ticket_chat_screen.dart';
-import '../features/support/screens/my_tickets_screen.dart';
-import '../features/support/screens/live_chat_screen.dart';
-import '../features/support/screens/emergency_report_screen.dart';
-import '../features/support/screens/emergency_details_screen.dart';
-
 final routerProvider = Provider<GoRouter>((ref) {
   final listenable = RouterRefreshNotifier(ref);
 
@@ -133,11 +35,11 @@ final routerProvider = Provider<GoRouter>((ref) {
         return loggingIn ? null : '/welcome';
       }
 
-      // 🛡️ [تعديل احترافي]: السماح بالمرور الحر لصفحات المصادقة والتحقق دون إجبار قسري مزعج
+      // 🛡️ [تعديل احترافي دقيق]: السماح بالبقاء والحرية الكاملة في التنقل والرجوع بين صفحات المصادقة والتحقق إذا لم يتم تفعيل البريد الإلكتروني بعد
       final firebaseUser = FirebaseAuth.instance.currentUser;
       if (firebaseUser != null && !firebaseUser.emailVerified) {
-        if (currentPath == '/verify-email' || currentPath == '/login' || currentPath == '/welcome' || currentPath == '/signup') {
-          return null;
+        if (currentPath == '/verify-email' || currentPath == '/login' || currentPath == '/signup' || currentPath == '/welcome') {
+          return null; // السماح بالرجوع والتنقل بحرية تامة دون إجبار قسري
         }
       }
 
@@ -154,6 +56,11 @@ final routerProvider = Provider<GoRouter>((ref) {
       final isPublicScreen = loggingIn || currentPath == '/' || currentPath == '/welcome';
 
       if (isPublicScreen) {
+        // إذا كان البريد غير مؤكد، امنع إعادة التوجيه التلقائي للوحة التحكم وأبقِ المستخدم في صفحة التحقق أو صفحات المصادقة
+        if (firebaseUser != null && !firebaseUser.emailVerified) {
+          return null;
+        }
+
         String target = '/welcome';
         switch (model.role) {
           case UserRole.superAdmin:
