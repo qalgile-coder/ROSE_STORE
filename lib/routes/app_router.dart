@@ -130,14 +130,17 @@ final routerProvider = Provider<GoRouter>((ref) {
         return isAuthScreen ? null : '/welcome';
       }
 
-      // 2. فحص حالة التحقق من البريد الإلكتروني (بشكل حاسم وفوري)
+      // 2. فحص حالة التحقق من البريد الإلكتروني (مع السماح بالرجوع للشاشات الأساسية بسلاسة)
       final firebaseUser = FirebaseAuth.instance.currentUser;
       if (firebaseUser != null && !firebaseUser.emailVerified) {
-        // إذا كان المستخدم لم يفعّل بريده، وجهه حصرياً لشاشة التحقق ما لم يكن فيها بالفعل
-        if (currentPath != '/verify-email') {
-          return '/verify-email';
+        // السماح للمستخدم بالتنقل بسلاسة والرجوع لشاشات المصادقة (التسجيل، تسجيل الدخول، أو الترحيب)
+        if (currentPath == '/verify-email' ||
+            currentPath == '/login' ||
+            currentPath == '/signup' ||
+            currentPath == '/welcome') {
+          return null;
         }
-        return null; // البقاء بسلاسة في شاشة التحقق مع السماح بالرجوع للخلف إن أردت
+        return '/verify-email';
       }
 
       // 3. إذا كان التحميل جارياً لنموذج المستخدم
