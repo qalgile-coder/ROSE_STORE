@@ -1,116 +1,100 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+// تم تعديل الاستيراد ليكون بالمسار النسبي المباشر المتوافق مع توليد الترجمة الافتراضي
+import '../l10n/app_localizations.dart';
 
-// 🌐 استيراد حزم الترجمة والملفات والشاشات الخاصة بالمشروع
-// (تأكد من تعديل مسارات الاستيراد بحسب هيكل مشروعك الفعلي)
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
-
-import '../features/auth/presentation/screens/welcome_screen.dart';
-import '../features/auth/presentation/screens/login_screen.dart';
-import '../features/auth/presentation/screens/signup_screen.dart';
-import '../features/auth/presentation/screens/verify_email_screen.dart';
-import '../features/splash/presentation/screens/splash_screen.dart';
-import '../features/developer/presentation/screens/developer_profile_screen.dart';
-
-// الشاشات الخاصة باللوحات المختلفة
-import '../features/admin/presentation/screens/admin_dashboard.dart';
-import '../features/admin/presentation/screens/add_vendor_screen.dart';
-import '../features/admin/presentation/screens/add_rider_screen.dart';
-import '../features/admin/presentation/screens/notifications_screen.dart';
-import '../features/admin/presentation/screens/admin_profile_screen.dart';
-import '../features/admin/presentation/screens/analytics_dashboard_screen.dart';
-import '../features/admin/presentation/screens/all_shops_screen.dart';
-import '../features/admin/presentation/screens/shop_management_screen.dart';
-import '../features/admin/presentation/screens/category_management_screen.dart';
-import '../features/admin/presentation/screens/coupon_management_screen.dart' as admin;
-import '../features/admin/presentation/screens/user_management_screen.dart';
-import '../features/admin/presentation/screens/rider_management_screen.dart';
-import '../features/admin/presentation/screens/pending_orders_screen.dart';
-import '../features/admin/presentation/screens/customer_management_screen.dart';
-import '../features/admin/presentation/screens/vendor_management_screen.dart';
-import '../features/admin/presentation/screens/approval_center_screen.dart';
-import '../features/admin/presentation/screens/payout_management_screen.dart';
-import '../features/admin/presentation/screens/system_settings_screen.dart';
-import '../features/admin/presentation/screens/system_info_screen.dart';
-import '../features/admin/presentation/screens/activity_log_screen.dart';
-import '../features/admin/presentation/screens/order_management_screen.dart';
-import '../features/admin/presentation/screens/order_map_screen.dart';
-import '../features/admin/presentation/screens/user_history_screen.dart';
-import '../features/admin/presentation/screens/support_list_screen.dart';
-import '../features/admin/presentation/screens/support_chat_detail_screen.dart';
-
-// شاشات البائع (Vendor)
-import '../features/vendor/presentation/screens/vendor_dashboard.dart';
-import '../features/vendor/presentation/screens/add_product_screen.dart';
-import '../features/vendor/presentation/screens/vendor_notifications_screen.dart';
-import '../features/vendor/presentation/screens/vendor_profile_screen.dart';
-import '../features/vendor/presentation/screens/edit_shop_screen.dart';
-import '../features/vendor/presentation/screens/vendor_sales_analytics_screen.dart';
-import '../features/vendor/presentation/screens/vendor_orders_screen.dart';
-import '../features/vendor/presentation/screens/vendor_order_details_screen.dart';
-import '../features/vendor/presentation/screens/product_management_screen.dart';
-import '../features/vendor/presentation/screens/low_stock_screen.dart';
-import '../features/vendor/presentation/screens/vendor_reviews_screen.dart';
-import '../features/vendor/presentation/screens/coupon_management_screen.dart';
-import '../features/vendor/presentation/screens/vendor_earnings_screen.dart';
-
-// شاشات العميل (Customer)
-import '../features/customer/presentation/screens/customer_home.dart';
-import '../features/customer/presentation/screens/customer_profile_screen.dart';
-import '../features/customer/presentation/screens/address_management_screen.dart';
-import '../features/customer/presentation/screens/customer_search_screen.dart';
-import '../features/customer/presentation/screens/wishlist_screen.dart';
-import '../features/customer/presentation/screens/cart_screen.dart';
-import '../features/customer/presentation/screens/checkout_screen.dart';
-import '../features/customer/presentation/screens/customer_orders_screen.dart';
-import '../features/customer/presentation/screens/customer_order_details_screen.dart';
-import '../features/customer/presentation/screens/order_success_screen.dart';
-import '../features/customer/presentation/screens/featured_shops_screen.dart';
-import '../features/customer/presentation/screens/nearby_shops_screen.dart';
-import '../features/customer/presentation/screens/trending_products_screen.dart';
-import '../features/customer/presentation/screens/customer_all_products_screen.dart';
-import '../features/customer/presentation/screens/category_shops_screen.dart';
-import '../features/customer/presentation/screens/offer_details_screen.dart';
-import '../features/customer/presentation/screens/product_details_screen.dart';
-import '../features/customer/presentation/screens/product_reviews_screen.dart';
-import '../features/customer/presentation/screens/shop_detail_screen.dart';
-import '../features/customer/presentation/screens/customer_notifications_screen.dart';
-
-// شاشات المندوب (Rider)
-import '../features/rider/presentation/screens/rider_dashboard.dart';
-import '../features/rider/presentation/screens/order_details_screen.dart';
-import '../features/rider/presentation/screens/active_tasks_screen.dart';
-import '../features/rider/presentation/screens/performance_details_screen.dart';
-import '../features/rider/presentation/screens/rider_reviews_screen.dart';
-import '../features/rider/presentation/screens/rider_profile_screen.dart';
-import '../features/rider/presentation/screens/rider_history_screen.dart';
-import '../features/rider/presentation/screens/rider_earnings_screen.dart';
-import '../features/rider/presentation/screens/vehicle_details_screen.dart';
-import '../features/rider/presentation/screens/support_center_screen.dart';
-import '../features/rider/presentation/screens/support_chat_screen.dart';
-import '../features/rider/presentation/screens/alerts_screen.dart';
-import '../features/rider/presentation/screens/documents_screen.dart';
-
-// شاشات الدعم والمحادثات العامة (Support & Chat)
-import '../features/support/presentation/screens/support_hub_screen.dart';
-import '../features/support/presentation/screens/create_ticket_screen.dart';
-import '../features/support/presentation/screens/ticket_chat_screen.dart';
-import '../features/support/presentation/screens/live_chat_screen.dart';
-import '../features/support/presentation/screens/emergency_report_screen.dart';
-import '../features/support/presentation/screens/emergency_details_screen.dart';
-import '../features/support/presentation/screens/my_tickets_screen.dart';
-import '../features/chat/presentation/screens/chat_screen.dart';
-
-// النماذج والـ Providers المطلوبة
-import '../core/enums/user_role.dart';
-import '../features/auth/providers/auth_provider.dart';
-import '../features/user/providers/user_model_provider.dart';
-import '../core/providers/splash_duration_provider.dart';
-import '../core/providers/system_settings_provider.dart';
-import '../features/customer/data/models/offer_model.dart';
-import '../features/customer/data/models/product_model.dart';
+import '../core/providers.dart';
+import '../models/user_model.dart';
+import '../screens/splash_screen.dart';
+import '../screens/developer_profile_screen.dart';
+import '../features/auth/welcome_screen.dart';
+import '../features/auth/login_screen.dart';
+import '../features/auth/signup_screen.dart';
+import '../screens/verify_email_screen.dart';
+import '../features/admin/admin_dashboard.dart';
+import '../features/admin/add_vendor_screen.dart';
+import '../features/admin/add_rider_screen.dart';
+import '../features/admin/notifications_screen.dart';
+import '../features/admin/admin_profile_screen.dart';
+import '../features/admin/analytics_dashboard_screen.dart';
+import '../features/admin/all_shops_screen.dart';
+import '../features/admin/rider_management_screen.dart';
+import '../features/admin/pending_orders_screen.dart';
+import '../features/admin/customer_management_screen.dart';
+import '../features/admin/vendor_management_screen.dart';
+import '../features/admin/approval_center_screen.dart';
+import '../features/admin/payout_management_screen.dart';
+import '../features/admin/system_settings_screen.dart';
+import '../features/admin/system_info_screen.dart';
+import '../features/admin/activity_log_screen.dart';
+import '../features/admin/shop_management_screen.dart';
+import '../features/admin/category_management_screen.dart';
+import '../features/admin/coupon_management_screen.dart' as admin;
+import '../features/admin/user_management_screen.dart';
+import '../features/admin/support_list_screen.dart';
+import '../features/admin/support_chat_detail_screen.dart';
+import '../features/admin/order_management_screen.dart';
+import '../features/admin/user_history_screen.dart';
+import '../features/admin/order_map_screen.dart';
+import '../features/vendor/vendor_dashboard.dart';
+import '../features/vendor/add_product_screen.dart';
+import '../features/vendor/vendor_notifications_screen.dart';
+import '../features/vendor/vendor_profile_screen.dart';
+import '../features/vendor/sales_analytics_screen.dart';
+import '../features/vendor/vendor_orders_screen.dart';
+import '../features/vendor/vendor_order_details_screen.dart';
+import '../features/vendor/product_management_screen.dart';
+import '../features/vendor/low_stock_screen.dart';
+import '../features/vendor/vendor_reviews_screen.dart';
+import '../features/vendor/edit_shop_screen.dart';
+import '../features/vendor/coupon_management_screen.dart';
+import '../features/vendor/vendor_earnings_screen.dart';
+import '../features/customer/customer_home.dart';
+import '../features/customer/shop_detail_screen.dart';
+import '../features/customer/customer_profile_screen.dart';
+import '../features/customer/address_management_screen.dart';
+import '../features/customer/search_screen.dart';
+import '../features/customer/cart_screen.dart';
+import '../features/customer/checkout_screen.dart';
+import '../features/customer/order_success_screen.dart';
+import '../features/customer/customer_orders_screen.dart';
+import '../features/customer/customer_order_details_screen.dart';
+import '../features/customer/category_shops_screen.dart';
+import '../features/customer/featured_shops_screen.dart';
+import '../features/customer/nearby_shops_screen.dart';
+import '../features/customer/trending_products_screen.dart';
+import '../features/customer/customer_all_products_screen.dart';
+import '../features/customer/product_reviews_screen.dart';
+import '../features/customer/offer_details_screen.dart';
+import '../features/customer/product_details_screen.dart';
+import '../features/customer/notifications_screen.dart';
+import '../features/customer/wishlist_screen.dart';
+import '../models/offer_model.dart';
+import '../models/product_model.dart';
+import '../features/rider/rider_dashboard.dart';
+import '../features/rider/order_details_screen.dart';
+import '../features/rider/active_tasks_screen.dart';
+import '../features/rider/performance_details_screen.dart';
+import '../features/rider/rider_reviews_screen.dart';
+import '../features/rider/rider_profile_screen.dart';
+import '../features/rider/history_screen.dart';
+import '../features/rider/earnings_screen.dart';
+import '../features/rider/vehicle_details_screen.dart';
+import '../features/rider/support_center_screen.dart';
+import '../features/rider/alerts_screen.dart';
+import '../features/rider/documents_screen.dart';
+import '../features/chat/chat_screen.dart';
+import '../features/chat/support_chat_screen.dart';
+import '../features/support/screens/support_hub_screen.dart';
+import '../features/support/screens/create_ticket_screen.dart';
+import '../features/support/screens/ticket_chat_screen.dart';
+import '../features/support/screens/my_tickets_screen.dart';
+import '../features/support/screens/live_chat_screen.dart';
+import '../features/support/screens/emergency_report_screen.dart';
+import '../features/support/screens/emergency_details_screen.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
   final listenable = RouterRefreshNotifier(ref);
@@ -149,12 +133,11 @@ final routerProvider = Provider<GoRouter>((ref) {
         return loggingIn ? null : '/welcome';
       }
 
-      // 🛡️ [تعديل احترافي دقيق ومتزامن]: الاعتماد على كائن الـ user القادم من الـ authState مباشرة لتجنب أي تأخير في المزامنة
-      final bool isEmailVerified = user.emailVerified;
-
-      if (!isEmailVerified) {
+      // 🛡️ [تعديل احترافي متزامن]: الاعتماد على الفحص المباشر والسماح بالمرور الحر بين شاشات المصادقة والتحقق دون إجبار قسري
+      final firebaseUser = FirebaseAuth.instance.currentUser;
+      if (firebaseUser != null && !firebaseUser.emailVerified) {
         if (currentPath == '/verify-email' || currentPath == '/login' || currentPath == '/signup' || currentPath == '/welcome') {
-          return null; // السماح بالرجوع والتنقل بحرية تامة دون إجبار قسري
+          return null;
         }
       }
 
@@ -171,8 +154,8 @@ final routerProvider = Provider<GoRouter>((ref) {
       final isPublicScreen = loggingIn || currentPath == '/' || currentPath == '/welcome';
 
       if (isPublicScreen) {
-        // إذا كان البريد غير مؤكد، امنع إعادة التوجيه التلقائي للوحة التحكم وأبقِ المستخدم في صفحة التحقق أو صفحات المصادقة
-        if (!isEmailVerified) {
+        // إذا كان البريد غير مؤكد، امنع إعادة التوجيه التلقائي وأبقِ المستخدم في صفحته الحالية
+        if (firebaseUser != null && !firebaseUser.emailVerified) {
           return null;
         }
 
@@ -306,7 +289,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(path: '/vendor/notifications', builder: (context, state) => const VendorNotificationsScreen()),
       GoRoute(path: '/vendor/profile', builder: (context, state) => const VendorProfileScreen()),
       GoRoute(path: '/vendor/edit-shop', builder: (context, state) => const EditShopScreen()),
-      GoRoute(path: '/vendor/analytics', builder: (context, state) => const VendorSalesAnalyticsScreen()),
+      GoRoute(path: '/vendor/analytics', builder: (context, state) => const SalesAnalyticsScreen()),
       GoRoute(path: '/vendor/orders', builder: (context, state) => const VendorOrdersScreen()),
       GoRoute(
         path: '/vendor/order-details/:id',
@@ -320,7 +303,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(path: '/customer', builder: (context, state) => const CustomerHome()),
       GoRoute(path: '/customer/profile', builder: (context, state) => const CustomerProfileScreen()),
       GoRoute(path: '/customer/addresses', builder: (context, state) => const AddressManagementScreen()),
-      GoRoute(path: '/customer/search', builder: (context, state) => const CustomerSearchScreen()),
+      GoRoute(path: '/customer/search', builder: (context, state) => const SearchScreen()),
       GoRoute(path: '/customer/wishlist', builder: (context, state) => const WishlistScreen()),
       GoRoute(path: '/customer/cart', builder: (context, state) => const CartScreen()),
       GoRoute(path: '/customer/checkout', builder: (context, state) => const CheckoutScreen()),
@@ -354,7 +337,7 @@ final routerProvider = Provider<GoRouter>((ref) {
         ),
       ),
       GoRoute(path: '/customer/shop/:id', builder: (context, state) => ShopDetailScreen(shopId: state.pathParameters['id']!)),
-      GoRoute(path: '/customer/notifications', builder: (context, state) => const CustomerNotificationsScreen()),
+      GoRoute(path: '/customer/notifications', builder: (context, state) => const NotificationsScreen()),
       GoRoute(
         path: '/product/:id',
         builder: (context, state) => ProductRouteWidget(productId: state.pathParameters['id']!),
@@ -368,8 +351,8 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(path: '/rider/performance', builder: (context, state) => const PerformanceDetailsScreen()),
       GoRoute(path: '/rider/reviews', builder: (context, state) => const RiderReviewsScreen()),
       GoRoute(path: '/rider/profile', builder: (context, state) => const RiderProfileScreen()),
-      GoRoute(path: '/rider/history', builder: (context, state) => const RiderHistoryScreen()),
-      GoRoute(path: '/rider/earnings', builder: (context, state) => const RiderEarningsScreen()),
+      GoRoute(path: '/rider/history', builder: (context, state) => const HistoryScreen()),
+      GoRoute(path: '/rider/earnings', builder: (context, state) => const EarningsScreen()),
       GoRoute(path: '/rider/vehicle', builder: (context, state) => const VehicleDetailsScreen()),
       GoRoute(path: '/rider/support', builder: (context, state) => const SupportCenterScreen()),
       GoRoute(path: '/rider/support-chat', builder: (context, state) => const SupportChatScreen()),
