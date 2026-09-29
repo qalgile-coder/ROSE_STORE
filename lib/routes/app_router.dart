@@ -109,11 +109,7 @@ final routerProvider = Provider<GoRouter>((ref) {
 
       final currentPath = state.matchedLocation;
 
-      final loggingIn = currentPath == '/login' ||
-          currentPath == '/welcome' ||
-          currentPath == '/signup' ||
-          currentPath == '/verify-email';
-
+      // فحص وضع الصيانة أولاً
       if (settings?.maintenanceMode == true) {
         final isSuperAdmin = userModel.valueOrNull?.role == UserRole.superAdmin;
         if (!isSuperAdmin) {
@@ -126,34 +122,46 @@ final routerProvider = Provider<GoRouter>((ref) {
 
       final user = authState.valueOrNull;
 
+      // 1. إذا لم يكن مسجلاً للدخول إطلاقاً
       if (user == null) {
-        return loggingIn ? null : '/welcome';
+        final isAuthScreen = currentPath == '/login' ||
+            currentPath == '/welcome' ||
+            currentPath == '/signup';
+        return isAuthScreen ? null : '/welcome';
       }
 
+      // 2. فحص حالة التحقق من البريد الإلكتروني (بشكل حاسم وفوري)
       final firebaseUser = FirebaseAuth.instance.currentUser;
       if (firebaseUser != null && !firebaseUser.emailVerified) {
-        if (currentPath == '/verify-email' || currentPath == '/login' || currentPath == '/welcome' || currentPath == '/signup') {
-          return null;
+        // إذا كان المستخدم لم يفعّل بريده، وجهه حصرياً لشاشة التحقق ما لم يكن فيها بالفعل
+        if (currentPath != '/verify-email') {
+          return '/verify-email';
         }
+        return null; // البقاء بسلاسة في شاشة التحقق مع السماح بالرجوع للخلف إن أردت
       }
 
+      // 3. إذا كان التحميل جارياً لنموذج المستخدم
       if (userModel.isLoading) return null;
 
       final model = userModel.valueOrNull;
 
       if (userModel.hasError || model == null) {
-        if (loggingIn || currentPath == '/') return null;
-        if (userModel.hasError && userModel.error is! Exception) return null;
+        final isAuthScreen = currentPath == '/login' ||
+            currentPath == '/welcome' ||
+            currentPath == '/signup' ||
+            currentPath == '/verify-email';
+        if (isAuthScreen || currentPath == '/') return null;
         return '/welcome';
       }
 
-      final isPublicScreen = loggingIn || currentPath == '/' || currentPath == '/welcome';
+      // 4. التوجيه بناءً على الدور إذا كان في الشاشات العامة
+      final isPublicScreen = currentPath == '/login' ||
+          currentPath == '/welcome' ||
+          currentPath == '/signup' ||
+          currentPath == '/verify-email' ||
+          currentPath == '/';
 
       if (isPublicScreen) {
-        if (firebaseUser != null && !firebaseUser.emailVerified) {
-          return null;
-        }
-
         String target = '/welcome';
         switch (model.role) {
           case UserRole.superAdmin:
