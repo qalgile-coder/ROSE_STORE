@@ -35,9 +35,10 @@ final routerProvider = Provider<GoRouter>((ref) {
         return loggingIn ? null : '/welcome';
       }
 
-      // 🛡️ [تعديل احترافي دقيق]: السماح بالبقاء والحرية الكاملة في التنقل والرجوع بين صفحات المصادقة والتحقق إذا لم يتم تفعيل البريد الإلكتروني بعد
-      final firebaseUser = FirebaseAuth.instance.currentUser;
-      if (firebaseUser != null && !firebaseUser.emailVerified) {
+      // 🛡️ [تعديل احترافي دقيق ومتزامن]: الاعتماد على كائن الـ user القادم من الـ authState مباشرة لتجنب أي تأخير في المزامنة
+      final bool isEmailVerified = user.emailVerified;
+
+      if (!isEmailVerified) {
         if (currentPath == '/verify-email' || currentPath == '/login' || currentPath == '/signup' || currentPath == '/welcome') {
           return null; // السماح بالرجوع والتنقل بحرية تامة دون إجبار قسري
         }
@@ -57,7 +58,7 @@ final routerProvider = Provider<GoRouter>((ref) {
 
       if (isPublicScreen) {
         // إذا كان البريد غير مؤكد، امنع إعادة التوجيه التلقائي للوحة التحكم وأبقِ المستخدم في صفحة التحقق أو صفحات المصادقة
-        if (firebaseUser != null && !firebaseUser.emailVerified) {
+        if (!isEmailVerified) {
           return null;
         }
 
