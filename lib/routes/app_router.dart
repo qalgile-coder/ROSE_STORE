@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart'; // <--- أُضيف لدعم فحص الـ emailVerified
+import 'package:firebase_auth/firebase_auth.dart';
 // تم تعديل الاستيراد ليكون بالمسار النسبي المباشر المتوافق مع توليد الترجمة الافتراضي
 import '../l10n/app_localizations.dart';
 
@@ -13,7 +13,7 @@ import '../screens/developer_profile_screen.dart';
 import '../features/auth/welcome_screen.dart';
 import '../features/auth/login_screen.dart';
 import '../features/auth/signup_screen.dart';
-import '../screens/verify_email_screen.dart'; // <--- تم تعديل المسار هنا ليطابق مكان الملف في lib/screens/
+import '../screens/verify_email_screen.dart';
 import '../features/admin/admin_dashboard.dart';
 import '../features/admin/add_vendor_screen.dart';
 import '../features/admin/add_rider_screen.dart';
@@ -66,7 +66,7 @@ import '../features/customer/category_shops_screen.dart';
 import '../features/customer/featured_shops_screen.dart';
 import '../features/customer/nearby_shops_screen.dart';
 import '../features/customer/trending_products_screen.dart';
-import '../features/customer/customer_all_products_screen.dart'; // <--- تم إضافة استيراد شاشة عرض كل المنتجات الجديدة
+import '../features/customer/customer_all_products_screen.dart';
 import '../features/customer/product_reviews_screen.dart';
 import '../features/customer/offer_details_screen.dart';
 import '../features/customer/product_details_screen.dart';
@@ -133,10 +133,12 @@ final routerProvider = Provider<GoRouter>((ref) {
         return loggingIn ? null : '/welcome';
       }
 
-      // 🛡️ [إضافة احترافية]: التحقق مما إذا كان البريد الإلكتروني غير مفعل
-      // يتم جلب الحالة المباشرة من FirebaseAuth لضمان دقة حالة التفعيل
+      // 🛡️ [تعديل احترافي]: السماح بالمرور إلى صفحات المصادقة (مثل تسجيل الدخول أو الترحيب) حتى لو لم يتم تفعيل البريد بعد
       final firebaseUser = FirebaseAuth.instance.currentUser;
       if (firebaseUser != null && !firebaseUser.emailVerified) {
+        if (currentPath == '/login' || currentPath == '/welcome' || currentPath == '/signup') {
+          return null;
+        }
         return currentPath == '/verify-email' ? null : '/verify-email';
       }
 
@@ -211,11 +213,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/verify-email',
         builder: (context, state) {
-          // تمرير البريد الإلكتروني بلطف في حال توفره عبر state.extra أو استخلاصه من المستخدم الحالي
           final email = (state.extra as String?) ?? FirebaseAuth.instance.currentUser?.email ?? '';
           return VerifyEmailScreen(email: email);
         },
-      ), // <--- تم تحديث المسار ليدعم استقبال البريد الإلكتروني بشكل آمن
+      ),
       GoRoute(path: '/admin', builder: (context, state) => const AdminDashboard()),
       GoRoute(path: '/admin/add-vendor', builder: (context, state) => const AddVendorScreen()),
       GoRoute(path: '/admin/add-rider', builder: (context, state) => const AddRiderScreen()),

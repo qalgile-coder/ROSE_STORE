@@ -71,7 +71,7 @@ class RoozStoreApp extends ConsumerWidget {
     final settings = ref.watch(settingsProvider);
     final userModel = ref.watch(userModelProvider);
     
-    ThemeMode activeThemeMode = ThemeMode.light;
+   ThemeMode activeThemeMode = ThemeMode.dark;
     
     if (settings.themeMode == ThemeMode.dark || settings.themeMode == ThemeMode.system) {
       activeThemeMode = settings.themeMode;
