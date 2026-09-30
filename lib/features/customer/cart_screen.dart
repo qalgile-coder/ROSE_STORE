@@ -51,7 +51,7 @@ class CartScreen extends ConsumerWidget {
                       child: TextButton(
                         onPressed: () => _showClearCartDialog(context, ref),
                         child: Text(
-                          'clear'.tr(ref).toUpperCase(), 
+                          'CLEAR', 
                           style: TextStyle(color: AppColors.error.withValues(alpha: 0.7), fontWeight: FontWeight.w900, fontSize: 11, letterSpacing: 1.5)
                         ),
                       ),
@@ -106,13 +106,13 @@ class CartScreen extends ConsumerWidget {
       builder: (context) => AlertDialog(
         backgroundColor: isLight ? Colors.white : AppColors.dialog,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
-        title: Text('clear'.tr(ref) + '?', style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontWeight: FontWeight.w800)),
-        content: Text('This will remove all premium items from your bag.', style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6))),
+        title: Text('Clear Cart?', style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontWeight: FontWeight.w800)),
+        content: Text('This will remove all items from your bag.', style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6))),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: Text('cancel'.tr(ref).toUpperCase(), style: const TextStyle(color: AppColors.textHint))),
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text('CANCEL', style: TextStyle(color: AppColors.textHint))),
           TextButton(
             onPressed: () { ref.read(cartProvider.notifier).clearCart(); Navigator.pop(context); },
-            child: Text('clear'.tr(ref).toUpperCase(), style: const TextStyle(color: AppColors.error, fontWeight: FontWeight.w800)),
+            child: const Text('CLEAR', style: TextStyle(color: AppColors.error, fontWeight: FontWeight.w800)),
           ),
         ],
       ),
@@ -137,14 +137,14 @@ class CartScreen extends ConsumerWidget {
             child: Icon(Icons.shopping_bag_outlined, size: 70, color: colorScheme.primary.withValues(alpha: 0.3)),
           ),
           const SizedBox(height: 32),
-          Text('empty_cart'.tr(ref), style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800, color: colorScheme.onBackground)),
+          Text('Your cart is empty', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800, color: colorScheme.onBackground)),
           const SizedBox(height: 12),
           Text('Discover premium products and add them here.', textAlign: TextAlign.center, style: TextStyle(color: colorScheme.onSurface.withValues(alpha: 0.6), fontSize: 14)),
           const SizedBox(height: 40),
           ElevatedButton(
             onPressed: () => context.go('/customer'),
             style: ElevatedButton.styleFrom(minimumSize: const Size(180, 56)),
-            child: Text('start_shopping'.tr(ref).toUpperCase()),
+            child: const Text('START SHOPPING'),
           ),
         ],
       ),
@@ -158,8 +158,7 @@ class CartScreen extends ConsumerWidget {
     const double deliveryFee = 0.0;
     double total = cart.totalAmount + deliveryFee;
     
-    // جلب رمز العملة من أول منتج بالسلة أو استخدام العملة الافتراضية
-    String currencySymbol = 'ج.س';
+    String currencySymbol = 'SDG';
     if (cart.items.isNotEmpty) {
       final firstItem = cart.items.values.first;
       if (firstItem.product.currency != null && firstItem.product.currency.isNotEmpty) {
@@ -187,10 +186,9 @@ class CartScreen extends ConsumerWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              // Detailed Bill Breakdown
-              _SummaryRow(label: 'item_total'.tr(ref), value: '${cart.totalAmount.toStringAsFixed(0)} $currencySymbol', colorScheme: colorScheme),
+              _SummaryRow(label: 'Item Total', value: '${cart.totalAmount.toStringAsFixed(0)} $currencySymbol', colorScheme: colorScheme),
               const SizedBox(height: 12),
-              _SummaryRow(label: 'delivery_fee'.tr(ref), value: '${deliveryFee.toStringAsFixed(0)} $currencySymbol', colorScheme: colorScheme, isHighlight: true),
+              _SummaryRow(label: 'Delivery Fee', value: '${deliveryFee.toStringAsFixed(0)} $currencySymbol', colorScheme: colorScheme, isHighlight: true),
               const Padding(
                 padding: EdgeInsets.symmetric(vertical: 16),
                 child: Divider(height: 1, color: Colors.black26),
@@ -198,24 +196,23 @@ class CartScreen extends ConsumerWidget {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text('grand_total'.tr(ref), style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: colorScheme.onSurface)),
+                  Text('Grand Total', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: colorScheme.onSurface)),
                   Text('${total.toStringAsFixed(0)} $currencySymbol', style: TextStyle(fontSize: 24, fontWeight: FontWeight.w900, color: colorScheme.primary)),
                 ],
               ),
               const SizedBox(height: 24),
-              // Full Width Checkout Button
               ElevatedButton(
                 onPressed: () => context.push('/customer/checkout'),
                 style: ElevatedButton.styleFrom(
                   minimumSize: const Size(double.infinity, 64),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
                 ),
-                child: Row(
+                child: const Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Text('checkout'.tr(ref).toUpperCase(), style: const TextStyle(letterSpacing: 1, fontWeight: FontWeight.w900)),
-                    const SizedBox(width: 12),
-                    const Icon(Icons.arrow_forward_rounded, size: 20),
+                    Text('CHECKOUT', style: TextStyle(letterSpacing: 1, fontWeight: FontWeight.w900)),
+                    SizedBox(width: 12),
+                    Icon(Icons.arrow_forward_rounded, size: 20),
                   ],
                 ),
               ),
@@ -256,7 +253,7 @@ class _CartItemTile extends ConsumerWidget {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final isLight = theme.brightness == Brightness.light;
-    final currencySymbol = item.product.currency.isNotEmpty ? item.product.currency : 'ج.س';
+    final currencySymbol = item.product.currency.isNotEmpty ? item.product.currency : 'SDG';
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -273,8 +270,8 @@ class _CartItemTile extends ConsumerWidget {
         border: Border.all(color: colorScheme.outline.withValues(alpha: 0.05)),
       ),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Product Image with Shadow
           Container(
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(20),
@@ -285,8 +282,7 @@ class _CartItemTile extends ConsumerWidget {
               child: Image.network(item.product.imageUrl, width: 90, height: 90, fit: BoxFit.cover),
             ),
           ),
-          const SizedBox(width: 20),
-          // Product Details
+          const SizedBox(width: 16),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -311,6 +307,45 @@ class _CartItemTile extends ConsumerWidget {
                   ],
                 ),
                 const SizedBox(height: 4),
+                
+                if ((item.selectedSize != null && item.selectedSize!.isNotEmpty) || 
+                    (item.selectedColor != null && item.selectedColor!.isNotEmpty)) ...[
+                  const SizedBox(height: 4),
+                  Row(
+                    children: [
+                      if (item.selectedSize != null && item.selectedSize!.isNotEmpty) ...[
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: colorScheme.primary.withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: Text(
+                            'Size: ${item.selectedSize}',
+                            style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: colorScheme.primary),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                      ],
+                      if (item.selectedColor != null && item.selectedColor!.isNotEmpty) ...[
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: colorScheme.surfaceVariant.withValues(alpha: 0.5),
+                            borderRadius: BorderRadius.circular(6),
+                            border: Border.all(color: colorScheme.outline.withValues(alpha: 0.2)),
+                          ),
+                          child: Text(
+                            'Color: ${item.selectedColor}',
+                            style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: colorScheme.onSurface.withValues(alpha: 0.7)),
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                ],
+
                 Text(
                   '${item.product.price.toStringAsFixed(0)} $currencySymbol', 
                   style: TextStyle(color: colorScheme.primary, fontWeight: FontWeight.w900, fontSize: 17)

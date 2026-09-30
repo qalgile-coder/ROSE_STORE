@@ -33,23 +33,23 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
   String? _selectedCategoryKey;
 
   final List<Map<String, String>> _categories = [
-    {'name': 'ملابس رجالية', 'key': 'mens_clothing'},
-    {'name': 'ملابس نسائية', 'key': 'womens_clothing'},
-    {'name': 'إكسسوارات', 'key': 'accessories'},
-    {'name': 'مستحضرات تجميل', 'key': 'cosmetics'},
-    {'name': 'أحذية رجالية', 'key': 'mens_shoes'},
-    {'name': 'أحذية نسائية', 'key': 'womens_shoes'},
-    {'name': 'ملابس أطفال', 'key': 'kids_clothing'},
-    {'name': 'حقائب ومحافظ', 'key': 'bags_wallets'},
-    {'name': 'عطور', 'key': 'perfumes'},
+    {'name': 'Men Clothing', 'key': 'mens_clothing'},
+    {'name': 'Women Clothing', 'key': 'womens_clothing'},
+    {'name': 'Accessories', 'key': 'accessories'},
+    {'name': 'Cosmetics', 'key': 'cosmetics'},
+    {'name': 'Men Shoes', 'key': 'mens_shoes'},
+    {'name': 'Women Shoes', 'key': 'womens_shoes'},
+    {'name': 'Kids Clothing', 'key': 'kids_clothing'},
+    {'name': 'Bags & Wallets', 'key': 'bags_wallets'},
+    {'name': 'Perfumes', 'key': 'perfumes'},
   ];
   
-  String _selectedCurrency = 'ج.س';
+  String _selectedCurrency = 'SDG';
 
   final List<Map<String, String>> _currencies = [
-    {'label': 'السودان (ج.س)', 'symbol': 'ج.س'},
-    {'label': 'مصر (ج.م)', 'symbol': 'ج.م'},
-    {'label': 'السعودية (ر.س)', 'symbol': 'ر.س'},
+    {'label': 'Sudan (SDG)', 'symbol': 'SDG'},
+    {'label': 'Egypt (EGP)', 'symbol': 'EGP'},
+    {'label': 'Saudi Arabia (SAR)', 'symbol': 'SAR'},
   ];
 
   // الخصائص الاحترافية الجديدة للأحجام والألوان (طريقة شي إن وتيمو)
@@ -57,14 +57,14 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
   final List<String> _selectedSizes = [];
 
   final List<Map<String, dynamic>> _availableColors = [
-    {'name': 'أسود', 'hex': '#000000', 'color': Colors.black},
-    {'name': 'أبيض', 'hex': '#FFFFFF', 'color': Colors.white},
-    {'name': 'أحمر', 'hex': '#FF0000', 'color': Colors.red},
-    {'name': 'أزرق', 'hex': '#0000FF', 'color': Colors.blue},
-    {'name': 'أخضر', 'hex': '#008000', 'color': Colors.green},
-    {'name': 'رمادي', 'hex': '#808080', 'color': Colors.grey},
-    {'name': 'بيج / كشمير', 'hex': '#F5F5DC', 'color': Color(0xFFF5F5DC)},
-    {'name': 'وردي', 'hex': '#FFC0CB', 'color': Colors.pink},
+    {'name': 'Black', 'hex': '#000000', 'color': Colors.black},
+    {'name': 'White', 'hex': '#FFFFFF', 'color': Colors.white},
+    {'name': 'Red', 'hex': '#FF0000', 'color': Colors.red},
+    {'name': 'Blue', 'hex': '#0000FF', 'color': Colors.blue},
+    {'name': 'Green', 'hex': '#008000', 'color': Colors.green},
+    {'name': 'Grey', 'hex': '#808080', 'color': Colors.grey},
+    {'name': 'Beige / Cashmere', 'hex': '#F5F5DC', 'color': Color(0xFFF5F5DC)},
+    {'name': 'Pink', 'hex': '#FFC0CB', 'color': Colors.pink},
   ];
   final List<String> _selectedColors = [];
 
@@ -152,8 +152,8 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
         category: _selectedCategoryKey ?? 'General',
         isAvailable: _isAvailable,
         createdAt: DateTime.now(),
-        sizes: _selectedSizes,   // تمرير الأحجام الاحترافية المختارة
-        colors: _selectedColors, // تمرير الألوان الاحترافية المختارة
+        sizes: _selectedSizes,
+        colors: _selectedColors,
       );
 
       await ref.read(vendorServiceProvider).addProduct(product);
@@ -344,8 +344,7 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
               _buildSectionHeader('PRODUCT VARIATIONS (SIZES & COLORS)', colorScheme),
               const SizedBox(height: 16),
               
-              // قسم اختيار الأحجام بشكل احترافي
-              Text('Available Sizes (أحجام المنتج)', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: colorScheme.onSurface)),
+              Text('Available Sizes', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: colorScheme.onSurface)),
               const SizedBox(height: 8),
               Wrap(
                 spacing: 8,
@@ -375,8 +374,7 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
               ),
 
               const SizedBox(height: 20),
-              // قسم اختيار الألوان بشكل احترافي
-              Text('Available Colors (ألوان المنتج)', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: colorScheme.onSurface)),
+              Text('Available Colors', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: colorScheme.onSurface)),
               const SizedBox(height: 8),
               Wrap(
                 spacing: 10,
@@ -525,7 +523,7 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
         dropdownColor: colorScheme.surface,
         icon: Icon(Icons.keyboard_arrow_down_rounded, color: colorScheme.primary, size: 20),
         decoration: InputDecoration(
-          labelText: 'اختر قسم المنتج',
+          labelText: 'Select Category',
           labelStyle: TextStyle(color: colorScheme.onSurface.withOpacity(0.4), fontSize: 13, fontWeight: FontWeight.w500),
           prefixIcon: Icon(Icons.category_rounded, color: colorScheme.primary, size: 20),
           border: OutlineInputBorder(
@@ -558,7 +556,7 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
             _selectedCategoryKey = val;
           });
         },
-        validator: (v) => v == null ? 'الرجاء اختيار القسم' : null,
+        validator: (v) => v == null ? 'Please select a category' : null,
       ),
     );
   }

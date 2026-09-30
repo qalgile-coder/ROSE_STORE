@@ -7,6 +7,7 @@ import 'package:share_plus/share_plus.dart';
 import '../../core/providers.dart';
 import '../../core/localization.dart';
 import '../../models/product_model.dart';
+import '../../models/cart_model.dart';
 import '../../models/review_model.dart';
 import '../../theme/app_colors.dart';
 
@@ -148,7 +149,7 @@ class _ProductDetailsScreenState extends ConsumerState<ProductDetailsScreen> {
                       _PriceSection(product: liveProduct),
                       
                       // -------------------------------------------------------------
-                      // 4. قسم اختيار الأحجام (Sizes) بأسلوب شي إن وتيمو الاحترافي
+                      // 4. قسم اختيار الأحجام (Sizes) بأسلوب احترافي
                       // -------------------------------------------------------------
                       if (liveProduct.sizes.isNotEmpty) ...[
                         const SizedBox(height: 32),
@@ -193,7 +194,7 @@ class _ProductDetailsScreenState extends ConsumerState<ProductDetailsScreen> {
                       ],
 
                       // -------------------------------------------------------------
-                      // 5. قسم اختيار الألوان (Colors) بأسلوب شي إن وتيمو الاحترافي
+                      // 5. قسم اختيار الألوان (Colors) بأسلوب احترافي
                       // -------------------------------------------------------------
                       if (liveProduct.colors.isNotEmpty) ...[
                         const SizedBox(height: 24),
@@ -212,7 +213,6 @@ class _ProductDetailsScreenState extends ConsumerState<ProductDetailsScreen> {
                           runSpacing: 12,
                           children: liveProduct.colors.map((colorHex) {
                             final isSelected = _selectedColor == colorHex;
-                            // تحليل كود اللون Hex أو عرضه كنص إن لم يكن Hex صحيحاً
                             Color parsedColor = Colors.grey;
                             try {
                               if (colorHex.startsWith('#')) {
@@ -442,15 +442,13 @@ class _ProductDetailsScreenState extends ConsumerState<ProductDetailsScreen> {
               Expanded(
                 child: ElevatedButton(
                   onPressed: () {
-                    // تمرير الخصائص المختارة (الصورة، الحجم، واللون) عند الإضافة للعربة
-                    final productToOrder = liveProduct.copyWith(
-                      imageUrl: _selectedImageUrl,
-                      imageUrls: [_selectedImageUrl],
-                      // يمكنك دمج معلومات الحجم واللون بالاسم أو وصف المنتج إذا لزم الأمر لعرضها بسلة التسوق بوضوح
-                      name: '${liveProduct.name} ${_selectedSize != null ? "($_selectedSize)" : ""} ${_selectedColor != null ? "[$_selectedColor]" : ""}',
+                    // تمرير الخصائص المختارة مباشرة عبر الكلاس المحدث لـ CartItem
+                    ref.read(cartProvider.notifier).addItemWithDetails(
+                      liveProduct,
+                      selectedColor: _selectedColor,
+                      selectedSize: _selectedSize,
                     );
 
-                    ref.read(cartProvider.notifier).addItem(productToOrder);
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
                         content: Text('${liveProduct.name} added to bag'),

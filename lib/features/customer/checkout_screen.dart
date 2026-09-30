@@ -23,7 +23,6 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
   bool _isPlacingOrder = false;
   CouponModel? _appliedCoupon;
 
-  // جلب رمز العملة الديناميكي من محتويات السلة
   String _getCurrencySymbol(dynamic cart) {
     if (cart.items.isNotEmpty) {
       final firstItem = cart.items.values.first;
@@ -31,7 +30,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
         return firstItem.product.currency;
       }
     }
-    return 'ج.س';
+    return 'SDG';
   }
 
   double _calculateDiscount(double subtotal) {
@@ -53,19 +52,17 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
     final isLight = theme.brightness == Brightness.light;
     final currencySymbol = _getCurrencySymbol(cart);
     
-    // Safety check for shop details
     final shopId = cart.shopId ?? '';
     final shopAsync = shopId.isNotEmpty 
         ? ref.watch(shopDetailProvider(shopId))
         : const AsyncData<ShopModel?>(null);
 
-    // رسوم التوصيل الأساسية
     final platformDeliveryFee = 0.0;
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        title: Text('confirm_order'.tr(ref), style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 20)),
+        title: const Text('Confirm Order', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 20)),
         backgroundColor: theme.scaffoldBackgroundColor,
         elevation: 0,
         centerTitle: true,
@@ -80,11 +77,11 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _buildSectionHeader('delivery_location'.tr(ref), Icons.location_on_rounded, colorScheme),
+            _buildSectionHeader('Delivery Location', Icons.location_on_rounded, colorScheme),
             const SizedBox(height: 16),
             _buildAddressCard(context, address, colorScheme, isLight),
             const SizedBox(height: 32),
-            _buildSectionHeader('payment_method'.tr(ref), Icons.payments_rounded, colorScheme),
+            _buildSectionHeader('Payment Method', Icons.payments_rounded, colorScheme),
             const SizedBox(height: 16),
             _buildPaymentOptions(colorScheme, isLight),
             const SizedBox(height: 32),
@@ -92,7 +89,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
             const SizedBox(height: 16),
             _buildCouponSelector(cart, colorScheme, isLight, currencySymbol),
             const SizedBox(height: 32),
-            _buildSectionHeader('order_summary'.tr(ref), Icons.shopping_bag_rounded, colorScheme),
+            _buildSectionHeader('Order Summary', Icons.shopping_bag_rounded, colorScheme),
             const SizedBox(height: 16),
             shopAsync.when(
               data: (shop) {
@@ -153,12 +150,12 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  address?.label ?? 'select_address'.tr(ref), 
+                  address?.label ?? 'Select Address', 
                   style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16, color: colorScheme.onSurface)
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  address?.fullAddress ?? 'add_address_hint'.tr(ref), 
+                  address?.fullAddress ?? 'Please add your delivery address', 
                   style: TextStyle(color: colorScheme.onSurface.withValues(alpha: 0.6), fontSize: 13, fontWeight: FontWeight.w500, height: 1.4),
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
@@ -192,7 +189,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
       child: Column(
         children: [
           _PaymentTile(
-            title: 'cash_on_delivery'.tr(ref),
+            title: 'Cash on Delivery',
             subtitle: 'Pay at your doorstep',
             icon: Icons.payments_rounded,
             isSelected: _paymentMethod == 'Cash on Delivery',
@@ -202,7 +199,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
           ),
           Divider(color: isLight ? colorScheme.outline.withValues(alpha: 0.1) : AppColors.border, indent: 64, endIndent: 16),
           _PaymentTile(
-            title: 'online_transfer'.tr(ref),
+            title: 'Online Transfer',
             subtitle: 'Instant secure payment',
             icon: Icons.qr_code_scanner_rounded,
             isSelected: _paymentMethod == 'Online Transfer',
@@ -298,7 +295,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                             Text(coupon.code, style: TextStyle(fontWeight: FontWeight.w900, color: colorScheme.onSurface, fontSize: 14, letterSpacing: 0.5)),
                             Text(
                               coupon.discountPercentage > 0 ? '${coupon.discountPercentage.round()}% OFF' : '${coupon.fixedDiscount.round()} $currencySymbol OFF',
-                              style: TextStyle(color: AppColors.success, fontWeight: FontWeight.w800, fontSize: 11),
+                              style: const TextStyle(color: AppColors.success, fontWeight: FontWeight.w800, fontSize: 11),
                             ),
                           ],
                         ),
@@ -358,9 +355,9 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
             ),
           )),
           Divider(color: isLight ? colorScheme.outline.withValues(alpha: 0.1) : AppColors.border, height: 32),
-          _SummaryLine(label: 'item_subtotal'.tr(ref), value: '${cart.totalAmount.toStringAsFixed(0)} $currencySymbol', colorScheme: colorScheme),
+          _SummaryLine(label: 'Item Subtotal', value: '${cart.totalAmount.toStringAsFixed(0)} $currencySymbol', colorScheme: colorScheme),
           const SizedBox(height: 12),
-          _SummaryLine(label: 'delivery_fee'.tr(ref), value: '${deliveryFee.toStringAsFixed(0)} $currencySymbol', color: AppColors.success, colorScheme: colorScheme),
+          _SummaryLine(label: 'Delivery Fee', value: '${deliveryFee.toStringAsFixed(0)} $currencySymbol', color: AppColors.success, colorScheme: colorScheme),
           
           if (discount > 0) ...[
             const SizedBox(height: 12),
@@ -376,7 +373,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text('total_to_pay'.tr(ref), style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: colorScheme.onSurface)),
+              Text('Total to Pay', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: colorScheme.onSurface)),
               Text('${totalToPay.toStringAsFixed(0)} $currencySymbol', 
                 style: TextStyle(fontSize: 24, fontWeight: FontWeight.w900, color: colorScheme.primary)),
             ],
@@ -414,7 +411,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
           : Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Text(_paymentMethod == 'Online Transfer' ? 'pay_confirm'.tr(ref).toUpperCase() : 'confirm_order'.tr(ref).toUpperCase()),
+                Text(_paymentMethod == 'Online Transfer' ? 'PAY & CONFIRM' : 'CONFIRM ORDER'),
                 const SizedBox(width: 12),
                 const Icon(Icons.verified_rounded, size: 20),
               ],
