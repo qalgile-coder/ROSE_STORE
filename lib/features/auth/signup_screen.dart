@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -124,18 +125,13 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
       if (!mounted) return;
 
       _showCustomSnackBar(
-        'تم إنشاء الحساب بنجاح! يرجى التحقق من بريدك الإلكتروني لتفعيل الحساب.',
+        'تم إنشاء الحساب بنجاح! يرجى التحقق من بريدك الإلكتروني.',
         AppColors.success,
       );
 
-      // تفعيل حالة الانتقال أو التوجيه للشاشة الرئيسية أو شاشة انتظار التحقق
-      ref.read(forcedSplashProvider.notifier).state = true;
-      Future.delayed(const Duration(seconds: 3), () {
-        if (mounted) {
-          ref.read(forcedSplashProvider.notifier).state = false;
-          context.go('/login');
-        }
-      });
+      // التوجيه الفوري لشاشة التحقق من البريد الإلكتروني مع إرسال البريد كـ extra
+      context.go('/verify-email', extra: _emailController.text.trim());
+
     } catch (e) {
       if (mounted) {
         String errorMessage = e.toString().replaceAll('Exception: ', '');
