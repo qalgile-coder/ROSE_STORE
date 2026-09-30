@@ -523,9 +523,32 @@ class CartNotifier extends StateNotifier<CartModel> {
   CartNotifier() : super(CartModel());
 
   void addItem(ProductModel product, {String? shopName, String? shopImageUrl}) {
+    addItemWithDetails(
+      product: product,
+      quantity: 1,
+      shopName: shopName,
+      shopImageUrl: shopImageUrl,
+    );
+  }
+
+  void addItemWithDetails({
+    required ProductModel product,
+    int quantity = 1,
+    String? selectedSize,
+    String? selectedColor,
+    String? shopName,
+    String? shopImageUrl,
+  }) {
     if (state.items.isEmpty) {
       state = CartModel(
-        items: {product.id: CartItem(product: product)},
+        items: {
+          product.id: CartItem(
+            product: product,
+            quantity: quantity,
+            selectedSize: selectedSize,
+            selectedColor: selectedColor,
+          ),
+        },
         shopId: product.shopId,
         shopName: shopName,
         shopImageUrl: shopImageUrl,
@@ -534,38 +557,47 @@ class CartNotifier extends StateNotifier<CartModel> {
     }
 
     if (state.items.containsKey(product.id)) {
+      final existingItem = state.items[product.id]!;
       state = CartModel(
         items: {
           ...state.items,
-          product.id: state.items[product.id]!.copyWith(
-            quantity: state.items[product.id]!.quantity + 1,
+          product.id: existingItem.copyWith(
+            quantity: existingItem.quantity + quantity,
+            selectedSize: selectedSize ?? existingItem.selectedSize,
+            selectedColor: selectedColor ?? existingItem.selectedColor,
           ),
         },
         shopId: state.shopId,
-        shopName: state.shopName,
-        shopImageUrl: state.shopImageUrl,
+        shopName: state.shopName ?? shopName,
+        shopImageUrl: state.shopImageUrl ?? shopImageUrl,
       );
     } else {
       state = CartModel(
         items: {
           ...state.items,
-          product.id: CartItem(product: product),
+          product.id: CartItem(
+            product: product,
+            quantity: quantity,
+            selectedSize: selectedSize,
+            selectedColor: selectedColor,
+          ),
         },
         shopId: state.shopId,
-        shopName: state.shopName,
-        shopImageUrl: state.shopImageUrl,
+        shopName: state.shopName ?? shopName,
+        shopImageUrl: state.shopImageUrl ?? shopImageUrl,
       );
     }
   }
 
   void removeItem(String productId) {
     if (!state.items.containsKey(productId)) return;
-    if (state.items[productId]!.quantity > 1) {
+    final currentItem = state.items[productId]!;
+    if (currentItem.quantity > 1) {
       state = CartModel(
         items: {
           ...state.items,
-          productId: state.items[productId]!.copyWith(
-            quantity: state.items[productId]!.quantity - 1,
+          productId: currentItem.copyWith(
+            quantity: currentItem.quantity - 1,
           ),
         },
         shopId: state.shopId,
