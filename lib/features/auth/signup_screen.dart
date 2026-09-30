@@ -111,10 +111,9 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
       return;
     }
 
-    setState(() => _isLoading, true); // سيتم تعديلها للأسفل لتصحيح وضع الـ setState
     setState(() => _isLoading = true);
     try {
-      // 1. إرسال البيانات وتسجيل الحساب عبر فايربيس ومزود الخدمة
+      // 1. تسجيل الحساب عبر مزود الخدمة
       await ref.read(authServiceProvider).signUpCustomer(
         name: _nameController.text.trim(),
         email: _emailController.text.trim(),
@@ -123,17 +122,20 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
         referredBy: _referralController.text.trim().isEmpty ? null : _referralController.text.trim(),
       );
 
-      // 2. إرسال رمز/بريد التحقق فوراً بشكل تلقائي دون انتظار مؤقت 60 ثانية
-      await ref.read(authServiceProvider).sendEmailVerification();
+      // ملاحظة: إذا كانت دالة إرسال الكود في الـ authService مسمّاة بشكل مختلف (مثل sendVerificationCode أو غيرها)، 
+      // يمكنك تعديل السطر أدناه ليتطابق مع ميثود الـ Service لديك، أو إزالتها إذا كان التسجيل يرسل البريد تلقائياً من الباك إند.
+      // try {
+      //   await ref.read(authServiceProvider).sendEmailVerification(); 
+      // } catch (_) {}
 
       if (!mounted) return;
 
       _showCustomSnackBar(
-        'تم إنشاء الحساب بنجاح وإرسال رمز التحقق!',
+        'تم إنشاء الحساب بنجاح! يرجى التحقق من بريدك الإلكتروني.',
         AppColors.success,
       );
 
-      // 3. التوجيه الفوري لشاشة التحقق من البريد الإلكتروني مع إرسال البريد كـ extra
+      // 2. التوجيه الفوري لشاشة التحقق من البريد الإلكتروني مع إرسال البريد كـ extra
       context.go('/verify-email', extra: _emailController.text.trim());
 
     } catch (e) {
