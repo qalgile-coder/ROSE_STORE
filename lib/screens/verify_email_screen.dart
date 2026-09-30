@@ -19,15 +19,16 @@ class _VerifyEmailScreenState extends ConsumerState<VerifyEmailScreen> {
   bool _isChecking = false;
   bool _isResending = false;
   
-  // متغيرات خاصة بالمؤقت لزر إعادة الإرسال
+  // متغيرات خاصة بالمؤقت لزر إرسال الرابط (يبدأ متاحاً ولا يعمل المؤقت تلقائياً)
   int _resendCountdown = 60;
   Timer? _timer;
-  bool _canResend = false;
+  bool _canResend = true; // السماح بالإرسال فور الدخول للشاشة دون مؤقت مسبق
+  bool _hasSentFirstTime = false; // تتبع ما إذا تم الضغط لأول مرة
 
   @override
   void initState() {
     super.initState();
-    _startResendTimer();
+    // تم إلغاء بدء المؤقت التلقائي هنا بناءً على طلبك
   }
 
   @override
@@ -40,6 +41,7 @@ class _VerifyEmailScreenState extends ConsumerState<VerifyEmailScreen> {
     setState(() {
       _resendCountdown = 60;
       _canResend = false;
+      _hasSentFirstTime = true;
     });
     _timer?.cancel();
     _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
@@ -90,8 +92,8 @@ class _VerifyEmailScreenState extends ConsumerState<VerifyEmailScreen> {
       if (user != null && !user.emailVerified) {
         await user.sendEmailVerification();
         if (!mounted) return;
-        _showCustomSnackBar('تم إعادة إرسال رابط التحقق بنجاح', AppColors.success);
-        _startResendTimer(); // إعادة تفعيل المؤقت بعد الإرسال الناجح
+        _showCustomSnackBar('تم إرسال رابط التحقق بنجاح', AppColors.success);
+        _startResendTimer(); // تشغيل المؤقت فور الضغط والإرسال الناجح
       }
     } catch (e) {
       if (!mounted) return;
@@ -198,7 +200,7 @@ class _VerifyEmailScreenState extends ConsumerState<VerifyEmailScreen> {
                     
                     const SizedBox(height: 12),
                     
-                    // توضيح احترافي للمستخدم لفتح البريد والضغط على الرابط والعودة
+                    // توضيح احترافي للمستخدم
                     Container(
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
@@ -210,8 +212,8 @@ class _VerifyEmailScreenState extends ConsumerState<VerifyEmailScreen> {
                         children: [
                           Text(
                             widget.email != null 
-                                ? 'أرسلنا رابط تفعيل إلى بريدك:\n${widget.email}' 
-                                : 'أرسلنا رابط تفعيل إلى بريدك الإلكتروني.',
+                                ? 'تم إنشاء الحساب بريد:\n${widget.email}' 
+                                : 'تم إنشاء حسابك بنجاح.',
                             style: GoogleFonts.plusJakartaSans(
                               fontSize: 14,
                               color: Colors.white,
@@ -222,7 +224,7 @@ class _VerifyEmailScreenState extends ConsumerState<VerifyEmailScreen> {
                           ),
                           const SizedBox(height: 8),
                           Text(
-                            'يرجى فتح بريدك الإلكتروني، الضغط على رابط التفعيل، ثم العودة إلى هذه الشاشة والضغط على زر "لقد قمت بالتحقق".',
+                            'يرجى الضغط على زر إرسال رابط التحقق أدناه، ثم فتح بريدك الإلكتروني للضغط على الرابط والعودة.',
                             style: GoogleFonts.plusJakartaSans(
                               fontSize: 13,
                               color: accentColor,
@@ -286,7 +288,7 @@ class _VerifyEmailScreenState extends ConsumerState<VerifyEmailScreen> {
                           
                           const SizedBox(height: 16),
                           
-                          // Secondary Button (Resend Email with Timer)
+                          // Secondary Button (Send Link / Resend with Timer)
                           SizedBox(
                             width: double.infinity,
                             height: 60,
@@ -308,10 +310,10 @@ class _VerifyEmailScreenState extends ConsumerState<VerifyEmailScreen> {
                                     )
                                   : Text(
                                       _canResend 
-                                          ? 'إعادة إرسال البريد' 
+                                          ? (_hasSentFirstTime ? 'إعادة إرسال رابط التحقق' : 'إرسال رابط التحقق إلى البريد')
                                           : 'إعادة الإرسال بعد (${_resendCountdown} ثانية)',
                                       style: GoogleFonts.plusJakartaSans(
-                                        fontSize: 16,
+                                        fontSize: 15,
                                         fontWeight: FontWeight.w700,
                                         color: _canResend ? accentColor : Colors.grey,
                                       ),
