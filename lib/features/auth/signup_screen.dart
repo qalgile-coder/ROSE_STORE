@@ -111,9 +111,10 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
       return;
     }
 
+    setState(() => _isLoading, true); // سيتم تعديلها للأسفل لتصحيح وضع الـ setState
     setState(() => _isLoading = true);
     try {
-      // إرسال البيانات وتسجيل الحساب عبر فايربيس ومزود الخدمة
+      // 1. إرسال البيانات وتسجيل الحساب عبر فايربيس ومزود الخدمة
       await ref.read(authServiceProvider).signUpCustomer(
         name: _nameController.text.trim(),
         email: _emailController.text.trim(),
@@ -122,14 +123,17 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
         referredBy: _referralController.text.trim().isEmpty ? null : _referralController.text.trim(),
       );
 
+      // 2. إرسال رمز/بريد التحقق فوراً بشكل تلقائي دون انتظار مؤقت 60 ثانية
+      await ref.read(authServiceProvider).sendEmailVerification();
+
       if (!mounted) return;
 
       _showCustomSnackBar(
-        'تم إنشاء الحساب بنجاح! يرجى التحقق من بريدك الإلكتروني.',
+        'تم إنشاء الحساب بنجاح وإرسال رمز التحقق!',
         AppColors.success,
       );
 
-      // التوجيه الفوري لشاشة التحقق من البريد الإلكتروني مع إرسال البريد كـ extra
+      // 3. التوجيه الفوري لشاشة التحقق من البريد الإلكتروني مع إرسال البريد كـ extra
       context.go('/verify-email', extra: _emailController.text.trim());
 
     } catch (e) {
