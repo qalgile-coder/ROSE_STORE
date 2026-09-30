@@ -52,6 +52,22 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
     {'label': 'السعودية (ر.س)', 'symbol': 'ر.س'},
   ];
 
+  // الخصائص الاحترافية الجديدة للأحجام والألوان (طريقة شي إن وتيمو)
+  final List<String> _availableSizes = ['XS', 'S', 'M', 'L', 'XL', 'XXL', '3XL', 'Free Size'];
+  final List<String> _selectedSizes = [];
+
+  final List<Map<String, dynamic>> _availableColors = [
+    {'name': 'أسود', 'hex': '#000000', 'color': Colors.black},
+    {'name': 'أبيض', 'hex': '#FFFFFF', 'color': Colors.white},
+    {'name': 'أحمر', 'hex': '#FF0000', 'color': Colors.red},
+    {'name': 'أزرق', 'hex': '#0000FF', 'color': Colors.blue},
+    {'name': 'أخضر', 'hex': '#008000', 'color': Colors.green},
+    {'name': 'رمادي', 'hex': '#808080', 'color': Colors.grey},
+    {'name': 'بيج / كشمير', 'hex': '#F5F5DC', 'color': Color(0xFFF5F5DC)},
+    {'name': 'وردي', 'hex': '#FFC0CB', 'color': Colors.pink},
+  ];
+  final List<String> _selectedColors = [];
+
   bool _isLoading = false;
   bool _isAvailable = true;
   
@@ -136,6 +152,8 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
         category: _selectedCategoryKey ?? 'General',
         isAvailable: _isAvailable,
         createdAt: DateTime.now(),
+        sizes: _selectedSizes,   // تمرير الأحجام الاحترافية المختارة
+        colors: _selectedColors, // تمرير الألوان الاحترافية المختارة
       );
 
       await ref.read(vendorServiceProvider).addProduct(product);
@@ -321,6 +339,102 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
               const SizedBox(height: 16),
               
               _buildCategoryDropdown(colorScheme, isLight),
+
+              const SizedBox(height: 32),
+              _buildSectionHeader('PRODUCT VARIATIONS (SIZES & COLORS)', colorScheme),
+              const SizedBox(height: 16),
+              
+              // قسم اختيار الأحجام بشكل احترافي
+              Text('Available Sizes (أحجام المنتج)', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: colorScheme.onSurface)),
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: _availableSizes.map((size) {
+                  final isSelected = _selectedSizes.contains(size);
+                  return ChoiceChip(
+                    label: Text(size),
+                    selected: isSelected,
+                    selectedColor: colorScheme.primary,
+                    backgroundColor: colorScheme.surface,
+                    labelStyle: TextStyle(
+                      color: isSelected ? Colors.white : colorScheme.onSurface,
+                      fontWeight: FontWeight.bold,
+                    ),
+                    onSelected: (selected) {
+                      setState(() {
+                        if (selected) {
+                          _selectedSizes.add(size);
+                        } else {
+                          _selectedSizes.remove(size);
+                        }
+                      });
+                    },
+                  );
+                }).toList(),
+              ),
+
+              const SizedBox(height: 20),
+              // قسم اختيار الألوان بشكل احترافي
+              Text('Available Colors (ألوان المنتج)', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: colorScheme.onSurface)),
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 10,
+                runSpacing: 10,
+                children: _availableColors.map((colorItem) {
+                  final colorName = colorItem['name'] as String;
+                  final colorHex = colorItem['hex'] as String;
+                  final displayColor = colorItem['color'] as Color;
+                  final isSelected = _selectedColors.contains(colorHex);
+
+                  return InkWell(
+                    onTap: () {
+                      setState(() {
+                        if (isSelected) {
+                          _selectedColors.remove(colorHex);
+                        } else {
+                          _selectedColors.add(colorHex);
+                        }
+                      });
+                    },
+                    borderRadius: BorderRadius.circular(16),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: isSelected ? colorScheme.primary.withOpacity(0.15) : colorScheme.surface,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(
+                          color: isSelected ? colorScheme.primary : colorScheme.outline.withOpacity(0.3),
+                          width: isSelected ? 2 : 1,
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Container(
+                            width: 16,
+                            height: 16,
+                            decoration: BoxDecoration(
+                              color: displayColor,
+                              shape: BoxShape.circle,
+                              border: Border.all(color: Colors.grey.shade400, width: 0.5),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            colorName,
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                              color: colorScheme.onSurface,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                }).toList(),
+              ),
               
               const SizedBox(height: 32),
               _buildSectionHeader('PRICING & STOCK', colorScheme),

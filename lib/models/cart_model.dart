@@ -3,15 +3,29 @@ import 'product_model.dart';
 class CartItem {
   final ProductModel product;
   int quantity;
+  final String? selectedColor; // اللون المختار للمنتج
+  final String? selectedSize;  // الحجم المختار للمنتج
 
-  CartItem({required this.product, this.quantity = 1});
+  CartItem({
+    required this.product, 
+    this.quantity = 1,
+    this.selectedColor,
+    this.selectedSize,
+  });
 
   double get totalPrice => product.price * quantity;
 
-  CartItem copyWith({ProductModel? product, int? quantity}) {
+  CartItem copyWith({
+    ProductModel? product, 
+    int? quantity,
+    String? selectedColor,
+    String? selectedSize,
+  }) {
     return CartItem(
       product: product ?? this.product,
       quantity: quantity ?? this.quantity,
+      selectedColor: selectedColor ?? this.selectedColor,
+      selectedSize: selectedSize ?? this.selectedSize,
     );
   }
 }
@@ -45,5 +59,19 @@ class CartModel {
       count += cartItem.quantity;
     });
     return count;
+  }
+
+  CartModel copyWith({
+    Map<String, CartItem>? items,
+    String? shopId,
+    String? shopName,
+    String? shopImageUrl,
+  }) {
+    return CartModel(
+      items: items ?? this.items,
+      shopId: shopId ?? this.shopId,
+      shopName: shopName ?? this.shopName,
+      shopImageUrl: shopImageUrl ?? this.shopImageUrl,
+    );
   }
 }

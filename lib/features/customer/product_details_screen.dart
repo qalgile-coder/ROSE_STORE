@@ -20,11 +20,20 @@ class ProductDetailsScreen extends ConsumerStatefulWidget {
 
 class _ProductDetailsScreenState extends ConsumerState<ProductDetailsScreen> {
   late String _selectedImageUrl;
+  String? _selectedSize; // الحجم المختار بواسطة العميل
+  String? _selectedColor; // اللون المختار بواسطة العميل
 
   @override
   void initState() {
     super.initState();
     _selectedImageUrl = widget.product.imageUrl;
+    // تحديد أول حجم ولون تلقائياً كقيمة افتراضية إن وجدوا لتجربة مستخدم مريحة
+    if (widget.product.sizes.isNotEmpty) {
+      _selectedSize = widget.product.sizes.first;
+    }
+    if (widget.product.colors.isNotEmpty) {
+      _selectedColor = widget.product.colors.first;
+    }
   }
 
   @override
@@ -137,6 +146,126 @@ class _ProductDetailsScreenState extends ConsumerState<ProductDetailsScreen> {
                       const SizedBox(height: 32),
 
                       _PriceSection(product: liveProduct),
+                      
+                      // -------------------------------------------------------------
+                      // 4. قسم اختيار الأحجام (Sizes) بأسلوب شي إن وتيمو الاحترافي
+                      // -------------------------------------------------------------
+                      if (liveProduct.sizes.isNotEmpty) ...[
+                        const SizedBox(height: 32),
+                        Text(
+                          'SELECT SIZE (اختر الحجم)',
+                          style: TextStyle(
+                            color: colorScheme.primary.withOpacity(0.7),
+                            fontSize: 11,
+                            fontWeight: FontWeight.w900,
+                            letterSpacing: 1.5,
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        Wrap(
+                          spacing: 10,
+                          runSpacing: 10,
+                          children: liveProduct.sizes.map((size) {
+                            final isSelected = _selectedSize == size;
+                            return ChoiceChip(
+                              label: Text(size),
+                              selected: isSelected,
+                              selectedColor: colorScheme.primary,
+                              backgroundColor: colorScheme.surface,
+                              labelStyle: TextStyle(
+                                color: isSelected ? Colors.white : colorScheme.onSurface,
+                                fontWeight: FontWeight.w800,
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(14),
+                                side: BorderSide(
+                                  color: isSelected ? colorScheme.primary : colorScheme.outline.withOpacity(0.2),
+                                ),
+                              ),
+                              onSelected: (selected) {
+                                setState(() {
+                                  _selectedSize = size;
+                                });
+                              },
+                            );
+                          }).toList(),
+                        ),
+                      ],
+
+                      // -------------------------------------------------------------
+                      // 5. قسم اختيار الألوان (Colors) بأسلوب شي إن وتيمو الاحترافي
+                      // -------------------------------------------------------------
+                      if (liveProduct.colors.isNotEmpty) ...[
+                        const SizedBox(height: 24),
+                        Text(
+                          'SELECT COLOR (اختر اللون)',
+                          style: TextStyle(
+                            color: colorScheme.primary.withOpacity(0.7),
+                            fontSize: 11,
+                            fontWeight: FontWeight.w900,
+                            letterSpacing: 1.5,
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        Wrap(
+                          spacing: 12,
+                          runSpacing: 12,
+                          children: liveProduct.colors.map((colorHex) {
+                            final isSelected = _selectedColor == colorHex;
+                            // تحليل كود اللون Hex أو عرضه كنص إن لم يكن Hex صحيحاً
+                            Color parsedColor = Colors.grey;
+                            try {
+                              if (colorHex.startsWith('#')) {
+                                parsedColor = Color(int.parse(colorHex.replaceFirst('#', '0xFF')));
+                              }
+                            } catch (_) {}
+
+                            return InkWell(
+                              onTap: () {
+                                setState(() {
+                                  _selectedColor = colorHex;
+                                });
+                              },
+                              borderRadius: BorderRadius.circular(16),
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                                decoration: BoxDecoration(
+                                  color: isSelected ? colorScheme.primary.withOpacity(0.15) : colorScheme.surface,
+                                  borderRadius: BorderRadius.circular(16),
+                                  border: Border.all(
+                                    color: isSelected ? colorScheme.primary : colorScheme.outline.withOpacity(0.3),
+                                    width: isSelected ? 2 : 1,
+                                  ),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Container(
+                                      width: 18,
+                                      height: 18,
+                                      decoration: BoxDecoration(
+                                        color: parsedColor,
+                                        shape: BoxShape.circle,
+                                        border: Border.all(color: Colors.grey.shade400, width: 0.8),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Text(
+                                      colorHex,
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.bold,
+                                        color: colorScheme.onSurface,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            );
+                          }).toList(),
+                        ),
+                      ],
+
                       Padding(
                         padding: const EdgeInsets.symmetric(vertical: 32),
                         child: Divider(color: colorScheme.outline.withValues(alpha: 0.1)),
@@ -313,9 +442,12 @@ class _ProductDetailsScreenState extends ConsumerState<ProductDetailsScreen> {
               Expanded(
                 child: ElevatedButton(
                   onPressed: () {
+                    // تمرير الخصائص المختارة (الصورة، الحجم، واللون) عند الإضافة للعربة
                     final productToOrder = liveProduct.copyWith(
                       imageUrl: _selectedImageUrl,
                       imageUrls: [_selectedImageUrl],
+                      // يمكنك دمج معلومات الحجم واللون بالاسم أو وصف المنتج إذا لزم الأمر لعرضها بسلة التسوق بوضوح
+                      name: '${liveProduct.name} ${_selectedSize != null ? "($_selectedSize)" : ""} ${_selectedColor != null ? "[$_selectedColor]" : ""}',
                     );
 
                     ref.read(cartProvider.notifier).addItem(productToOrder);

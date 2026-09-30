@@ -21,6 +21,10 @@ class ProductModel {
   final int reviewCount;
   final int orderCount;
   final DateTime createdAt;
+  
+  // الخصائص الاحترافية الجديدة (الأحجام والألوان على غرار تطبيقات التسوق الكبرى)
+  final List<String> sizes; // مثال: ['S', 'M', 'L', 'XL', 'XXL', '3XL']
+  final List<String> colors; // تخزين رموز أو أسماء الألوان مثل: ['#FF0000', '#000000', 'أزرق']
 
   ProductModel({
     required this.id,
@@ -43,6 +47,8 @@ class ProductModel {
     this.reviewCount = 0,
     this.orderCount = 0,
     required this.createdAt,
+    this.sizes = const [],
+    this.colors = const [],
   });
 
   ProductModel copyWith({
@@ -66,6 +72,8 @@ class ProductModel {
     int? reviewCount,
     int? orderCount,
     DateTime? createdAt,
+    List<String>? sizes,
+    List<String>? colors,
   }) {
     return ProductModel(
       id: id ?? this.id,
@@ -88,6 +96,8 @@ class ProductModel {
       reviewCount: reviewCount ?? this.reviewCount,
       orderCount: orderCount ?? this.orderCount,
       createdAt: createdAt ?? this.createdAt,
+      sizes: sizes ?? this.sizes,
+      colors: colors ?? this.colors,
     );
   }
 
@@ -127,6 +137,8 @@ class ProductModel {
               ? (data['createdAt'] as Timestamp).toDate() 
               : DateTime.tryParse(data['createdAt'].toString()) ?? DateTime.now()) 
           : DateTime.now(),
+      sizes: List<String>.from(data['sizes'] ?? []),
+      colors: List<String>.from(data['colors'] ?? []),
     );
   }
 
@@ -163,6 +175,8 @@ class ProductModel {
               ? (map['createdAt'] as Timestamp).toDate()
               : DateTime.tryParse(map['createdAt'].toString()) ?? DateTime.now())
           : DateTime.now(),
+      sizes: List<String>.from(map['sizes'] ?? []),
+      colors: List<String>.from(map['colors'] ?? []),
     );
   }
 
@@ -187,6 +201,14 @@ class ProductModel {
       'reviewCount': reviewCount,
       'orderCount': orderCount,
       'createdAt': createdAt,
+      'sizes': sizes,
+      'colors': colors,
     };
   }
 }
+```[cite: 8]
+
+---
+
+### الخطوة القادمة:
+قم بتحديث ملف `product_model.dart` بهذا الكود الحصري. وبعدها، ما هو **الكود الثاني** الذي ترغب في إرساله لنا (هل هو كود شاشة إضافة المنتج `add_product_screen.dart` لنقوم بتعديله وإضافة واجهات اختيار الأحجام والألوان باحترافية تامة؟) أرسله لنا لنتابع فوراً!

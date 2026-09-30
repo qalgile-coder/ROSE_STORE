@@ -23,6 +23,17 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
   bool _isPlacingOrder = false;
   CouponModel? _appliedCoupon;
 
+  // جلب رمز العملة الديناميكي من محتويات السلة
+  String _getCurrencySymbol(dynamic cart) {
+    if (cart.items.isNotEmpty) {
+      final firstItem = cart.items.values.first;
+      if (firstItem.product.currency != null && firstItem.product.currency.isNotEmpty) {
+        return firstItem.product.currency;
+      }
+    }
+    return 'ج.س';
+  }
+
   double _calculateDiscount(double subtotal) {
     if (_appliedCoupon == null) return 0.0;
     if (_appliedCoupon!.discountPercentage > 0) {
@@ -40,6 +51,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final isLight = theme.brightness == Brightness.light;
+    final currencySymbol = _getCurrencySymbol(cart);
     
     // Safety check for shop details
     final shopId = cart.shopId ?? '';
@@ -47,7 +59,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
         ? ref.watch(shopDetailProvider(shopId))
         : const AsyncData<ShopModel?>(null);
 
-    // تم تعديل رسوم التوصيل الأساسية لتصبح 0.0
+    // رسوم التوصيل الأساسية
     final platformDeliveryFee = 0.0;
 
     return Scaffold(
@@ -78,18 +90,17 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
             const SizedBox(height: 32),
             _buildSectionHeader('Available Coupons', Icons.confirmation_number_rounded, colorScheme),
             const SizedBox(height: 16),
-            _buildCouponSelector(cart, colorScheme, isLight),
+            _buildCouponSelector(cart, colorScheme, isLight, currencySymbol),
             const SizedBox(height: 32),
             _buildSectionHeader('order_summary'.tr(ref), Icons.shopping_bag_rounded, colorScheme),
             const SizedBox(height: 16),
             shopAsync.when(
               data: (shop) {
-                // فرض أن رسوم التوصيل دائماً 0 بغض النظر عن إعدادات المتجر
                 const deliveryFee = 0.0;
-                return _buildOrderSummary(cart, colorScheme, isLight, deliveryFee);
+                return _buildOrderSummary(cart, colorScheme, isLight, deliveryFee, currencySymbol);
               },
               loading: () => Center(child: CircularProgressIndicator(color: colorScheme.primary)),
-              error: (_, __) => _buildOrderSummary(cart, colorScheme, isLight, platformDeliveryFee), // Fallback
+              error: (_, __) => _buildOrderSummary(cart, colorScheme, isLight, platformDeliveryFee, currencySymbol),
             ),
             const SizedBox(height: 40),
           ],
@@ -102,7 +113,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
         user, 
         colorScheme, 
         isLight, 
-        0.0, // فرض أن رسوم التوصيل في أزرار التنقل السفلي هي 0 أيضاً
+        0.0,
       ),
     );
   }
@@ -124,14 +135,14 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
         color: colorScheme.surface,
         borderRadius: BorderRadius.circular(22),
         boxShadow: isLight ? [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 20)] : null,
-        border: isLight ? Border.all(color: colorScheme.outline.withOpacity(0.1)) : null,
+        border: isLight ? Border.all(color: colorScheme.outline.withValues(alpha: 0.1)) : null,
       ),
       child: Row(
         children: [
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: colorScheme.primary.withOpacity(0.1),
+              color: colorScheme.primary.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(14),
             ),
             child: Icon(Icons.location_on_rounded, color: colorScheme.primary, size: 24),
@@ -148,7 +159,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                 const SizedBox(height: 4),
                 Text(
                   address?.fullAddress ?? 'add_address_hint'.tr(ref), 
-                  style: TextStyle(color: colorScheme.onSurface.withOpacity(0.6), fontSize: 13, fontWeight: FontWeight.w500, height: 1.4),
+                  style: TextStyle(color: colorScheme.onSurface.withValues(alpha: 0.6), fontSize: 13, fontWeight: FontWeight.w500, height: 1.4),
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                 ),
@@ -176,7 +187,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
         color: colorScheme.surface,
         borderRadius: BorderRadius.circular(22),
         boxShadow: isLight ? [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 20)] : null,
-        border: isLight ? Border.all(color: colorScheme.outline.withOpacity(0.1)) : null,
+        border: isLight ? Border.all(color: colorScheme.outline.withValues(alpha: 0.1)) : null,
       ),
       child: Column(
         children: [
@@ -189,7 +200,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
             colorScheme: colorScheme,
             isLight: isLight,
           ),
-          Divider(color: isLight ? colorScheme.outline.withOpacity(0.1) : AppColors.border, indent: 64, endIndent: 16),
+          Divider(color: isLight ? colorScheme.outline.withValues(alpha: 0.1) : AppColors.border, indent: 64, endIndent: 16),
           _PaymentTile(
             title: 'online_transfer'.tr(ref),
             subtitle: 'Instant secure payment',
@@ -204,7 +215,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
     );
   }
 
-  Widget _buildCouponSelector(dynamic cart, ColorScheme colorScheme, bool isLight) {
+  Widget _buildCouponSelector(dynamic cart, ColorScheme colorScheme, bool isLight, String currencySymbol) {
     if (cart.items.isEmpty) return const SizedBox.shrink();
     final couponsAsync = ref.watch(shopCouponsProvider);
 
@@ -222,13 +233,13 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
             decoration: BoxDecoration(
               color: colorScheme.surface,
               borderRadius: BorderRadius.circular(22),
-              border: Border.all(color: colorScheme.outline.withOpacity(0.05)),
+              border: Border.all(color: colorScheme.outline.withValues(alpha: 0.05)),
             ),
             child: Row(
               children: [
-                Icon(Icons.info_outline_rounded, color: colorScheme.onSurface.withOpacity(0.3), size: 20),
+                Icon(Icons.info_outline_rounded, color: colorScheme.onSurface.withValues(alpha: 0.3), size: 20),
                 const SizedBox(width: 12),
-                Text('No applicable coupons for this store', style: TextStyle(color: colorScheme.onSurface.withOpacity(0.4), fontSize: 13, fontWeight: FontWeight.w500)),
+                Text('No applicable coupons for this store', style: TextStyle(color: colorScheme.onSurface.withValues(alpha: 0.4), fontSize: 13, fontWeight: FontWeight.w500)),
               ],
             ),
           );
@@ -261,10 +272,10 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                   width: 200,
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
-                    color: isSelected ? colorScheme.primary.withOpacity(0.1) : colorScheme.surface,
+                    color: isSelected ? colorScheme.primary.withValues(alpha: 0.1) : colorScheme.surface,
                     borderRadius: BorderRadius.circular(22),
                     border: Border.all(
-                      color: isSelected ? colorScheme.primary : colorScheme.outline.withOpacity(0.1),
+                      color: isSelected ? colorScheme.primary : colorScheme.outline.withValues(alpha: 0.1),
                       width: 1.5,
                     ),
                   ),
@@ -273,7 +284,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                       Container(
                         padding: const EdgeInsets.all(8),
                         decoration: BoxDecoration(
-                          color: isSelected ? colorScheme.primary : colorScheme.primary.withOpacity(0.1),
+                          color: isSelected ? colorScheme.primary : colorScheme.primary.withValues(alpha: 0.1),
                           shape: BoxShape.circle,
                         ),
                         child: Icon(Icons.confirmation_number_rounded, color: isSelected ? Colors.white : colorScheme.primary, size: 16),
@@ -286,7 +297,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                           children: [
                             Text(coupon.code, style: TextStyle(fontWeight: FontWeight.w900, color: colorScheme.onSurface, fontSize: 14, letterSpacing: 0.5)),
                             Text(
-                              coupon.discountPercentage > 0 ? '${coupon.discountPercentage.round()}% OFF' : 'Rs ${coupon.fixedDiscount.round()} OFF',
+                              coupon.discountPercentage > 0 ? '${coupon.discountPercentage.round()}% OFF' : '${coupon.fixedDiscount.round()} $currencySymbol OFF',
                               style: TextStyle(color: AppColors.success, fontWeight: FontWeight.w800, fontSize: 11),
                             ),
                           ],
@@ -307,7 +318,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
     );
   }
 
-  Widget _buildOrderSummary(dynamic cart, ColorScheme colorScheme, bool isLight, double deliveryFee) {
+  Widget _buildOrderSummary(dynamic cart, ColorScheme colorScheme, bool isLight, double deliveryFee, String currencySymbol) {
     final discount = _calculateDiscount(cart.totalAmount);
     final totalToPay = cart.totalAmount + deliveryFee - discount;
 
@@ -317,7 +328,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
         color: colorScheme.surface,
         borderRadius: BorderRadius.circular(22),
         boxShadow: isLight ? [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 20)] : null,
-        border: isLight ? Border.all(color: colorScheme.outline.withOpacity(0.1)) : null,
+        border: isLight ? Border.all(color: colorScheme.outline.withValues(alpha: 0.1)) : null,
       ),
       child: Column(
         children: [
@@ -342,31 +353,31 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                     ],
                   ),
                 ),
-                Text('Rs ${item.totalPrice.toStringAsFixed(0)}', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14, color: colorScheme.onSurface)),
+                Text('${item.totalPrice.toStringAsFixed(0)} $currencySymbol', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14, color: colorScheme.onSurface)),
               ],
             ),
           )),
-          Divider(color: isLight ? colorScheme.outline.withOpacity(0.1) : AppColors.border, height: 32),
-          _SummaryLine(label: 'item_subtotal'.tr(ref), value: 'Rs ${cart.totalAmount.toStringAsFixed(0)}', colorScheme: colorScheme),
+          Divider(color: isLight ? colorScheme.outline.withValues(alpha: 0.1) : AppColors.border, height: 32),
+          _SummaryLine(label: 'item_subtotal'.tr(ref), value: '${cart.totalAmount.toStringAsFixed(0)} $currencySymbol', colorScheme: colorScheme),
           const SizedBox(height: 12),
-          _SummaryLine(label: 'delivery_fee'.tr(ref), value: 'Rs ${deliveryFee.toStringAsFixed(0)}', color: AppColors.success, colorScheme: colorScheme),
+          _SummaryLine(label: 'delivery_fee'.tr(ref), value: '${deliveryFee.toStringAsFixed(0)} $currencySymbol', color: AppColors.success, colorScheme: colorScheme),
           
           if (discount > 0) ...[
             const SizedBox(height: 12),
             _SummaryLine(
               label: 'Coupon Discount (${_appliedCoupon?.code})', 
-              value: '- Rs ${discount.toStringAsFixed(0)}', 
+              value: '- ${discount.toStringAsFixed(0)} $currencySymbol', 
               color: AppColors.success, 
               colorScheme: colorScheme
             ),
           ],
 
-          Divider(color: isLight ? colorScheme.outline.withOpacity(0.1) : AppColors.border, height: 32),
+          Divider(color: isLight ? colorScheme.outline.withValues(alpha: 0.1) : AppColors.border, height: 32),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text('total_to_pay'.tr(ref), style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: colorScheme.onSurface)),
-              Text('Rs ${totalToPay.toStringAsFixed(0)}', 
+              Text('${totalToPay.toStringAsFixed(0)} $currencySymbol', 
                 style: TextStyle(fontSize: 24, fontWeight: FontWeight.w900, color: colorScheme.primary)),
             ],
           ),
@@ -376,6 +387,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
   }
 
   Widget _buildBottomAction(BuildContext context, dynamic cart, dynamic address, dynamic user, ColorScheme colorScheme, bool isLight, double deliveryFee) {
+    final currencySymbol = _getCurrencySymbol(cart);
     return Container(
       padding: const EdgeInsets.fromLTRB(24, 16, 24, 40),
       decoration: BoxDecoration(
@@ -383,16 +395,16 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
         borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
         boxShadow: [
           BoxShadow(
-            color: isLight ? Colors.black.withOpacity(0.08) : Colors.black.withOpacity(0.3), 
+            color: isLight ? Colors.black.withValues(alpha: 0.08) : Colors.black.withValues(alpha: 0.3), 
             blurRadius: 30
           )
         ],
-        border: Border.all(color: isLight ? colorScheme.outline.withOpacity(0.1) : colorScheme.outline.withOpacity(0.1)),
+        border: Border.all(color: isLight ? colorScheme.outline.withValues(alpha: 0.1) : colorScheme.outline.withValues(alpha: 0.1)),
       ),
       child: ElevatedButton(
         onPressed: (_isPlacingOrder || address == null) ? null : () {
           if (_paymentMethod == 'Online Transfer') {
-            _showQRScannerDialog(context, cart, address, user, colorScheme, isLight, deliveryFee);
+            _showQRScannerDialog(context, cart, address, user, colorScheme, isLight, deliveryFee, currencySymbol);
           } else {
             _placeOrder(context, cart, address, user);
           }
@@ -411,7 +423,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
     );
   }
 
-  void _showQRScannerDialog(BuildContext context, dynamic cart, dynamic address, dynamic user, ColorScheme colorScheme, bool isLight, double deliveryFee) {
+  void _showQRScannerDialog(BuildContext context, dynamic cart, dynamic address, dynamic user, ColorScheme colorScheme, bool isLight, double deliveryFee, String currencySymbol) {
     final discount = _calculateDiscount(cart.totalAmount);
     final total = cart.totalAmount + deliveryFee - discount;
     
@@ -428,11 +440,11 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
         child: Column(
           children: [
             const SizedBox(height: 12),
-            Container(width: 40, height: 4, decoration: BoxDecoration(color: colorScheme.onSurface.withOpacity(0.1), borderRadius: BorderRadius.circular(2))),
+            Container(width: 40, height: 4, decoration: BoxDecoration(color: colorScheme.onSurface.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(2))),
             const SizedBox(height: 24),
             Text('Secure Checkout', style: TextStyle(fontSize: 24, fontWeight: FontWeight.w800, color: colorScheme.onSurface)),
             const SizedBox(height: 8),
-            Text('Scan QR code to pay Rs ${total.toStringAsFixed(0)}', style: TextStyle(color: colorScheme.onSurface.withOpacity(0.6), fontWeight: FontWeight.w500)),
+            Text('Scan QR code to pay ${total.toStringAsFixed(0)} $currencySymbol', style: TextStyle(color: colorScheme.onSurface.withValues(alpha: 0.6), fontWeight: FontWeight.w500)),
             const SizedBox(height: 32),
             
             Container(
@@ -462,7 +474,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
               child: Text(
                 'Open your digital wallet to scan and pay. We will verify your transaction automatically.',
                 textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 13, color: colorScheme.onSurface.withOpacity(0.6), height: 1.6, fontWeight: FontWeight.w500),
+                style: TextStyle(fontSize: 13, color: colorScheme.onSurface.withValues(alpha: 0.6), height: 1.6, fontWeight: FontWeight.w500),
               ),
             ),
             
@@ -500,9 +512,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
       final shopPhone = shopData?['phone'] ?? '03001234567';
       final shopAddress = shopData?['address'] ?? 'Shop Address, Main Market';
       
-      // تعيين رسوم التوصيل عند إرسال الطلب لقاعدة البيانات لتصبح 0.0 فوراً
       const double actualDeliveryFee = 0.0;
-
       final discount = _calculateDiscount(cart.totalAmount);
       final finalAmount = cart.totalAmount + actualDeliveryFee - discount;
 
@@ -539,11 +549,9 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
 
       final orderId = await ref.read(customerServiceProvider).placeOrder(orderData);
       
-      // Clear cart before navigating to success
       ref.read(cartProvider.notifier).clearCart();
       
       if (context.mounted) {
-        // If bottom sheet is open (QR Pay), close it first
         if (Navigator.canPop(context)) {
           Navigator.pop(context);
         }
@@ -620,7 +628,7 @@ class _VerificationStatusState extends State<_VerificationStatus> {
             borderRadius: BorderRadius.circular(10),
             child: LinearProgressIndicator(
               value: _progress,
-              backgroundColor: widget.colorScheme.onSurface.withOpacity(0.05),
+              backgroundColor: widget.colorScheme.onSurface.withValues(alpha: 0.05),
               color: _isSuccess ? AppColors.success : widget.colorScheme.primary,
               minHeight: 6,
             ),
@@ -651,7 +659,7 @@ class _PaymentTile extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
           decoration: BoxDecoration(
-            color: isSelected ? colorScheme.primary.withOpacity(0.05) : Colors.transparent,
+            color: isSelected ? colorScheme.primary.withValues(alpha: 0.05) : Colors.transparent,
             borderRadius: BorderRadius.circular(18),
           ),
           child: Row(
@@ -659,10 +667,10 @@ class _PaymentTile extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: isSelected ? colorScheme.primary.withOpacity(0.1) : (isLight ? AppColors.lightSecondaryBackground : AppColors.background), 
+                  color: isSelected ? colorScheme.primary.withValues(alpha: 0.1) : (isLight ? AppColors.lightSecondaryBackground : AppColors.background), 
                   borderRadius: BorderRadius.circular(14)
                 ),
-                child: Icon(icon, color: isSelected ? colorScheme.primary : colorScheme.onSurface.withOpacity(0.3), size: 24),
+                child: Icon(icon, color: isSelected ? colorScheme.primary : colorScheme.onSurface.withValues(alpha: 0.3), size: 24),
               ),
               const SizedBox(width: 16),
               Expanded(
@@ -680,7 +688,7 @@ class _PaymentTile extends StatelessWidget {
                     const SizedBox(height: 2),
                     Text(
                       subtitle, 
-                      style: TextStyle(color: colorScheme.onSurface.withOpacity(0.4), fontSize: 12, fontWeight: FontWeight.w500)
+                      style: TextStyle(color: colorScheme.onSurface.withValues(alpha: 0.4), fontSize: 12, fontWeight: FontWeight.w500)
                     ),
                   ],
                 ),
@@ -690,7 +698,7 @@ class _PaymentTile extends StatelessWidget {
                 height: 20,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle, 
-                  border: Border.all(color: isSelected ? colorScheme.primary : colorScheme.onSurface.withOpacity(0.1), width: 2)
+                  border: Border.all(color: isSelected ? colorScheme.primary : colorScheme.onSurface.withValues(alpha: 0.1), width: 2)
                 ),
                 child: isSelected 
                   ? Center(child: Container(width: 10, height: 10, decoration: BoxDecoration(color: colorScheme.primary, shape: BoxShape.circle))) 
@@ -715,7 +723,7 @@ class _SummaryLine extends StatelessWidget {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween, 
       children: [
-        Text(label, style: TextStyle(color: colorScheme.onSurface.withOpacity(0.5), fontSize: 14, fontWeight: FontWeight.w500)), 
+        Text(label, style: TextStyle(color: colorScheme.onSurface.withValues(alpha: 0.5), fontSize: 14, fontWeight: FontWeight.w500)), 
         Text(value, style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14, color: color ?? colorScheme.onSurface))
       ]
     );

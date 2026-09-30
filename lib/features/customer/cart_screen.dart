@@ -157,6 +157,15 @@ class CartScreen extends ConsumerWidget {
     final colorScheme = theme.colorScheme;
     const double deliveryFee = 0.0;
     double total = cart.totalAmount + deliveryFee;
+    
+    // جلب رمز العملة من أول منتج بالسلة أو استخدام العملة الافتراضية
+    String currencySymbol = 'ج.س';
+    if (cart.items.isNotEmpty) {
+      final firstItem = cart.items.values.first;
+      if (firstItem.product.currency != null && firstItem.product.currency.isNotEmpty) {
+        currencySymbol = firstItem.product.currency;
+      }
+    }
 
     return ClipRRect(
       child: BackdropFilter(
@@ -179,9 +188,9 @@ class CartScreen extends ConsumerWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               // Detailed Bill Breakdown
-              _SummaryRow(label: 'item_total'.tr(ref), value: 'Rs ${cart.totalAmount.toStringAsFixed(0)}', colorScheme: colorScheme),
+              _SummaryRow(label: 'item_total'.tr(ref), value: '${cart.totalAmount.toStringAsFixed(0)} $currencySymbol', colorScheme: colorScheme),
               const SizedBox(height: 12),
-              _SummaryRow(label: 'delivery_fee'.tr(ref), value: 'Rs ${deliveryFee.toStringAsFixed(0)}', colorScheme: colorScheme, isHighlight: true),
+              _SummaryRow(label: 'delivery_fee'.tr(ref), value: '${deliveryFee.toStringAsFixed(0)} $currencySymbol', colorScheme: colorScheme, isHighlight: true),
               const Padding(
                 padding: EdgeInsets.symmetric(vertical: 16),
                 child: Divider(height: 1, color: Colors.black26),
@@ -190,7 +199,7 @@ class CartScreen extends ConsumerWidget {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text('grand_total'.tr(ref), style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: colorScheme.onSurface)),
-                  Text('Rs ${total.toStringAsFixed(0)}', style: TextStyle(fontSize: 24, fontWeight: FontWeight.w900, color: colorScheme.primary)),
+                  Text('${total.toStringAsFixed(0)} $currencySymbol', style: TextStyle(fontSize: 24, fontWeight: FontWeight.w900, color: colorScheme.primary)),
                 ],
               ),
               const SizedBox(height: 24),
@@ -247,6 +256,7 @@ class _CartItemTile extends ConsumerWidget {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final isLight = theme.brightness == Brightness.light;
+    final currencySymbol = item.product.currency.isNotEmpty ? item.product.currency : 'ج.س';
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -302,7 +312,7 @@ class _CartItemTile extends ConsumerWidget {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  'Rs ${item.product.price.toStringAsFixed(0)}', 
+                  '${item.product.price.toStringAsFixed(0)} $currencySymbol', 
                   style: TextStyle(color: colorScheme.primary, fontWeight: FontWeight.w900, fontSize: 17)
                 ),
                 const SizedBox(height: 14),
