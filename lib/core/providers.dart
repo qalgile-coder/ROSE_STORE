@@ -524,15 +524,16 @@ class CartNotifier extends StateNotifier<CartModel> {
 
   void addItem(ProductModel product, {String? shopName, String? shopImageUrl}) {
     addItemWithDetails(
-      product: product,
+      product,
       quantity: 1,
       shopName: shopName,
       shopImageUrl: shopImageUrl,
     );
   }
 
-  void addItemWithDetails({
-    required ProductModel product,
+  // تم تحديث الدالة لتقبل ProductModel كمعامل موضعي (Positional) متوافق تماماً مع الاستدعاء في شاشة تفاصيل المنتج
+  void addItemWithDetails(
+    ProductModel product, {
     int quantity = 1,
     String? selectedSize,
     String? selectedColor,
