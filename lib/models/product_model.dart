@@ -7,13 +7,13 @@ class ProductModel {
   final String name;
   final String description;
   final double price;
-  final String currency; // حقل العملة (ج.س، ج.م، ر.س)
+  final String currency;
   final double discount;
   final int stock;
   final int soldQuantity;
   final String unit;
-  final List<String> imageUrls; // قائمة الصور المتعددة
-  final String imageUrl; // للتوافق العكسي مع الكود القديم
+  final List<String> imageUrls;
+  final String imageUrl;
   final String category;
   final String brand;
   final bool isAvailable;
@@ -22,9 +22,8 @@ class ProductModel {
   final int orderCount;
   final DateTime createdAt;
   
-  // الخصائص الاحترافية الجديدة (الأحجام والألوان على غرار تطبيقات التسوق الكبرى)
-  final List<String> sizes; // مثال: ['S', 'M', 'L', 'XL', 'XXL', '3XL']
-  final List<String> colors; // تخزين رموز أو أسماء الألوان مثل: ['#FF0000', '#000000', 'أزرق']
+  final List<String> sizes;
+  final List<String> colors;
 
   ProductModel({
     required this.id,
@@ -33,7 +32,7 @@ class ProductModel {
     required this.name,
     required this.description,
     required this.price,
-    this.currency = 'ج.س',
+    this.currency = 'SDG',
     this.discount = 0.0,
     required this.stock,
     this.soldQuantity = 0,
@@ -104,7 +103,6 @@ class ProductModel {
   factory ProductModel.fromFirestore(DocumentSnapshot doc) {
     Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
     
-    // التعامل مع قائمة الصور أو الصورة المفردة القديمة
     List<String> parsedImages = [];
     if (data['imageUrls'] != null) {
       parsedImages = List<String>.from(data['imageUrls']);
@@ -119,7 +117,7 @@ class ProductModel {
       name: data['name'] ?? '',
       description: data['description'] ?? '',
       price: (data['price'] ?? 0.0).toDouble(),
-      currency: data['currency'] ?? 'ج.س',
+      currency: data['currency'] ?? 'SDG',
       discount: (data['discount'] ?? 0.0).toDouble(),
       stock: data['stock'] ?? 0,
       soldQuantity: data['soldQuantity'] ?? 0,
@@ -157,7 +155,7 @@ class ProductModel {
       name: map['name'] ?? '',
       description: map['description'] ?? '',
       price: (map['price'] ?? 0.0).toDouble(),
-      currency: map['currency'] ?? 'ج.س',
+      currency: map['currency'] ?? 'SDG',
       discount: (map['discount'] ?? 0.0).toDouble(),
       stock: map['stock'] ?? 0,
       soldQuantity: map['soldQuantity'] ?? 0,
@@ -193,7 +191,7 @@ class ProductModel {
       'soldQuantity': soldQuantity,
       'unit': unit,
       'imageUrls': imageUrls,
-      'imageUrl': imageUrls.isNotEmpty ? imageUrls.first : imageUrl, // حفظ أول صورة في الحقل القديم للاحتياط
+      'imageUrl': imageUrls.isNotEmpty ? imageUrls.first : imageUrl,
       'category': category,
       'brand': brand,
       'isAvailable': isAvailable,
@@ -206,9 +204,3 @@ class ProductModel {
     };
   }
 }
-```[cite: 8]
-
----
-
-### الخطوة القادمة:
-قم بتحديث ملف `product_model.dart` بهذا الكود الحصري. وبعدها، ما هو **الكود الثاني** الذي ترغب في إرساله لنا (هل هو كود شاشة إضافة المنتج `add_product_screen.dart` لنقوم بتعديله وإضافة واجهات اختيار الأحجام والألوان باحترافية تامة؟) أرسله لنا لنتابع فوراً!
