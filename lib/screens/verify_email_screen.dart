@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -17,6 +18,43 @@ class VerifyEmailScreen extends ConsumerStatefulWidget {
 class _VerifyEmailScreenState extends ConsumerState<VerifyEmailScreen> {
   bool _isChecking = false;
   bool _isResending = false;
+  
+  // متغيرات خاصة بالمؤقت لزر إعادة الإرسال
+  int _resendCountdown = 60;
+  Timer? _timer;
+  bool _canResend = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _startResendTimer();
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
+
+  void _startResendTimer() {
+    setState(() {
+      _resendCountdown = 60;
+      _canResend = false;
+    });
+    _timer?.cancel();
+    _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (_resendCountdown > 0) {
+        setState(() {
+          _resendCountdown--;
+        });
+      } else {
+        _timer?.cancel();
+        setState(() {
+          _canResend = true;
+        });
+      }
+    });
+  }
 
   Future<void> _checkVerificationStatus() async {
     setState(() => _isChecking = true);
@@ -44,6 +82,8 @@ class _VerifyEmailScreenState extends ConsumerState<VerifyEmailScreen> {
   }
 
   Future<void> _resendVerificationEmail() async {
+    if (!_canResend) return;
+    
     setState(() => _isResending = true);
     try {
       final user = FirebaseAuth.instance.currentUser;
@@ -51,6 +91,7 @@ class _VerifyEmailScreenState extends ConsumerState<VerifyEmailScreen> {
         await user.sendEmailVerification();
         if (!mounted) return;
         _showCustomSnackBar('تم إعادة إرسال رابط التحقق بنجاح', AppColors.success);
+        _startResendTimer(); // إعادة تفعيل المؤقت بعد الإرسال الناجح
       }
     } catch (e) {
       if (!mounted) return;
@@ -157,20 +198,44 @@ class _VerifyEmailScreenState extends ConsumerState<VerifyEmailScreen> {
                     
                     const SizedBox(height: 12),
                     
-                    Text(
-                      widget.email != null 
-                          ? 'لقد أرسلنا رابط تحقق إلى:\n${widget.email}' 
-                          : 'لقد أرسلنا رابط تحقق إلى بريدك الإلكتروني. يرجى النقر على الرابط لتفعيل حسابك.',
-                      style: GoogleFonts.plusJakartaSans(
-                        fontSize: 15,
-                        color: Colors.white.withValues(alpha: 0.6),
-                        height: 1.6,
-                        fontWeight: FontWeight.w500,
+                    // توضيح احترافي للمستخدم لفتح البريد والضغط على الرابط والعودة
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: surfaceColor.withValues(alpha: 0.5),
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: accentColor.withValues(alpha: 0.2)),
                       ),
-                      textAlign: TextAlign.center,
+                      child: Column(
+                        children: [
+                          Text(
+                            widget.email != null 
+                                ? 'أرسلنا رابط تفعيل إلى بريدك:\n${widget.email}' 
+                                : 'أرسلنا رابط تفعيل إلى بريدك الإلكتروني.',
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 14,
+                              color: Colors.white,
+                              height: 1.5,
+                              fontWeight: FontWeight.w600,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            'يرجى فتح بريدك الإلكتروني، الضغط على رابط التفعيل، ثم العودة إلى هذه الشاشة والضغط على زر "لقد قمت بالتحقق".',
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 13,
+                              color: accentColor,
+                              height: 1.5,
+                              fontWeight: FontWeight.w500,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ],
+                      ),
                     ),
                     
-                    const SizedBox(height: 48),
+                    const SizedBox(height: 36),
 
                     // Main Container Card
                     Container(
@@ -221,14 +286,17 @@ class _VerifyEmailScreenState extends ConsumerState<VerifyEmailScreen> {
                           
                           const SizedBox(height: 16),
                           
-                          // Secondary Button (Resend Email)
+                          // Secondary Button (Resend Email with Timer)
                           SizedBox(
                             width: double.infinity,
                             height: 60,
                             child: OutlinedButton(
-                              onPressed: _isResending ? null : _resendVerificationEmail,
+                              onPressed: (_isResending || !_canResend) ? null : _resendVerificationEmail,
                               style: OutlinedButton.styleFrom(
-                                side: BorderSide(color: accentColor.withValues(alpha: 0.5), width: 1.5),
+                                side: BorderSide(
+                                  color: _canResend ? accentColor.withValues(alpha: 0.5) : Colors.grey.withValues(alpha: 0.3),
+                                  width: 1.5,
+                                ),
                                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
                                 backgroundColor: Colors.transparent,
                               ),
@@ -239,11 +307,13 @@ class _VerifyEmailScreenState extends ConsumerState<VerifyEmailScreen> {
                                       child: CircularProgressIndicator(color: accentColor, strokeWidth: 2.5),
                                     )
                                   : Text(
-                                      'إعادة إرسال البريد',
+                                      _canResend 
+                                          ? 'إعادة إرسال البريد' 
+                                          : 'إعادة الإرسال بعد (${_resendCountdown} ثانية)',
                                       style: GoogleFonts.plusJakartaSans(
                                         fontSize: 16,
                                         fontWeight: FontWeight.w700,
-                                        color: accentColor,
+                                        color: _canResend ? accentColor : Colors.grey,
                                       ),
                                     ),
                             ),
