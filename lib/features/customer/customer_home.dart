@@ -15,7 +15,7 @@ final realTimeProductsStreamProvider = StreamProvider.autoDispose<List<ProductMo
   return ref.watch(customerServiceProvider).getProductsStream();
 });
 
-// دالة تحويل الكود الإنجليزي للأقسام إلى الاسم العربي المناسب
+// دالة تحويل الكود الإنجليزي للأقسام إلى الاسم العربي المناسب[cite: 10]
 String getCategoryArabicName(String categoryKey) {
   final Map<String, String> categoryNames = {
     'mens_clothing': 'ملابس رجالية',
@@ -42,7 +42,7 @@ class CustomerHome extends ConsumerWidget {
     final connectivity = ref.watch(connectivityProvider).asData?.value;
     final isOffline = connectivity == ConnectivityResult.none;
 
-    // Dynamic Theme Mapping
+    // Dynamic Theme Mapping[cite: 10]
     final bgColor = isLight ? AppColors.lightBackground : AppColors.premiumDarkBackground;
     final primaryColor = isLight ? AppColors.lightPrimary : AppColors.premiumDarkPrimary;
     final textColor = isLight ? AppColors.lightTextPrimary : AppColors.premiumDarkTextPrimary;
@@ -51,17 +51,17 @@ class CustomerHome extends ConsumerWidget {
       backgroundColor: bgColor,
       body: Stack(
         children: [
-          // Background Gradient Glow
+          // Background Gradient Glow[cite: 10]
           Positioned(
-            top: -200,
-            left: -100,
+            top: -150,
+            left: -50,
             child: Container(
-              width: 400,
-              height: 400,
+              width: 350,
+              height: 350,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 gradient: RadialGradient(
-                  colors: [primaryColor.withValues(alpha: isLight ? 0.12 : 0.08), Colors.transparent],
+                  colors: [primaryColor.withValues(alpha: isLight ? 0.15 : 0.1), Colors.transparent],
                 ),
               ),
             ),
@@ -75,10 +75,10 @@ class CustomerHome extends ConsumerWidget {
                 floating: true,
                 pinned: true,
                 elevation: 0,
-                backgroundColor: bgColor.withOpacity(0.8),
+                backgroundColor: bgColor.withOpacity(0.85),
                 flexibleSpace: FlexibleSpaceBar(
                   background: BackdropFilter(
-                    filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                    filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
                     child: Container(color: Colors.transparent),
                   ),
                 ),
@@ -91,7 +91,7 @@ class CustomerHome extends ConsumerWidget {
                         Container(
                           width: double.infinity,
                           padding: const EdgeInsets.symmetric(vertical: 4),
-                          color: AppColors.error.withOpacity(0.8),
+                          color: AppColors.error.withOpacity(0.9),
                           child: const Center(
                             child: Text(
                               'WORKING OFFLINE • VIEWING CACHED DATA',
@@ -118,7 +118,7 @@ class CustomerHome extends ConsumerWidget {
                       const SizedBox(height: 16),
                       const _CategoryGrid(),
                       const SizedBox(height: 24),
-                      // سلايدر البنرات الترويجية أصبح هنا أسفل الأقسام الرئيسية مباشرة
+                      // سلايدر البنرات الترويجية[cite: 10]
                       const _PromoBannersSlider(),
                       const SizedBox(height: 32),
                       _SectionHeader(
@@ -133,7 +133,7 @@ class CustomerHome extends ConsumerWidget {
                   ),
                 ),
               ),
-              // قسم جميع المنتجات مرتب ومنسق بشبكة رأسية مرنة واحترافية متوافقة مع الـ CustomScrollView
+              // قسم جميع المنتجات[cite: 10]
               const _AllMerchantProductsGridList(),
               SliverToBoxAdapter(
                 child: Padding(
@@ -206,8 +206,9 @@ class _LocationHeader extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: primaryColor.withOpacity(0.1),
+                    gradient: LinearGradient(colors: [primaryColor.withOpacity(0.2), primaryColor.withOpacity(0.05)]),
                     borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: primaryColor.withOpacity(0.2)),
                   ),
                   child: Icon(Icons.location_on_rounded, color: primaryColor, size: 20),
                 ),
@@ -220,7 +221,7 @@ class _LocationHeader extends StatelessWidget {
                       Text(
                         'التوصيل إلى',
                         style: TextStyle(
-                          color: primaryColor.withOpacity(0.8),
+                          color: primaryColor.withOpacity(0.9),
                           fontSize: 9,
                           fontWeight: FontWeight.w900,
                           letterSpacing: 1.5,
@@ -234,10 +235,10 @@ class _LocationHeader extends StatelessWidget {
                               defaultAddress?.fullAddress ?? 'اختر موقع التوصيل',
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
-                              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: textColor),
+                              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: textColor),
                             ),
                           ),
-                          Icon(Icons.keyboard_arrow_down_rounded, size: 16, color: textColor.withOpacity(0.4)),
+                          Icon(Icons.keyboard_arrow_down_rounded, size: 16, color: textColor.withOpacity(0.5)),
                         ],
                       ),
                     ],
@@ -254,7 +255,7 @@ class _LocationHeader extends StatelessWidget {
           textColor: textColor,
           isLight: isLight,
         ),
-        const SizedBox(width: 12),
+        const SizedBox(width: 10),
         _HeaderActionBtn(
           icon: Icons.favorite_border_rounded, 
           onTap: () => context.push('/customer/wishlist'),
@@ -262,7 +263,7 @@ class _LocationHeader extends StatelessWidget {
           textColor: textColor,
           isLight: isLight,
         ),
-        const SizedBox(width: 12),
+        const SizedBox(width: 10),
         GestureDetector(
           onTap: () => context.push('/customer/profile'),
           child: Hero(
@@ -271,7 +272,7 @@ class _LocationHeader extends StatelessWidget {
               padding: const EdgeInsets.all(2),
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                border: Border.all(color: primaryColor.withOpacity(0.3), width: 1.5),
+                gradient: LinearGradient(colors: [primaryColor, primaryColor.withOpacity(0.3)]),
               ),
               child: CircleAvatar(
                 radius: 18,
@@ -306,14 +307,14 @@ class _HeaderActionBtn extends StatelessWidget {
   Widget build(BuildContext context) {
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(12),
+      borderRadius: BorderRadius.circular(14),
       child: Container(
         padding: const EdgeInsets.all(10),
         decoration: BoxDecoration(
           color: cardColor,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: isLight ? AppColors.lightBorder : AppColors.premiumDarkDivider),
-          boxShadow: isLight ? [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10)] : null,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: isLight ? AppColors.lightBorder : AppColors.premiumDarkDivider, width: 1.2),
+          boxShadow: isLight ? [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 12, offset: const Offset(0, 4))] : null,
         ),
         child: Icon(icon, color: textColor, size: 20),
       ),
@@ -334,33 +335,36 @@ class _SearchBar extends ConsumerWidget {
     return GestureDetector(
       onTap: () => context.push('/customer/search'),
       child: Container(
-        height: 54,
+        height: 56,
         padding: const EdgeInsets.symmetric(horizontal: 20),
         decoration: BoxDecoration(
           color: cardColor,
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(22),
           boxShadow: [
             BoxShadow(
-              color: isLight ? Colors.black.withOpacity(0.04) : Colors.black.withOpacity(0.12), 
-              blurRadius: 20, 
-              offset: const Offset(0, 8)
+              color: isLight ? primaryColor.withOpacity(0.08) : Colors.black.withOpacity(0.2), 
+              blurRadius: 25, 
+              offset: const Offset(0, 10)
             ),
           ],
-          border: Border.all(color: isLight ? AppColors.lightBorder : AppColors.premiumDarkDivider.withOpacity(0.3)),
+          border: Border.all(color: isLight ? primaryColor.withOpacity(0.2) : AppColors.premiumDarkDivider.withOpacity(0.5), width: 1.5),
         ),
         child: Row(
           children: [
-            Icon(Icons.search_rounded, color: primaryColor, size: 22),
+            Icon(Icons.search_rounded, color: primaryColor, size: 24),
             const SizedBox(width: 14),
             Text(
-              'ابحث عن ما تحتاج إليه...',
-              style: TextStyle(color: secondaryTextColor.withOpacity(0.6), fontSize: 14, fontWeight: FontWeight.w500),
+              'ابحث عما ترغب فيه اليوم...',
+              style: TextStyle(color: secondaryTextColor.withOpacity(0.7), fontSize: 14, fontWeight: FontWeight.w600),
             ),
             const Spacer(),
             Container(
               padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(color: primaryColor.withOpacity(0.1), borderRadius: BorderRadius.circular(10)),
-              child: Icon(Icons.tune_rounded, color: primaryColor, size: 16),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(colors: [primaryColor.withOpacity(0.2), primaryColor.withOpacity(0.05)]),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(Icons.tune_rounded, color: primaryColor, size: 18),
             ),
           ],
         ),
@@ -369,7 +373,6 @@ class _SearchBar extends ConsumerWidget {
   }
 }
 
-// سلايدر البنرات الترويجية الاحترافي الداعم لأكثر من صورة مع السحب الأفقي ومقاس مستطيل متناسق
 class _PromoBannersSlider extends ConsumerStatefulWidget {
   const _PromoBannersSlider();
 
@@ -396,8 +399,8 @@ class _PromoBannersSliderState extends ConsumerState<_PromoBannersSlider> {
           }
           _pageController.animateToPage(
             _currentIndex,
-            duration: const Duration(milliseconds: 500),
-            curve: Curves.easeInOut,
+            duration: const Duration(milliseconds: 600),
+            curve: Curves.easeInOutCubic,
           );
         }
       });
@@ -424,7 +427,7 @@ class _PromoBannersSliderState extends ConsumerState<_PromoBannersSlider> {
         return Column(
           children: [
             SizedBox(
-              height: 180,
+              height: 220,
               child: PageView.builder(
                 controller: _pageController,
                 physics: const BouncingScrollPhysics(),
@@ -437,19 +440,19 @@ class _PromoBannersSliderState extends ConsumerState<_PromoBannersSlider> {
                 itemBuilder: (context, index) {
                   final offer = offers[index];
                   return Container(
-                    margin: const EdgeInsets.symmetric(horizontal: 2),
+                    margin: const EdgeInsets.symmetric(horizontal: 4),
                     decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(28),
+                      borderRadius: BorderRadius.circular(36),
                       boxShadow: [
                         BoxShadow(
-                          color: isLight ? primaryColor.withOpacity(0.12) : Colors.black.withOpacity(0.3), 
-                          blurRadius: 30, 
-                          offset: const Offset(0, 15)
+                          color: isLight ? primaryColor.withOpacity(0.22) : Colors.black.withOpacity(0.5), 
+                          blurRadius: 40, 
+                          offset: const Offset(0, 18)
                         ),
                       ],
                     ),
                     child: ClipRRect(
-                      borderRadius: BorderRadius.circular(28),
+                      borderRadius: BorderRadius.circular(36),
                       child: Stack(
                         children: [
                           Positioned.fill(
@@ -462,7 +465,7 @@ class _PromoBannersSliderState extends ConsumerState<_PromoBannersSlider> {
                             child: Container(
                               decoration: BoxDecoration(
                                 gradient: LinearGradient(
-                                  colors: [Colors.black.withOpacity(0.85), Colors.transparent],
+                                  colors: [Colors.black.withOpacity(0.9), Colors.black.withOpacity(0.4), Colors.transparent],
                                   begin: Alignment.centerLeft,
                                   end: Alignment.centerRight,
                                 ),
@@ -476,17 +479,23 @@ class _PromoBannersSliderState extends ConsumerState<_PromoBannersSlider> {
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
                                 Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                                  decoration: BoxDecoration(color: primaryColor, borderRadius: BorderRadius.circular(8)),
+                                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                                  decoration: BoxDecoration(
+                                    color: primaryColor,
+                                    borderRadius: BorderRadius.circular(12),
+                                    boxShadow: [BoxShadow(color: primaryColor.withOpacity(0.4), blurRadius: 10)],
+                                  ),
                                   child: Text(
-                                    offer.offerType == 'percentage' ? '${offer.value.round()}% خصم' : 'عرض مميز',
-                                    style: TextStyle(color: isLight ? Colors.white : AppColors.premiumDarkBackground, fontSize: 10, fontWeight: FontWeight.w900, letterSpacing: 1),
+                                    offer.offerType == 'percentage' ? '${offer.value.round()}% خصم حصري' : 'عرض مميز',
+                                    style: TextStyle(color: isLight ? Colors.white : AppColors.premiumDarkBackground, fontSize: 11, fontWeight: FontWeight.w900, letterSpacing: 1),
                                   ),
                                 ),
                                 const SizedBox(height: 12),
                                 Text(
                                   offer.title,
-                                  style: const TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.w800, letterSpacing: -0.5),
+                                  style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.w900, letterSpacing: -0.5),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
                                 ),
                                 const SizedBox(height: 16),
                                 ElevatedButton(
@@ -494,10 +503,12 @@ class _PromoBannersSliderState extends ConsumerState<_PromoBannersSlider> {
                                   style: ElevatedButton.styleFrom(
                                     backgroundColor: Colors.white,
                                     foregroundColor: Colors.black,
-                                    minimumSize: const Size(100, 40),
-                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                    minimumSize: const Size(120, 44),
+                                    elevation: 0,
+                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                                    shadowColor: Colors.black.withOpacity(0.2),
                                   ),
-                                  child: const Text('تسوق الآن', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 12)),
+                                  child: const Text('تسوق الآن', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 13)),
                                 ),
                               ],
                             ),
@@ -510,18 +521,18 @@ class _PromoBannersSliderState extends ConsumerState<_PromoBannersSlider> {
               ),
             ),
             if (offers.length > 1) ...[
-              const SizedBox(height: 12),
+              const SizedBox(height: 16),
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: List.generate(
                   offers.length,
                   (index) => AnimatedContainer(
-                    duration: const Duration(milliseconds: 300),
+                    duration: const Duration(milliseconds: 350),
                     margin: const EdgeInsets.symmetric(horizontal: 4),
-                    width: _currentIndex == index ? 22 : 8,
+                    width: _currentIndex == index ? 28 : 8,
                     height: 8,
                     decoration: BoxDecoration(
-                      color: _currentIndex == index ? primaryColor : primaryColor.withOpacity(0.2),
+                      color: _currentIndex == index ? primaryColor : primaryColor.withOpacity(0.25),
                       borderRadius: BorderRadius.circular(4),
                     ),
                   ),
@@ -531,7 +542,7 @@ class _PromoBannersSliderState extends ConsumerState<_PromoBannersSlider> {
           ],
         );
       },
-      loading: () => const _Skeleton(height: 180, radius: 28),
+      loading: () => const _Skeleton(height: 220, radius: 36),
       error: (e, s) => const SizedBox.shrink(),
     );
   }
@@ -551,16 +562,31 @@ class _SectionHeader extends StatelessWidget {
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Expanded(
-          child: Text(
-            title,
-            style: TextStyle(
-              fontSize: 20, 
-              fontWeight: FontWeight.w900, 
-              color: textColor, 
-              letterSpacing: -0.5
-            ),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
+          child: Row(
+            children: [
+              Container(
+                width: 4,
+                height: 20,
+                decoration: BoxDecoration(
+                  color: primaryColor,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  title,
+                  style: TextStyle(
+                    fontSize: 20, 
+                    fontWeight: FontWeight.w900, 
+                    color: textColor, 
+                    letterSpacing: -0.5
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ],
           ),
         ),
         if (showSeeAll)
@@ -571,8 +597,8 @@ class _SectionHeader extends StatelessWidget {
               }
             },
             style: TextButton.styleFrom(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
@@ -597,7 +623,6 @@ class _CategoryGrid extends StatelessWidget {
     final cardColor = isLight ? AppColors.lightSurface : AppColors.premiumDarkSurface;
     final secondaryTextColor = isLight ? AppColors.lightTextSecondary : AppColors.premiumDarkTextSecondary;
 
-    // الأقسام الـ 9 المتوافقة تماماً مع شاشة الإضافة
     final categories = [
       {'name': 'ملابس رجالية', 'key': 'mens_clothing', 'icon': Icons.man_rounded, 'color': const Color(0xFF3B82F6)},
       {'name': 'ملابس نسائية', 'key': 'womens_clothing', 'icon': Icons.woman_rounded, 'color': const Color(0xFFEC4899)},
@@ -617,25 +642,40 @@ class _CategoryGrid extends StatelessWidget {
         children: categories.map((cat) {
           final color = cat['color'] as Color;
           return Padding(
-            padding: const EdgeInsets.only(right: 14),
+            padding: const EdgeInsets.only(right: 16),
             child: InkWell(
               onTap: () => context.push('/customer/category/${cat['key']}'),
-              borderRadius: BorderRadius.circular(22),
+              borderRadius: BorderRadius.circular(24),
               child: Column(
                 children: [
                   Container(
-                    width: 72,
-                    height: 72,
+                    width: 76,
+                    height: 76,
                     decoration: BoxDecoration(
                       color: cardColor,
-                      borderRadius: BorderRadius.circular(22),
-                      border: Border.all(color: isLight ? color.withOpacity(0.15) : AppColors.premiumDarkDivider.withOpacity(0.5), width: 1),
-                      boxShadow: isLight ? [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10)] : null,
+                      borderRadius: BorderRadius.circular(24),
+                      border: Border.all(color: color.withOpacity(0.3), width: 1.5),
+                      boxShadow: [
+                        BoxShadow(
+                          color: color.withOpacity(isLight ? 0.15 : 0.08), 
+                          blurRadius: 15, 
+                          offset: const Offset(0, 6)
+                        ),
+                      ],
                     ),
-                    child: Center(child: Icon(cat['icon'] as IconData, color: color, size: 28)),
+                    child: Center(
+                      child: Container(
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: color.withOpacity(0.12),
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(cat['icon'] as IconData, color: color, size: 28),
+                      ),
+                    ),
                   ),
-                  const SizedBox(height: 8),
-                  Text(cat['name'] as String, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: secondaryTextColor)),
+                  const SizedBox(height: 10),
+                  Text(cat['name'] as String, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: secondaryTextColor)),
                 ],
               ),
             ),
@@ -669,9 +709,9 @@ class _AllMerchantProductsGridList extends ConsumerWidget {
             ),
             gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
               crossAxisCount: 2,
-              mainAxisSpacing: 14,
-              crossAxisSpacing: 14,
-              childAspectRatio: 0.72,
+              mainAxisSpacing: 16,
+              crossAxisSpacing: 16,
+              childAspectRatio: 0.70,
             ),
           ),
         );
@@ -703,54 +743,62 @@ class _GridProductCard extends ConsumerWidget {
 
     return InkWell(
       onTap: () => context.push('/customer/product', extra: product),
-      borderRadius: BorderRadius.circular(22),
+      borderRadius: BorderRadius.circular(24),
       child: Container(
-        padding: const EdgeInsets.all(10),
+        padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
           color: cardColor, 
-          borderRadius: BorderRadius.circular(22),
-          boxShadow: isLight ? [BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 10, offset: const Offset(0, 4))] : null,
-          border: isLight ? Border.all(color: AppColors.lightBorder) : Border.all(color: AppColors.premiumDarkDivider.withOpacity(0.4)),
+          borderRadius: BorderRadius.circular(24),
+          boxShadow: [
+            BoxShadow(
+              color: isLight ? Colors.black.withOpacity(0.05) : Colors.black.withOpacity(0.2), 
+              blurRadius: 15, 
+              offset: const Offset(0, 6)
+            ),
+          ],
+          border: Border.all(
+            color: isLight ? AppColors.lightBorder : AppColors.premiumDarkDivider.withOpacity(0.5), 
+            width: 1.2
+          ),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Expanded(
               child: ClipRRect(
-                borderRadius: BorderRadius.circular(16),
+                borderRadius: BorderRadius.circular(18),
                 child: product.imageUrl.isNotEmpty 
                     ? Image.network(product.imageUrl, fit: BoxFit.cover, width: double.infinity)
                     : Container(
                         width: double.infinity, 
                         color: isLight ? AppColors.lightSecondaryBackground : AppColors.premiumDarkSecondaryBackground, 
-                        child: Center(child: Icon(Icons.image, color: textColor.withOpacity(0.1)))
+                        child: Center(child: Icon(Icons.image_rounded, color: textColor.withOpacity(0.2), size: 30))
                       ),
               ),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 10),
             Text(
               product.name, 
               style: TextStyle(
                 fontWeight: FontWeight.w900, 
-                fontSize: 13, 
+                fontSize: 13.5, 
                 color: textColor
               ), 
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),
             const SizedBox(height: 2),
-            // استخدام دالة تحويل اسم القسم إلى العربية بدلاً من عرض الكود البرمجي بالإنجليزية
             Text(
               getCategoryArabicName(product.category), 
               style: TextStyle(
                 color: primaryColor, 
                 fontSize: 11, 
-                fontWeight: FontWeight.w700
+                fontWeight: FontWeight.w800
               ),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),
-            const SizedBox(height: 6),
+            const SizedBox(height: 8),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -759,16 +807,17 @@ class _GridProductCard extends ConsumerWidget {
                   style: TextStyle(
                     color: primaryColor, 
                     fontWeight: FontWeight.w900, 
-                    fontSize: 13
+                    fontSize: 14
                   )
                 ),
                 Container(
-                  padding: const EdgeInsets.all(5),
+                  padding: const EdgeInsets.all(6),
                   decoration: BoxDecoration(
-                    color: primaryColor.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(8),
+                    gradient: LinearGradient(colors: [primaryColor, primaryColor.withOpacity(0.8)]),
+                    borderRadius: BorderRadius.circular(10),
+                    boxShadow: [BoxShadow(color: primaryColor.withOpacity(0.4), blurRadius: 8, offset: const Offset(0, 3))],
                   ),
-                  child: Icon(Icons.add_rounded, color: primaryColor, size: 14),
+                  child: const Icon(Icons.add_rounded, color: Colors.white, size: 16),
                 ),
               ],
             ),
@@ -828,12 +877,12 @@ class _FeaturedShopCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(28),
           boxShadow: [
             BoxShadow(
-              color: isLight ? Colors.black.withOpacity(0.04) : Colors.black.withOpacity(0.2), 
+              color: isLight ? Colors.black.withOpacity(0.06) : Colors.black.withOpacity(0.25), 
               blurRadius: 24, 
-              offset: const Offset(0, 8)
+              offset: const Offset(0, 10)
             )
           ],
-          border: Border.all(color: isLight ? AppColors.lightBorder : AppColors.premiumDarkDivider.withOpacity(0.4)),
+          border: Border.all(color: isLight ? AppColors.lightBorder : AppColors.premiumDarkDivider.withOpacity(0.5), width: 1.2),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -846,7 +895,7 @@ class _FeaturedShopCard extends StatelessWidget {
                     tag: 'shop_home_${shop.id}',
                     child: shop.imageUrl.isNotEmpty 
                         ? Image.network(shop.imageUrl, height: 145, width: double.infinity, fit: BoxFit.cover)
-                        : Container(height: 145, color: isLight ? AppColors.lightSecondaryBackground : AppColors.premiumDarkSecondaryBackground, child: Center(child: Icon(Icons.storefront, color: textColor.withOpacity(0.1), size: 40))),
+                        : Container(height: 145, color: isLight ? AppColors.lightSecondaryBackground : AppColors.premiumDarkSecondaryBackground, child: Center(child: Icon(Icons.storefront_rounded, color: textColor.withOpacity(0.2), size: 45))),
                   ),
                 ),
                 Positioned(
@@ -884,9 +933,16 @@ class _FeaturedShopCard extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(width: 8),
-                      Text(
-                        shop.deliveryTime,
-                        style: TextStyle(color: theme.colorScheme.primary, fontSize: 11, fontWeight: FontWeight.w900),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: theme.colorScheme.primary.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Text(
+                          shop.deliveryTime,
+                          style: TextStyle(color: theme.colorScheme.primary, fontSize: 11, fontWeight: FontWeight.w900),
+                        ),
                       ),
                     ],
                   ),
@@ -909,24 +965,24 @@ class _GlassBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ClipRRect(
-      borderRadius: BorderRadius.circular(10),
+      borderRadius: BorderRadius.circular(12),
       child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
         child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
           decoration: BoxDecoration(
-            color: Colors.black.withOpacity(0.4),
-            borderRadius: BorderRadius.circular(10),
-            border: Border.all(color: Colors.white.withOpacity(0.1)),
+            color: Colors.black.withOpacity(0.55),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: Colors.white.withOpacity(0.15)),
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(icon, color: color, size: 12),
+              Icon(icon, color: color, size: 14),
               const SizedBox(width: 4),
               Text(
                 label,
-                style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w800),
+                style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w900),
               ),
             ],
           ),
@@ -949,7 +1005,7 @@ class _Skeleton extends StatelessWidget {
       width: width,
       height: height,
       decoration: BoxDecoration(
-        color: isLight ? Colors.black.withOpacity(0.05) : Colors.white.withOpacity(0.05),
+        color: isLight ? Colors.black.withOpacity(0.06) : Colors.white.withOpacity(0.06),
         borderRadius: BorderRadius.circular(radius),
       ),
     );
@@ -981,7 +1037,7 @@ class _TrendingProducts extends ConsumerWidget {
           ),
         );
       },
-      loading: () => SizedBox(height: 240, child: ListView(scrollDirection: Axis.horizontal, children: List.generate(2, (_) => const Padding(padding: EdgeInsets.only(right: 14), child: _Skeleton(width: 160, height: 240, radius: 22))))),
+      loading: () => SizedBox(height: 240, child: ListView(scrollDirection: Axis.horizontal, children: List.generate(2, (_) => const Padding(padding: EdgeInsets.only(right: 14), child: _Skeleton(width: 160, height: 240, radius: 24))))),
       error: (e, s) => const SizedBox.shrink(),
     );
   }

@@ -335,7 +335,22 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => CategoryShopsScreen(category: state.pathParameters['name']!),
       ),
       GoRoute(path: '/customer/offer', builder: (context, state) => OfferDetailsScreen(offer: state.extra as OfferModel)),
-      GoRoute(path: '/customer/product', builder: (context, state) => ProductDetailsScreen(product: state.extra as ProductModel)),
+      
+      // مسار تفاصيل المنتج المُحدث لدعم الكائن أو جلبه عبر المعرف ديناميكياً بدون أخطاء
+      GoRoute(
+        path: '/customer/product',
+        builder: (context, state) {
+          if (state.extra is ProductModel) {
+            return ProductDetailsScreen(product: state.extra as ProductModel);
+          }
+          return const Scaffold(body: Center(child: Text('Invalid product data')));
+        },
+      ),
+      GoRoute(
+        path: '/customer/product/:id',
+        builder: (context, state) => ProductRouteWidget(productId: state.pathParameters['id']!),
+      ),
+
       GoRoute(
         path: '/customer/product-reviews/:id/:name',
         builder: (context, state) => ProductReviewsScreen(

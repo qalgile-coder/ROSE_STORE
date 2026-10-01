@@ -1,4 +1,4 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'cloud_firestore/cloud_firestore.dart';
 
 class ReviewModel {
   final String id;
@@ -25,26 +25,29 @@ class ReviewModel {
     this.reply,
   });
 
+  /// إنشاء كائن ReviewModel من مستند Firestore مع حماية تامة ضد أخطاء أنواع البيانات
   factory ReviewModel.fromFirestore(DocumentSnapshot doc) {
-    Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
+    final data = doc.data() as Map<String, dynamic>? ?? {};
+    
     return ReviewModel(
       id: doc.id,
-      customerName: data['customerName'] ?? 'Anonymous',
-      rating: (data['rating'] ?? 0.0).toDouble(),
-      review: data['review'] ?? '',
-      orderId: data['orderId'] ?? '',
-      shopId: data['shopId'] ?? '',
-      riderId: data['riderId'],
+      customerName: data['customerName'] as String? ?? 'Anonymous',
+      rating: (data['rating'] is num) ? (data['rating'] as num).toDouble() : 0.0,
+      review: data['review'] as String? ?? '',
+      orderId: data['orderId'] as String? ?? '',
+      shopId: data['shopId'] as String? ?? '',
+      riderId: data['riderId'] as String?,
       productRatings: data['productRatings'] != null
           ? List<Map<String, dynamic>>.from(data['productRatings'])
           : [],
       createdAt: data['createdAt'] != null 
           ? (data['createdAt'] as Timestamp).toDate() 
           : DateTime.now(),
-      reply: data['reply'],
+      reply: data['reply'] as String?,
     );
   }
 
+  /// تحويل كائن البيانات إلى Map لحفظه في Firestore
   Map<String, dynamic> toMap() {
     return {
       'customerName': customerName,
@@ -57,5 +60,32 @@ class ReviewModel {
       'createdAt': FieldValue.serverTimestamp(),
       'reply': reply,
     };
+  }
+
+  /// دالة مساعدة لتحديث بعض حقول الكائن بسهولة عند الحاجة
+  ReviewModel copyWith({
+    String? id,
+    String? customerName,
+    double? rating,
+    String? review,
+    String? orderId,
+    String? shopId,
+    String? riderId,
+    List<Map<String, dynamic>>? productRatings,
+    DateTime? createdAt,
+    String? reply,
+  }) {
+    return ReviewModel(
+      id: id ?? this.id,
+      customerName: customerName ?? this.customerName,
+      rating: rating ?? this.rating,
+      review: review ?? this.review,
+      orderId: orderId ?? this.orderId,
+      shopId: shopId ?? this.shopId,
+      riderId: riderId ?? this.riderId,
+      productRatings: productRatings ?? this.productRatings,
+      createdAt: createdAt ?? this.createdAt,
+      reply: reply ?? this.reply,
+    );
   }
 }
