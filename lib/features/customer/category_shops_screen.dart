@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/providers.dart';
-import '../../models/shop_model.dart';
+import '../../models/product_model.dart';
 import '../../theme/app_colors.dart';
 
 class CategoryShopsScreen extends ConsumerStatefulWidget {
@@ -19,7 +19,8 @@ class _CategoryShopsScreenState extends ConsumerState<CategoryShopsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final shopsAsync = ref.watch(categoryShopsProvider(widget.category));
+    // استخدام المزود الاحترافي الجديد لجلب منتجات القسم مباشرة بناءً على المفتاح المطابق لقاعدة البيانات
+    final productsAsync = ref.watch(categoryProductsProvider(widget.category));
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final isLight = theme.brightness == Brightness.light;
@@ -27,7 +28,7 @@ class _CategoryShopsScreenState extends ConsumerState<CategoryShopsScreen> {
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        title: Text('${widget.category} Stores', style: TextStyle(fontWeight: FontWeight.w900, color: colorScheme.onBackground)),
+        title: Text('${widget.category} Products', style: TextStyle(fontWeight: FontWeight.w900, color: colorScheme.onBackground)),
         backgroundColor: theme.scaffoldBackgroundColor,
         elevation: 0,
         leading: IconButton(
@@ -48,7 +49,7 @@ class _CategoryShopsScreenState extends ConsumerState<CategoryShopsScreen> {
                 onChanged: (v) => setState(() => _searchQuery = v.toLowerCase()),
                 style: TextStyle(color: colorScheme.onSurface, fontWeight: FontWeight.w600),
                 decoration: InputDecoration(
-                  hintText: 'Search for ${widget.category.toLowerCase()} stores...',
+                  hintText: 'Search in ${widget.category.toLowerCase()}...',
                   hintStyle: TextStyle(color: colorScheme.onSurface.withOpacity(0.4), fontSize: 14),
                   prefixIcon: Icon(Icons.search_rounded, size: 20, color: colorScheme.primary),
                   border: InputBorder.none,
@@ -59,30 +60,35 @@ class _CategoryShopsScreenState extends ConsumerState<CategoryShopsScreen> {
           ),
         ),
       ),
-      body: shopsAsync.when(
-        data: (shops) {
-          final filtered = shops.where((s) => s.name.toLowerCase().contains(_searchQuery)).toList();
+      body: productsAsync.when(
+        data: (products) {
+          final filtered = products.where((p) => p.name.toLowerCase().contains(_searchQuery)).toList();
           
           if (filtered.isEmpty) {
             return Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.storefront_rounded, size: 64, color: colorScheme.onSurface.withOpacity(0.1)),
+                  Icon(Icons.inventory_2_outlined, size: 64, color: colorScheme.onSurface.withOpacity(0.1)),
                   const SizedBox(height: 16),
-                  Text('No stores found in ${widget.category}', style: TextStyle(color: colorScheme.onSurface.withOpacity(0.4), fontWeight: FontWeight.w600)),
+                  Text('No products found in ${widget.category}', style: TextStyle(color: colorScheme.onSurface.withOpacity(0.4), fontWeight: FontWeight.w600)),
                 ],
               ),
             );
           }
 
-          return ListView.separated(
+          return GridView.builder(
             padding: const EdgeInsets.all(20),
             itemCount: filtered.length,
             physics: const BouncingScrollPhysics(),
-            separatorBuilder: (_, __) => const SizedBox(height: 20),
-            itemBuilder: (context, index) => _ShopListTile(
-              shop: filtered[index],
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 2,
+              childAspectRatio: 0.7,
+              crossAxisSpacing: 16,
+              mainAxisSpacing: 16,
+            ),
+            itemBuilder: (context, index) => _ProductCard(
+              product: filtered[index],
               isLight: isLight,
               colorScheme: colorScheme,
             ),
@@ -95,27 +101,27 @@ class _CategoryShopsScreenState extends ConsumerState<CategoryShopsScreen> {
   }
 }
 
-class _ShopListTile extends StatelessWidget {
-  final ShopModel shop;
+class _ProductCard extends StatelessWidget {
+  final ProductModel product;
   final bool isLight;
   final ColorScheme colorScheme;
 
-  const _ShopListTile({required this.shop, required this.isLight, required this.colorScheme});
+  const _ProductCard({required this.product, required this.isLight, required this.colorScheme});
 
   @override
   Widget build(BuildContext context) {
     return InkWell(
-      onTap: () => context.push('/customer/shop/${shop.id}'),
-      borderRadius: BorderRadius.circular(32),
+      onTap: () => context.push('/customer/product/${product.id}'),
+      borderRadius: BorderRadius.circular(24),
       child: Container(
         decoration: BoxDecoration(
           color: colorScheme.surface,
-          borderRadius: BorderRadius.circular(32),
+          borderRadius: BorderRadius.circular(24),
           boxShadow: [
             BoxShadow(
-              color: isLight ? Colors.black.withOpacity(0.05) : Colors.black.withOpacity(0.2), 
-              blurRadius: 20, 
-              offset: const Offset(0, 8)
+              color: isLight ? Colors.black.withOpacity(0.04) : Colors.black.withOpacity(0.2), 
+              blurRadius: 15, 
+              offset: const Offset(0, 6)
             ),
           ],
           border: isLight ? Border.all(color: colorScheme.outline.withOpacity(0.1)) : Border.all(color: colorScheme.outline.withOpacity(0.3)),
@@ -123,80 +129,33 @@ class _ShopListTile extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Stack(
-              children: [
-                Hero(
-                  tag: 'shop_banner_${shop.id}',
-                  child: Container(
-                    height: 160,
-                    decoration: BoxDecoration(
-                      color: isLight ? AppColors.lightSecondaryBackground : AppColors.premiumDarkSecondaryBackground,
-                      borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
-                      image: shop.imageUrl.isNotEmpty 
-                          ? DecorationImage(image: NetworkImage(shop.imageUrl), fit: BoxFit.cover)
-                          : null,
-                    ),
-                    child: shop.imageUrl.isEmpty 
-                        ? Center(child: Icon(Icons.storefront, size: 48, color: colorScheme.onSurface.withOpacity(0.1)))
-                        : null,
-                  ),
+            Expanded(
+              child: ClipRRect(
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+                child: Container(
+                  width: double.infinity,
+                  color: isLight ? AppColors.lightSecondaryBackground : AppColors.premiumDarkSecondaryBackground,
+                  child: product.imageUrl.isNotEmpty 
+                      ? Image.network(product.imageUrl, fit: BoxFit.cover)
+                      : Icon(Icons.shopping_bag, size: 36, color: colorScheme.onSurface.withOpacity(0.1)),
                 ),
-                Positioned(
-                  top: 16,
-                  right: 16,
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(12),
-                    child: BackdropFilter(
-                      filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                        decoration: BoxDecoration(
-                          color: Colors.black.withOpacity(0.3),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            const Icon(Icons.star_rounded, color: AppColors.warning, size: 16),
-                            const SizedBox(width: 4),
-                            Text(shop.rating.toString(), style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 13, color: Colors.white)),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ],
+              ),
             ),
             Padding(
-              padding: const EdgeInsets.all(20),
-              child: Row(
+              padding: const EdgeInsets.all(12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          shop.name, 
-                          style: TextStyle(fontWeight: FontWeight.w900, fontSize: 18, color: colorScheme.onSurface, letterSpacing: -0.2)
-                        ),
-                        const SizedBox(height: 6),
-                        Text(
-                          '${shop.deliveryTime} • ${shop.address}', 
-                          style: TextStyle(color: colorScheme.onSurface.withOpacity(0.6), fontSize: 12, fontWeight: FontWeight.w500), 
-                          maxLines: 1, 
-                          overflow: TextOverflow.ellipsis
-                        ),
-                      ],
-                    ),
+                  Text(
+                    product.name, 
+                    style: TextStyle(fontWeight: FontWeight.w800, fontSize: 14, color: colorScheme.onSurface),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
-                  Container(
-                    padding: const EdgeInsets.all(10),
-                    decoration: BoxDecoration(
-                      color: colorScheme.primary.withOpacity(0.1),
-                      shape: BoxShape.circle,
-                    ),
-                    child: Icon(Icons.arrow_forward_rounded, size: 18, color: colorScheme.primary),
+                  const SizedBox(height: 4),
+                  Text(
+                    '${product.price} ${product.currency}', 
+                    style: TextStyle(color: colorScheme.primary, fontSize: 13, fontWeight: FontWeight.w900),
                   ),
                 ],
               ),

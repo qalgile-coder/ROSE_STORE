@@ -316,6 +316,15 @@ final categoryShopsProvider = StreamProvider.family<List<ShopModel>, String>((re
   return ref.watch(customerServiceProvider).getCategoryShops(category);
 });
 
+// --- المزود الاحترافي المضاف حديثاً لجلب منتجات القسم مباشرة ---
+final categoryProductsProvider = StreamProvider.family<List<ProductModel>, String>((ref, categoryKey) {
+  return FirebaseFirestore.instance
+      .collection('products')
+      .where('category', isEqualTo: categoryKey)
+      .snapshots()
+      .map((snapshot) => snapshot.docs.map((doc) => ProductModel.fromFirestore(doc)).toList());
+});
+
 final offerShopsProvider = StreamProvider.family<List<ShopModel>, List<String>>((ref, shopIds) {
   return ref.watch(customerServiceProvider).getShopsByIds(shopIds);
 });
@@ -531,7 +540,6 @@ class CartNotifier extends StateNotifier<CartModel> {
     );
   }
 
-  // تم تحديث الدالة لتقبل ProductModel كمعامل موضعي (Positional) متوافق تماماً مع الاستدعاء في شاشة تفاصيل المنتج
   void addItemWithDetails(
     ProductModel product, {
     int quantity = 1,
