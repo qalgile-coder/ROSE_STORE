@@ -532,11 +532,15 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
         'pickupAddress': shopAddress,
         'deliveryAddress': address.fullAddress,
         'deliveryLocation': address.location,
+        // تم تحديث حقل items لإرسال كافة تفاصيل المنتج (الصورة، اللون، الحجم، السعر، الكمية، وغيرها)
         'items': cart.items.values.map((item) => {
           'productId': item.product.id,
           'name': item.product.name,
           'price': item.product.price,
           'quantity': item.quantity,
+          'selectedColor': item.selectedColor, // اللون المختار
+          'selectedSize': item.selectedSize,   // الحجم المختار
+          'imageUrl': item.product.imageUrl ?? (item.product.images?.isNotEmpty == true ? item.product.images.first : ''), // صورة المنتج
         }).toList(),
         'paymentMethod': _paymentMethod,
         'paymentStatus': isPrepaid ? 'paid' : 'pending',

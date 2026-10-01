@@ -86,28 +86,95 @@ class VendorOrderDetailsScreen extends ConsumerWidget {
                   isLight: isLight,
                   children: [
                     ...order.items.map((item) => Padding(
-                      padding: const EdgeInsets.only(bottom: 12),
+                      padding: const EdgeInsets.only(bottom: 16),
                       child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Expanded(
-                            child: Row(
-                              children: [
-                                Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                  decoration: BoxDecoration(
-                                    color: colorScheme.primary.withValues(alpha: 0.1),
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
-                                  child: Text('x${item['quantity']}', style: TextStyle(fontWeight: FontWeight.w900, color: colorScheme.primary, fontSize: 12)),
+                          // 1. عرض صورة المنتج المصغرة باحترافية عالية
+                          if (item['imageUrl'] != null && item['imageUrl'].toString().isNotEmpty)
+                            Container(
+                              width: 55,
+                              height: 55,
+                              margin: const EdgeInsets.only(right: 12),
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(color: colorScheme.outline.withOpacity(0.15)),
+                                image: DecorationImage(
+                                  image: NetworkImage(item['imageUrl']),
+                                  fit: BoxFit.cover,
                                 ),
-                                const SizedBox(width: 12),
-                                Expanded(child: Text(item['name'], style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14), maxLines: 2, overflow: TextOverflow.ellipsis)),
+                              ),
+                            ),
+                          
+                          // 2. تفاصيل المنتج (الاسم، اللون، المقاس، والكمية)
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  item['name'] ?? '', 
+                                  style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14), 
+                                  maxLines: 2, 
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                                const SizedBox(height: 6),
+                                
+                                // عرض الخيارات (اللون والمقاس) بشكل شارات منظمة وأنيقة
+                                Wrap(
+                                  spacing: 8,
+                                  runSpacing: 4,
+                                  children: [
+                                    if (item['selectedColor'] != null && item['selectedColor'].toString().isNotEmpty)
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                        decoration: BoxDecoration(
+                                          color: colorScheme.primary.withOpacity(0.08),
+                                          borderRadius: BorderRadius.circular(6),
+                                        ),
+                                        child: Text(
+                                          'Color: ${item['selectedColor']}', 
+                                          style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: colorScheme.primary),
+                                        ),
+                                      ),
+                                    if (item['selectedSize'] != null && item['selectedSize'].toString().isNotEmpty)
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                        decoration: BoxDecoration(
+                                          color: colorScheme.secondary.withOpacity(0.08),
+                                          borderRadius: BorderRadius.circular(6),
+                                        ),
+                                        child: Text(
+                                          'Size: ${item['selectedSize']}', 
+                                          style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: colorScheme.onSurface.withOpacity(0.8)),
+                                        ),
+                                      ),
+                                  ],
+                                ),
+                                const SizedBox(height: 6),
+                                
+                                // مؤشر الكمية المطلوبة
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                  decoration: BoxDecoration(
+                                    color: colorScheme.surfaceContainerHighest.withOpacity(0.5),
+                                    borderRadius: BorderRadius.circular(6),
+                                  ),
+                                  child: Text(
+                                    'Qty: x${item['quantity'] ?? 1}', 
+                                    style: TextStyle(fontWeight: FontWeight.w900, color: colorScheme.primary, fontSize: 11),
+                                  ),
+                                ),
                               ],
                             ),
                           ),
+                          
                           const SizedBox(width: 8),
-                          Text('Rs ${item['price'] * item['quantity']}', style: const TextStyle(fontWeight: FontWeight.w700)),
+                          
+                          // 3. السعر الإجمالي للعنصر
+                          Text(
+                            'Rs ${(item['price'] ?? 0) * (item['quantity'] ?? 1)}', 
+                            style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 14),
+                          ),
                         ],
                       ),
                     )),
@@ -326,6 +393,7 @@ class _InfoRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    Notice:
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 6),
       child: Row(

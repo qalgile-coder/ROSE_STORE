@@ -78,8 +78,8 @@ class _GridProductCard extends StatelessWidget {
     final secondaryTextColor = isLight ? AppColors.lightTextSecondary : AppColors.premiumDarkTextSecondary;
 
     return InkWell(
-      // التعديل الاحترافي هنا للتوجه إلى مسار الـ Product الصحيح عبر الـ ID
-      onTap: () => context.push('/product/${product.id}'),
+      // الحل الاحترافي الجذري: استخدام المسار المطلق من جذور الروتر مباشرة لتفادي تداخل مسارات العملاء الفرعية
+      onTap: () => GoRouter.of(context).go('/product/${product.id}'),
       borderRadius: BorderRadius.circular(24),
       child: Container(
         padding: const EdgeInsets.all(12),
