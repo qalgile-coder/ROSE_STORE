@@ -812,7 +812,16 @@ class _PaymentTile extends StatelessWidget {
   final ColorScheme colorScheme;
   final bool isLight;
 
-  const _PaymentTile({required this.title, required this.subtitle, required this.icon, required this.isSelected, required this.onTap, required this.colorScheme, required this.isLight});
+  const _PaymentTile({
+    required this.title,
+    required this.subtitle,
+    required this.icon,
+    required this.isSelected,
+    required this.onTap,
+    required this.colorScheme,
+    required this.isLight,
+  });
+
   @override
   Widget build(BuildContext context) {
     return Material(
@@ -832,7 +841,7 @@ class _PaymentTile extends StatelessWidget {
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
                   color: isSelected ? colorScheme.primary.withValues(alpha: 0.1) : (isLight ? AppColors.lightSecondaryBackground : AppColors.background), 
-                  borderRadius: BorderRadius.circular(14)
+                  borderRadius: BorderRadius.circular(14),
                 ),
                 child: Icon(icon, color: isSelected ? colorScheme.primary : colorScheme.onSurface.withValues(alpha: 0.3), size: 24),
               ),
@@ -847,39 +856,40 @@ class _PaymentTile extends StatelessWidget {
                         fontWeight: FontWeight.w700, 
                         fontSize: 15, 
                         color: colorScheme.onSurface,
-                      )
+                      ),
                     ),
                     const SizedBox(height: 2),
                     Text(
                       subtitle, 
-                      style: TextStyle(color: colorScheme.onSurface.withValues(alpha: 0.4), fontSize: 12, fontWeight: FontWeight.w500)
+                      style: TextStyle(color: colorScheme.onSurface.withValues(alpha: 0.4), fontSize: 12, fontWeight: FontWeight.w500),
                     ),
                   ],
                 ),
               ),
               Container(
-      width: 20,
-      height: 20,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        border: Border.all(
-          color: isSelected ? colorScheme.primary : colorScheme.onSurface.withValues(alpha: 0.1),
-          width: 2,
-        ),
-      ),
-      child: isSelected
-          ? Center(
-              child: Container(
-                width: 10,
-                height: 10,
+                width: 20,
+                height: 20,
                 decoration: BoxDecoration(
-                  color: colorScheme.primary,
                   shape: BoxShape.circle,
+                  border: Border.all(
+                    color: isSelected ? colorScheme.primary : colorScheme.onSurface.withValues(alpha: 0.1),
+                    width: 2,
+                  ),
                 ),
+                child: isSelected
+                    ? Center(
+                        child: Container(
+                          width: 10,
+                          height: 10,
+                          decoration: BoxDecoration(
+                            color: colorScheme.primary,
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                      )
+                    : null,
               ),
-            )
-          : null,
-    ),
+            ],
           ),
         ),
       ),
@@ -892,7 +902,14 @@ class _SummaryLine extends StatelessWidget {
   final String value;
   final Color? color;
   final ColorScheme colorScheme;
-  const _SummaryLine({required this.label, required this.value, this.color, required this.colorScheme});
+
+  const _SummaryLine({
+    required this.label,
+    required this.value,
+    this.color,
+    required this.colorScheme,
+  });
+
   @override
   Widget build(BuildContext context) {
     return Row(
@@ -900,7 +917,7 @@ class _SummaryLine extends StatelessWidget {
       children: [
         Text(label, style: TextStyle(color: colorScheme.onSurface.withValues(alpha: 0.5), fontSize: 14, fontWeight: FontWeight.w500)), 
         Text(value, style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14, color: color ?? colorScheme.onSurface))
-      ]
+      ],
     );
   }
 }
