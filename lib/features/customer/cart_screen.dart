@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../core/providers.dart';
 import '../../core/localization.dart';
 import '../../theme/app_colors.dart';
+import '../../color_helper.dart';
 import './widgets/customer_bottom_nav.dart';
 
 class CartScreen extends ConsumerWidget {
@@ -331,12 +332,12 @@ class _CartItemTile extends ConsumerWidget {
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                           decoration: BoxDecoration(
-                            color: colorScheme.surfaceVariant.withValues(alpha: 0.5),
+                            color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
                             borderRadius: BorderRadius.circular(6),
                             border: Border.all(color: colorScheme.outline.withValues(alpha: 0.2)),
                           ),
                           child: Text(
-                            'Color: ${item.selectedColor}',
+                            'Color: ${AppColorsData.getColorName(item.selectedColor)}',
                             style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: colorScheme.onSurface.withValues(alpha: 0.7)),
                           ),
                         ),

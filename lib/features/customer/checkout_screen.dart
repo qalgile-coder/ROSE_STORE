@@ -10,6 +10,7 @@ import '../../models/order_model.dart';
 import '../../models/coupon_model.dart';
 import '../../models/shop_model.dart';
 import '../../theme/app_colors.dart';
+import '../../color_helper.dart';
 
 class CheckoutScreen extends ConsumerStatefulWidget {
   const CheckoutScreen({super.key});
@@ -22,6 +23,17 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
   String _paymentMethod = 'Cash on Delivery';
   bool _isPlacingOrder = false;
   CouponModel? _appliedCoupon;
+
+  final TextEditingController _couponController = TextEditingController();
+  bool _isVerifyingCoupon = false;
+  String _couponMessage = '';
+  bool _isCouponValid = false;
+
+  @override
+  void dispose() {
+    _couponController.dispose();
+    super.dispose();
+  }
 
   String _getCurrencySymbol(dynamic cart) {
     if (cart.items.isNotEmpty) {
@@ -41,12 +53,84 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
     return _appliedCoupon!.fixedDiscount;
   }
 
+  Future<void> _verifyAndApplyCouponCode(String code, double subtotal, String shopId) async {
+    final trimmedCode = code.trim().toUpperCase();
+    if (trimmedCode.isEmpty) {
+      setState(() {
+        _couponMessage = 'Please enter a coupon code.';
+        _isCouponValid = false;
+        _appliedCoupon = null;
+      });
+      return;
+    }
+
+    setState(() {
+      _isVerifyingCoupon = true;
+      _couponMessage = '';
+    });
+
+    try {
+      final querySnapshot = await FirebaseFirestore.instance
+          .collection('coupons')
+          .where('code', isEqualTo: trimmedCode)
+          .where('shopId', isEqualTo: shopId)
+          .where('isActive', isEqualTo: true)
+          .get();
+
+      if (querySnapshot.docs.isEmpty) {
+        setState(() {
+          _couponMessage = 'Invalid coupon or does not belong to this store.';
+          _isCouponValid = false;
+          _appliedCoupon = null;
+        });
+        return;
+      }
+
+      final coupon = CouponModel.fromFirestore(querySnapshot.docs.first);
+
+      if (coupon.expiryDate.isBefore(DateTime.now())) {
+        setState(() {
+          _couponMessage = 'This coupon has expired.';
+          _isCouponValid = false;
+          _appliedCoupon = null;
+        });
+        return;
+      }
+
+      if (subtotal < coupon.minOrderAmount) {
+        setState(() {
+          _couponMessage = 'Min. spend required is ${coupon.minOrderAmount.round()}';
+          _isCouponValid = false;
+          _appliedCoupon = null;
+        });
+        return;
+      }
+
+      setState(() {
+        _appliedCoupon = coupon;
+        _isCouponValid = true;
+        _couponMessage = coupon.discountPercentage > 0
+            ? 'Coupon applied successfully! (${coupon.discountPercentage.round()}% OFF)'
+            : 'Coupon applied successfully! (${coupon.fixedDiscount.round()} OFF)';
+      });
+    } catch (e) {
+      setState(() {
+        _couponMessage = 'Error verifying coupon. Please try again.';
+        _isCouponValid = false;
+        _appliedCoupon = null;
+      });
+    } finally {
+      setState(() {
+        _isVerifyingCoupon = false;
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final cart = ref.watch(cartProvider);
     final address = ref.watch(defaultAddressProvider);
     final user = ref.watch(userModelProvider).asData?.value;
-    final settings = ref.watch(systemSettingsProvider).asData?.value;
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final isLight = theme.brightness == Brightness.light;
@@ -85,9 +169,9 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
             const SizedBox(height: 16),
             _buildPaymentOptions(colorScheme, isLight),
             const SizedBox(height: 32),
-            _buildSectionHeader('Available Coupons', Icons.confirmation_number_rounded, colorScheme),
+            _buildSectionHeader('Coupons & Discounts', Icons.confirmation_number_rounded, colorScheme),
             const SizedBox(height: 16),
-            _buildCouponSelector(cart, colorScheme, isLight, currencySymbol),
+            _buildCouponSection(cart, shopId, colorScheme, isLight, currencySymbol),
             const SizedBox(height: 32),
             _buildSectionHeader('Order Summary', Icons.shopping_bag_rounded, colorScheme),
             const SizedBox(height: 16),
@@ -212,111 +296,189 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
     );
   }
 
-  Widget _buildCouponSelector(dynamic cart, ColorScheme colorScheme, bool isLight, String currencySymbol) {
+  Widget _buildCouponSection(dynamic cart, String shopId, ColorScheme colorScheme, bool isLight, String currencySymbol) {
     if (cart.items.isEmpty) return const SizedBox.shrink();
+    
     final couponsAsync = ref.watch(shopCouponsProvider);
 
-    return couponsAsync.when(
-      data: (coupons) {
-        final activeCoupons = coupons.where((c) => 
-          c.isActive && 
-          c.expiryDate.isAfter(DateTime.now()) &&
-          cart.totalAmount >= c.minOrderAmount
-        ).toList();
-
-        if (activeCoupons.isEmpty) {
-          return Container(
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              color: colorScheme.surface,
-              borderRadius: BorderRadius.circular(22),
-              border: Border.all(color: colorScheme.outline.withValues(alpha: 0.05)),
-            ),
-            child: Row(
-              children: [
-                Icon(Icons.info_outline_rounded, color: colorScheme.onSurface.withValues(alpha: 0.3), size: 20),
-                const SizedBox(width: 12),
-                Text('No applicable coupons for this store', style: TextStyle(color: colorScheme.onSurface.withValues(alpha: 0.4), fontSize: 13, fontWeight: FontWeight.w500)),
-              ],
-            ),
-          );
-        }
-
-        return SizedBox(
-          height: 90,
-          child: ListView.separated(
-            scrollDirection: Axis.horizontal,
-            physics: const BouncingScrollPhysics(),
-            itemCount: activeCoupons.length,
-            separatorBuilder: (_, __) => const SizedBox(width: 12),
-            itemBuilder: (context, index) {
-              final coupon = activeCoupons[index];
-              final isSelected = _appliedCoupon?.id == coupon.id;
-
-              return InkWell(
-                onTap: () {
-                  setState(() {
-                    if (isSelected) {
-                      _appliedCoupon = null;
-                    } else {
-                      _appliedCoupon = coupon;
-                    }
-                  });
-                },
-                borderRadius: BorderRadius.circular(22),
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 200),
-                  width: 200,
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: isSelected ? colorScheme.primary.withValues(alpha: 0.1) : colorScheme.surface,
-                    borderRadius: BorderRadius.circular(22),
-                    border: Border.all(
-                      color: isSelected ? colorScheme.primary : colorScheme.outline.withValues(alpha: 0.1),
-                      width: 1.5,
-                    ),
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: colorScheme.surface,
+        borderRadius: BorderRadius.circular(22),
+        boxShadow: isLight ? [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 20)] : null,
+        border: isLight ? Border.all(color: colorScheme.outline.withValues(alpha: 0.1)) : null,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: TextField(
+                  controller: _couponController,
+                  textCapitalization: TextCapitalization.characters,
+                  decoration: InputDecoration(
+                    hintText: 'Enter Coupon Code (e.g. OSI)',
+                    hintStyle: TextStyle(fontSize: 13, color: colorScheme.onSurface.withValues(alpha: 0.4)),
+                    prefixIcon: Icon(Icons.confirmation_number_rounded, color: colorScheme.primary, size: 20),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide(color: colorScheme.outline.withValues(alpha: 0.2))),
+                    enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide(color: colorScheme.outline.withValues(alpha: 0.2))),
+                    focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide(color: colorScheme.primary, width: 1.5)),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                   ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              SizedBox(
+                height: 48,
+                child: ElevatedButton(
+                  onPressed: _isVerifyingCoupon 
+                      ? null 
+                      : () => _verifyAndApplyCouponCode(_couponController.text, cart.totalAmount, shopId),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: colorScheme.primary,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                  ),
+                  child: _isVerifyingCoupon
+                      ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                      : const Text('Apply', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
+                ),
+              ),
+            ],
+          ),
+          
+          if (_couponMessage.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.only(top: 8, left: 4),
+              child: Text(
+                _couponMessage,
+                style: TextStyle(
+                  color: _isCouponValid ? AppColors.success : AppColors.error,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+          
+          const SizedBox(height: 16),
+          Divider(color: isLight ? colorScheme.outline.withValues(alpha: 0.1) : AppColors.border),
+          const SizedBox(height: 12),
+          
+          Text('Or select from available store coupons:', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: colorScheme.onSurface.withValues(alpha: 0.6))),
+          const SizedBox(height: 12),
+
+          couponsAsync.when(
+            data: (coupons) {
+              final activeCoupons = coupons.where((c) => 
+                c.isActive && 
+                c.expiryDate.isAfter(DateTime.now()) &&
+                c.shopId == shopId
+              ).toList();
+
+              if (activeCoupons.isEmpty) {
+                return Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 8),
                   child: Row(
                     children: [
-                      Container(
-                        padding: const EdgeInsets.all(8),
+                      Icon(Icons.info_outline_rounded, color: colorScheme.onSurface.withValues(alpha: 0.3), size: 18),
+                      const SizedBox(width: 8),
+                      Text('No active coupons available for this store', style: TextStyle(color: colorScheme.onSurface.withValues(alpha: 0.4), fontSize: 12, fontWeight: FontWeight.w500)),
+                    ],
+                  ),
+                );
+              }
+
+              return SizedBox(
+                height: 85,
+                child: ListView.separated(
+                  scrollDirection: Axis.horizontal,
+                  physics: const BouncingScrollPhysics(),
+                  itemCount: activeCoupons.length,
+                  separatorBuilder: (_, __) => const SizedBox(width: 10),
+                  itemBuilder: (context, index) {
+                    final coupon = activeCoupons[index];
+                    final isSelected = _appliedCoupon?.id == coupon.id;
+
+                    return InkWell(
+                      onTap: () {
+                        setState(() {
+                          if (isSelected) {
+                            _appliedCoupon = null;
+                            _couponController.clear();
+                            _couponMessage = '';
+                          } else {
+                            _appliedCoupon = coupon;
+                            _couponController.text = coupon.code;
+                            if (cart.totalAmount < coupon.minOrderAmount) {
+                              _couponMessage = 'Min. spend required is ${coupon.minOrderAmount.round()}';
+                              _isCouponValid = false;
+                            } else {
+                              _isCouponValid = true;
+                              _couponMessage = 'Coupon applied successfully!';
+                            }
+                          }
+                        });
+                      },
+                      borderRadius: BorderRadius.circular(16),
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 200),
+                        width: 180,
+                        padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
-                          color: isSelected ? colorScheme.primary : colorScheme.primary.withValues(alpha: 0.1),
-                          shape: BoxShape.circle,
+                          color: isSelected ? colorScheme.primary.withValues(alpha: 0.1) : (isLight ? AppColors.lightSecondaryBackground : AppColors.background),
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(
+                            color: isSelected ? colorScheme.primary : colorScheme.outline.withValues(alpha: 0.1),
+                            width: 1.5,
+                          ),
                         ),
-                        child: Icon(Icons.confirmation_number_rounded, color: isSelected ? Colors.white : colorScheme.primary, size: 16),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisAlignment: MainAxisAlignment.center,
+                        child: Row(
                           children: [
-                            Text(coupon.code, style: TextStyle(fontWeight: FontWeight.w900, color: colorScheme.onSurface, fontSize: 14, letterSpacing: 0.5)),
-                            Text(
-                              coupon.discountPercentage > 0 ? '${coupon.discountPercentage.round()}% OFF' : '${coupon.fixedDiscount.round()} $currencySymbol OFF',
-                              style: const TextStyle(color: AppColors.success, fontWeight: FontWeight.w800, fontSize: 11),
+                            Container(
+                              padding: const EdgeInsets.all(6),
+                              decoration: BoxDecoration(
+                                color: isSelected ? colorScheme.primary : colorScheme.primary.withValues(alpha: 0.1),
+                                shape: BoxShape.circle,
+                              ),
+                              child: Icon(Icons.confirmation_number_rounded, color: isSelected ? Colors.white : colorScheme.primary, size: 14),
                             ),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Text(coupon.code, style: TextStyle(fontWeight: FontWeight.w900, color: colorScheme.onSurface, fontSize: 13, letterSpacing: 0.5)),
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    coupon.discountPercentage > 0 ? '${coupon.discountPercentage.round()}% OFF' : '${coupon.fixedDiscount.round()} $currencySymbol OFF',
+                                    style: const TextStyle(color: AppColors.success, fontWeight: FontWeight.w800, fontSize: 10),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            if (isSelected)
+                              const Icon(Icons.check_circle_rounded, color: AppColors.success, size: 16),
                           ],
                         ),
                       ),
-                      if (isSelected)
-                        const Icon(Icons.check_circle_rounded, color: AppColors.success, size: 18),
-                    ],
-                  ),
+                    );
+                  },
                 ),
               );
             },
+            loading: () => const Center(child: SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2))),
+            error: (_, __) => const SizedBox.shrink(),
           ),
-        );
-      },
-      loading: () => const Center(child: CircularProgressIndicator()),
-      error: (e, s) => const SizedBox.shrink(),
+        ],
+      ),
     );
   }
 
   Widget _buildOrderSummary(dynamic cart, ColorScheme colorScheme, bool isLight, double deliveryFee, String currencySymbol) {
-    final discount = _calculateDiscount(cart.totalAmount);
+    final discount = (_isCouponValid && _appliedCoupon != null) ? _calculateDiscount(cart.totalAmount) : 0.0;
     final totalToPay = cart.totalAmount + deliveryFee - discount;
 
     return Container(
@@ -421,7 +583,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
   }
 
   void _showQRScannerDialog(BuildContext context, dynamic cart, dynamic address, dynamic user, ColorScheme colorScheme, bool isLight, double deliveryFee, String currencySymbol) {
-    final discount = _calculateDiscount(cart.totalAmount);
+    final discount = (_isCouponValid && _appliedCoupon != null) ? _calculateDiscount(cart.totalAmount) : 0.0;
     final total = cart.totalAmount + deliveryFee - discount;
     
     showModalBottomSheet(
@@ -510,7 +672,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
       final shopAddress = shopData?['address'] ?? 'Shop Address, Main Market';
       
       const double actualDeliveryFee = 0.0;
-      final discount = _calculateDiscount(cart.totalAmount);
+      final discount = (_isCouponValid && _appliedCoupon != null) ? _calculateDiscount(cart.totalAmount) : 0.0;
       final finalAmount = cart.totalAmount + actualDeliveryFee - discount;
 
       final orderData = {
@@ -527,20 +689,21 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
         'status': 'pending',
         'totalAmount': finalAmount,
         'discountAmount': discount,
-        'couponCode': _appliedCoupon?.code,
+        'couponCode': (_isCouponValid && _appliedCoupon != null) ? _appliedCoupon?.code : null,
         'deliveryFee': actualDeliveryFee,
         'pickupAddress': shopAddress,
         'deliveryAddress': address.fullAddress,
         'deliveryLocation': address.location,
-        // تم تحديث حقل items لإرسال كافة تفاصيل المنتج (الصورة، اللون، الحجم، السعر، الكمية، وغيرها)
         'items': cart.items.values.map((item) => {
           'productId': item.product.id,
           'name': item.product.name,
           'price': item.product.price,
           'quantity': item.quantity,
-          'selectedColor': item.selectedColor, // اللون المختار
-          'selectedSize': item.selectedSize,   // الحجم المختار
-          'imageUrl': item.product.imageUrl ?? (item.product.images?.isNotEmpty == true ? item.product.images.first : ''), // صورة المنتج
+          'selectedColor': item.selectedColor != null && item.selectedColor!.isNotEmpty
+              ? AppColorsData.getColorName(item.selectedColor!)
+              : null,
+          'selectedSize': item.selectedSize,
+          'imageUrl': item.product.imageUrl ?? (item.product.images?.isNotEmpty == true ? item.product.images.first : ''),
         }).toList(),
         'paymentMethod': _paymentMethod,
         'paymentStatus': isPrepaid ? 'paid' : 'pending',
@@ -702,7 +865,7 @@ class _PaymentTile extends StatelessWidget {
                   border: Border.all(color: isSelected ? colorScheme.primary : colorScheme.onSurface.withValues(alpha: 0.1), width: 2)
                 ),
                 child: isSelected 
-                  ? Center(child: Container(width: 10, height: 10, decoration: BoxDecoration(color: colorScheme.primary, shape: BoxShape.circle))) 
+                  : Center(child: Container(width: 10, height: 10, decoration: BoxDecoration(color: colorScheme.primary, shape: BoxShape.circle))) 
                   : null,
               ),
             ],
@@ -714,7 +877,7 @@ class _PaymentTile extends StatelessWidget {
 }
 
 class _SummaryLine extends StatelessWidget {
-  final String label;
+  finalString label;
   final String value;
   final Color? color;
   final ColorScheme colorScheme;

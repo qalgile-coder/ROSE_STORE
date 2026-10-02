@@ -6,10 +6,8 @@ import 'package:go_router/go_router.dart';
 import '../../core/providers.dart';
 import '../../models/product_model.dart';
 import '../../theme/app_colors.dart';
+import '../../color_helper.dart';
 
-// -----------------------------------------------------------------------------
-// مزود لتحديث حالة تدفق المنتجات لضمان التزامن الفوري مع شاشة العميل (CustomerHome)
-// -----------------------------------------------------------------------------
 final realTimeProductsStreamProvider = StreamProvider.autoDispose<List<ProductModel>>((ref) {
   return ref.watch(customerServiceProvider).getProductsStream();
 });
@@ -52,20 +50,9 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
     {'label': 'Saudi Arabia (SAR)', 'symbol': 'SAR'},
   ];
 
-  // الخصائص الاحترافية الجديدة للأحجام والألوان (طريقة شي إن وتيمو)
   final List<String> _availableSizes = ['XS', 'S', 'M', 'L', 'XL', 'XXL', '3XL', 'Free Size'];
   final List<String> _selectedSizes = [];
 
-  final List<Map<String, dynamic>> _availableColors = [
-    {'name': 'Black', 'hex': '#000000', 'color': Colors.black},
-    {'name': 'White', 'hex': '#FFFFFF', 'color': Colors.white},
-    {'name': 'Red', 'hex': '#FF0000', 'color': Colors.red},
-    {'name': 'Blue', 'hex': '#0000FF', 'color': Colors.blue},
-    {'name': 'Green', 'hex': '#008000', 'color': Colors.green},
-    {'name': 'Grey', 'hex': '#808080', 'color': Colors.grey},
-    {'name': 'Beige / Cashmere', 'hex': '#F5F5DC', 'color': Color(0xFFF5F5DC)},
-    {'name': 'Pink', 'hex': '#FFC0CB', 'color': Colors.pink},
-  ];
   final List<String> _selectedColors = [];
 
   bool _isLoading = false;
@@ -230,10 +217,10 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
                               color: colorScheme.surface,
                               borderRadius: BorderRadius.circular(24),
                               border: Border.all(
-                                color: colorScheme.primary.withOpacity(0.4),
+                                color: colorScheme.primary.withValues(alpha: 0.4),
                                 width: 1.5,
                               ),
-                              boxShadow: isLight ? [BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 10)] : null,
+                              boxShadow: isLight ? [BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 10)] : null,
                             ),
                             child: Column(
                               mainAxisAlignment: MainAxisAlignment.center,
@@ -241,7 +228,7 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
                                 Container(
                                   padding: const EdgeInsets.all(12),
                                   decoration: BoxDecoration(
-                                    color: colorScheme.primary.withOpacity(0.1),
+                                    color: colorScheme.primary.withValues(alpha: 0.1),
                                     shape: BoxShape.circle,
                                   ),
                                   child: Icon(Icons.add_photo_alternate_rounded, size: 28, color: colorScheme.primary),
@@ -278,7 +265,7 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
                                 image: FileImage(file),
                                 fit: BoxFit.cover,
                               ),
-                              boxShadow: isLight ? [BoxShadow(color: Colors.black.withOpacity(0.06), blurRadius: 10)] : null,
+                              boxShadow: isLight ? [BoxShadow(color: Colors.black.withValues(alpha: 0.06), blurRadius: 10)] : null,
                             ),
                           ),
                           Positioned(
@@ -308,7 +295,7 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
                               child: Container(
                                 padding: const EdgeInsets.symmetric(vertical: 3),
                                 decoration: BoxDecoration(
-                                  color: Colors.black.withOpacity(0.6),
+                                  color: Colors.black.withValues(alpha: 0.6),
                                   borderRadius: BorderRadius.circular(8),
                                 ),
                                 child: const Text(
@@ -379,10 +366,9 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
               Wrap(
                 spacing: 10,
                 runSpacing: 10,
-                children: _availableColors.map((colorItem) {
-                  final colorName = colorItem['name'] as String;
-                  final colorHex = colorItem['hex'] as String;
-                  final displayColor = colorItem['color'] as Color;
+                children: AppColorsData.colorMap.entries.map((entry) {
+                  final colorHex = entry.key;
+                  final colorName = entry.value;
                   final isSelected = _selectedColors.contains(colorHex);
 
                   return InkWell(
@@ -399,10 +385,10 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                       decoration: BoxDecoration(
-                        color: isSelected ? colorScheme.primary.withOpacity(0.15) : colorScheme.surface,
+                        color: isSelected ? colorScheme.primary.withValues(alpha: 0.15) : colorScheme.surface,
                         borderRadius: BorderRadius.circular(16),
                         border: Border.all(
-                          color: isSelected ? colorScheme.primary : colorScheme.outline.withOpacity(0.3),
+                          color: isSelected ? colorScheme.primary : colorScheme.outline.withValues(alpha: 0.3),
                           width: isSelected ? 2 : 1,
                         ),
                       ),
@@ -413,7 +399,7 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
                             width: 16,
                             height: 16,
                             decoration: BoxDecoration(
-                              color: displayColor,
+                              color: Color(int.parse(colorHex.replaceFirst('#', '0xFF'))),
                               shape: BoxShape.circle,
                               border: Border.all(color: Colors.grey.shade400, width: 0.5),
                             ),
@@ -474,7 +460,7 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
                 decoration: BoxDecoration(
                   color: colorScheme.surface,
                   borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: colorScheme.outline.withOpacity(isLight ? 0.5 : 0.05)),
+                  border: Border.all(color: colorScheme.outline.withValues(alpha: isLight ? 0.5 : 0.05)),
                 ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -516,7 +502,7 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
       decoration: BoxDecoration(
         color: colorScheme.surface,
         borderRadius: BorderRadius.circular(20),
-        boxShadow: isLight ? [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10)] : null,
+        boxShadow: isLight ? [BoxShadow(color: Colors.black.withValues(alpha: 0.02), blurRadius: 10)] : null,
       ),
       child: DropdownButtonFormField<String>(
         value: _categories.any((cat) => cat['key'] == _selectedCategoryKey) ? _selectedCategoryKey : null,
@@ -524,15 +510,15 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
         icon: Icon(Icons.keyboard_arrow_down_rounded, color: colorScheme.primary, size: 20),
         decoration: InputDecoration(
           labelText: 'Select Category',
-          labelStyle: TextStyle(color: colorScheme.onSurface.withOpacity(0.4), fontSize: 13, fontWeight: FontWeight.w500),
+          labelStyle: TextStyle(color: colorScheme.onSurface.withValues(alpha: 0.4), fontSize: 13, fontWeight: FontWeight.w500),
           prefixIcon: Icon(Icons.category_rounded, color: colorScheme.primary, size: 20),
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(20), 
-            borderSide: BorderSide(color: colorScheme.outline.withOpacity(isLight ? 0.5 : 0.05))
+            borderSide: BorderSide(color: colorScheme.outline.withValues(alpha: isLight ? 0.5 : 0.05))
           ),
           enabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(20), 
-            borderSide: BorderSide(color: colorScheme.outline.withOpacity(isLight ? 0.5 : 0.05))
+            borderSide: BorderSide(color: colorScheme.outline.withValues(alpha: isLight ? 0.5 : 0.05))
           ),
           filled: true,
           fillColor: Colors.transparent,
@@ -568,8 +554,8 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
       decoration: BoxDecoration(
         color: colorScheme.surface,
         borderRadius: BorderRadius.circular(20),
-        boxShadow: isLight ? [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10)] : null,
-        border: Border.all(color: colorScheme.outline.withOpacity(isLight ? 0.5 : 0.05)),
+        boxShadow: isLight ? [BoxShadow(color: Colors.black.withValues(alpha: 0.02), blurRadius: 10)] : null,
+        border: Border.all(color: colorScheme.outline.withValues(alpha: isLight ? 0.5 : 0.05)),
       ),
       child: DropdownButtonHideUnderline(
         child: DropdownButton<String>(
@@ -603,7 +589,7 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
     return Text(
       title,
       style: TextStyle(
-        color: colorScheme.primary.withOpacity(0.7),
+        color: colorScheme.primary.withValues(alpha: 0.7),
         fontSize: 11,
         fontWeight: FontWeight.w900,
         letterSpacing: 1.5,
@@ -616,7 +602,7 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
       decoration: BoxDecoration(
         color: colorScheme.surface,
         borderRadius: BorderRadius.circular(20),
-        boxShadow: isLight ? [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10)] : null,
+        boxShadow: isLight ? [BoxShadow(color: Colors.black.withValues(alpha: 0.02), blurRadius: 10)] : null,
       ),
       child: TextFormField(
         controller: controller,
@@ -625,15 +611,15 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
         style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: colorScheme.onSurface),
         decoration: InputDecoration(
           labelText: label,
-          labelStyle: TextStyle(color: colorScheme.onSurface.withOpacity(0.4), fontSize: 13, fontWeight: FontWeight.w500),
+          labelStyle: TextStyle(color: colorScheme.onSurface.withValues(alpha: 0.4), fontSize: 13, fontWeight: FontWeight.w500),
           prefixIcon: Icon(icon, color: colorScheme.primary, size: 20),
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(20), 
-            borderSide: BorderSide(color: colorScheme.outline.withOpacity(isLight ? 0.5 : 0.05))
+            borderSide: BorderSide(color: colorScheme.outline.withValues(alpha: isLight ? 0.5 : 0.05))
           ),
           enabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(20), 
-            borderSide: BorderSide(color: colorScheme.outline.withOpacity(isLight ? 0.5 : 0.05))
+            borderSide: BorderSide(color: colorScheme.outline.withValues(alpha: isLight ? 0.5 : 0.05))
           ),
           filled: true,
           fillColor: Colors.transparent,

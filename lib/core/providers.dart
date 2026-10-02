@@ -35,6 +35,7 @@ import '../models/cart_model.dart';
 import '../models/system_settings_model.dart';
 import '../services/cache_service.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
+import '../color_helper.dart';
 
 // --- CORE SERVICE PROVIDERS ---
 final authServiceProvider = Provider((ref) => AuthService());
@@ -316,7 +317,6 @@ final categoryShopsProvider = StreamProvider.family<List<ShopModel>, String>((re
   return ref.watch(customerServiceProvider).getCategoryShops(category);
 });
 
-// --- المزود الاحترافي المضاف حديثاً لجلب منتجات القسم مباشرة ---
 final categoryProductsProvider = StreamProvider.family<List<ProductModel>, String>((ref, categoryKey) {
   return FirebaseFirestore.instance
       .collection('products')
@@ -548,6 +548,8 @@ class CartNotifier extends StateNotifier<CartModel> {
     String? shopName,
     String? shopImageUrl,
   }) {
+    final formattedColor = selectedColor != null ? AppColorsData.getColorName(selectedColor) : null;
+
     if (state.items.isEmpty) {
       state = CartModel(
         items: {
@@ -555,7 +557,7 @@ class CartNotifier extends StateNotifier<CartModel> {
             product: product,
             quantity: quantity,
             selectedSize: selectedSize,
-            selectedColor: selectedColor,
+            selectedColor: formattedColor,
           ),
         },
         shopId: product.shopId,
@@ -573,7 +575,7 @@ class CartNotifier extends StateNotifier<CartModel> {
           product.id: existingItem.copyWith(
             quantity: existingItem.quantity + quantity,
             selectedSize: selectedSize ?? existingItem.selectedSize,
-            selectedColor: selectedColor ?? existingItem.selectedColor,
+            selectedColor: formattedColor ?? existingItem.selectedColor,
           ),
         },
         shopId: state.shopId,
@@ -588,7 +590,7 @@ class CartNotifier extends StateNotifier<CartModel> {
             product: product,
             quantity: quantity,
             selectedSize: selectedSize,
-            selectedColor: selectedColor,
+            selectedColor: formattedColor,
           ),
         },
         shopId: state.shopId,
