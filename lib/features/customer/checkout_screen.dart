@@ -858,17 +858,28 @@ class _PaymentTile extends StatelessWidget {
                 ),
               ),
               Container(
-                width: 20,
-                height: 20,
+      width: 20,
+      height: 20,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        border: Border.all(
+          color: isSelected ? colorScheme.primary : colorScheme.onSurface.withValues(alpha: 0.1),
+          width: 2,
+        ),
+      ),
+      child: isSelected
+          ? Center(
+              child: Container(
+                width: 10,
+                height: 10,
                 decoration: BoxDecoration(
-                  shape: BoxShape.circle, 
-                  border: Border.all(color: isSelected ? colorScheme.primary : colorScheme.onSurface.withValues(alpha: 0.1), width: 2)
+                  color: colorScheme.primary,
+                  shape: BoxShape.circle,
                 ),
-                child: isSelected 
-                  : Center(child: Container(width: 10, height: 10, decoration: BoxDecoration(color: colorScheme.primary, shape: BoxShape.circle))) 
-                  : null,
               ),
-            ],
+            )
+          : null,
+    ),
           ),
         ),
       ),
@@ -877,7 +888,7 @@ class _PaymentTile extends StatelessWidget {
 }
 
 class _SummaryLine extends StatelessWidget {
-  finalString label;
+  final String label;
   final String value;
   final Color? color;
   final ColorScheme colorScheme;
