@@ -50,8 +50,8 @@ jobs:
           name: release-signed-apk
           path: build/app/outputs/flutter-apk/*.apk
 
-      - name: Build Web Release with SEO and Canvaskit
-        run: flutter build web --release --web-renderer canvaskit
+      - name: Build Web Release
+        run: flutter build web --release
 
       - name: Upload Web artifact
         uses: actions/upload-artifact@v4
