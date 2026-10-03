@@ -1,6 +1,8 @@
 import 'dart:io';
+import 'package:flutter/foundation.dart'; // تمت إضافة هذه المكتبة للتحقق من منصة الويب أو الهاتف
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'firebase_options.dart'; // استيراد إعدادات فايربيز المعيارية لضمان عمل الويب بدون أخطاء
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -17,7 +19,9 @@ import 'models/user_model.dart';
 // 1. دالة معالجة الإشعارات في الخلفية (يجب أن تكون خارج أي كلاس Top-level)
 @pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
-  await Firebase.initializeApp();
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
   debugPrint("Handling a background message: ${message.messageId}");
 }
 
@@ -26,22 +30,27 @@ void main() async {
   final prefs = await SharedPreferences.getInstance();
   
   try {
-    await Firebase.initializeApp();
-    
-    // 2. تسجيل معالج الخلفية الخاص بـ Firebase Messaging
-    FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
-
-    // **الإضافة الاحترافية لحل المشكلة:** طلب صلاحيات الإشعارات صراحةً من النظام
-    NotificationSettings settings = await FirebaseMessaging.instance.requestPermission(
-      alert: true,
-      announcement: false,
-      badge: true,
-      carPlay: false,
-      criticalAlert: false,
-      provisional: false,
-      sound: true,
+    // تمرير خيارات المنصة لضمان عدم ظهور خطأ [core/no-app] على الويب أو غيره
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
     );
-    debugPrint('Notification Permission Status: ${settings.authorizationStatus}');
+    
+    // 2. تسجيل معالج الخلفية الخاص بـ Firebase Messaging (يتم تجاوزه أوتوماتيكياً على الويب إذا لم يكن مدعوماً بنفس الطريقة)
+    if (!kIsWeb) {
+      FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+
+      // **الإضافة الاحترافية لحل المشكلة:** طلب صلاحيات الإشعارات صراحةً من النظام
+      NotificationSettings settings = await FirebaseMessaging.instance.requestPermission(
+        alert: true,
+        announcement: false,
+        badge: true,
+        carPlay: false,
+        criticalAlert: false,
+        provisional: false,
+        sound: true,
+      );
+      debugPrint('Notification Permission Status: ${settings.authorizationStatus}');
+    }
 
     await CacheService.initialize();
     
