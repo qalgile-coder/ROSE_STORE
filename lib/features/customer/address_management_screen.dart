@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:flutter_map/flutter_map.dart';
+import 'package:latlong2/latlong.dart';
+import 'package:geolocator/geolocator.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../core/providers.dart';
 import '../../models/address_model.dart';
 import '../../theme/app_colors.dart';
@@ -88,6 +92,10 @@ class AddressManagementScreen extends ConsumerWidget {
     final addressController = TextEditingController(text: address?.fullAddress);
     final cityController = TextEditingController(text: address?.city);
     bool isDefault = address?.isDefault ?? false;
+    
+    // متغيرات لحفظ الإحداثيات عند استخدام الخريطة
+    GeoPoint? selectedGeoPoint = address?.location;
+
     final colorScheme = Theme.of(context).colorScheme;
     final isLight = Theme.of(context).brightness == Brightness.light;
 
@@ -112,7 +120,35 @@ class AddressManagementScreen extends ConsumerWidget {
                 address == null ? 'New Location' : 'Update Address',
                 style: TextStyle(fontSize: 24, fontWeight: FontWeight.w800, color: colorScheme.onSurface, letterSpacing: -1),
               ),
-              const SizedBox(height: 32),
+              const SizedBox(height: 24),
+              
+              // زر اختيار الموقع عبر الخريطة والـ GPS باحترافية
+              OutlinedButton.icon(
+                style: OutlinedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  side: BorderSide(color: colorScheme.primary.withOpacity(0.5)),
+                ),
+                onPressed: () async {
+                  final result = await Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const _MapPickerScreen()),
+                  );
+                  if (result != null && result is LatLng) {
+                    setState(() {
+                      selectedGeoPoint = GeoPoint(result.latitude, result.longitude);
+                      addressController.text = 'Lat: ${result.latitude.toStringAsFixed(4)}, Lng: ${result.longitude.toStringAsFixed(4)}';
+                    });
+                  }
+                },
+                icon: Icon(Icons.my_location_rounded, color: colorScheme.primary, size: 20),
+                label: Text(
+                  selectedGeoPoint == null ? 'Pick Location from GPS Map' : 'Location Pinned Successfully ✓',
+                  style: TextStyle(color: colorScheme.primary, fontWeight: FontWeight.w700),
+                ),
+              ),
+              const SizedBox(height: 20),
+
               TextField(
                 controller: labelController,
                 decoration: const InputDecoration(
@@ -162,6 +198,7 @@ class AddressManagementScreen extends ConsumerWidget {
                     label: labelController.text.trim(),
                     fullAddress: addressController.text.trim(),
                     city: cityController.text.trim(),
+                    location: selectedGeoPoint,
                     isDefault: isDefault,
                   );
                   if (address == null) {
@@ -177,6 +214,112 @@ class AddressManagementScreen extends ConsumerWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+// شاشة الخريطة الداخلية باستخدام flutter_map و geolocator لجلب موقع الـ GPS الحالي
+class _MapPickerScreen extends StatefulWidget {
+  const _MapPickerScreen();
+
+  @override
+  State<_MapPickerScreen> createState() => _MapPickerScreenState();
+}
+
+class _MapPickerScreenState extends State<_MapPickerScreen> {
+  LatLng _pickedLocation = const LatLng(15.5007, 32.5599); // الموقع الافتراضي (الخرطوم)
+  bool _isLoading = true;
+  final MapController _mapController = MapController();
+
+  @override
+  void initState() {
+    super.initState();
+    _determineUserGPSPosition();
+  }
+
+  Future<void> _determineUserGPSPosition() async {
+    bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+    if (!serviceEnabled) {
+      setState(() => _isLoading = false);
+      return;
+    }
+
+    LocationPermission permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
+      if (permission == LocationPermission.denied) {
+        setState(() => _isLoading = false);
+        return;
+      }
+    }
+
+    try {
+      Position position = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.high,
+      );
+      final currentLatLng = LatLng(position.latitude, position.longitude);
+      setState(() {
+        _pickedLocation = currentLatLng;
+        _isLoading = false;
+      });
+      _mapController.move(currentLatLng, 16.0);
+    } catch (e) {
+      setState(() => _isLoading = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Pick Location via GPS', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+        centerTitle: true,
+      ),
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : Stack(
+              children: [
+                FlutterMap(
+                  mapController: _mapController,
+                  options: MapOptions(
+                    initialCenter: _pickedLocation,
+                    initialZoom: 16.0,
+                    onPositionChanged: (position, hasGesture) {
+                      if (position.center != null) {
+                        _pickedLocation = position.center!;
+                      }
+                    },
+                  ),
+                  children: [
+                    TileLayer(
+                      urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                      userAgentPackageName: 'com.rooz.store',
+                    ),
+                  ],
+                ),
+                const Center(
+                  child: Padding(
+                    padding: EdgeInsets.only(bottom: 40),
+                    child: Icon(Icons.location_pin, size: 48, color: Colors.redAccent),
+                  ),
+                ),
+                Positioned(
+                  bottom: 30,
+                  left: 20,
+                  right: 20,
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                    ),
+                    onPressed: () {
+                      Navigator.pop(context, _pickedLocation);
+                    },
+                    child: const Text('CONFIRM LOCATION', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                  ),
+                ),
+              ],
+            ),
     );
   }
 }
