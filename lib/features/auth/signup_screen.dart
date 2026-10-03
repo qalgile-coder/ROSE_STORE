@@ -25,6 +25,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
   bool _isLoading = false;
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
+  bool _agreedToTerms = false; // متغير حالة الموافقة على الشروط والأحكام
   double _passwordStrength = 0.0;
   String _passwordStrengthText = '';
   Color _passwordStrengthColor = Colors.transparent;
@@ -103,9 +104,139 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
     return null;
   }
 
+  // نافذة الشروط والأحكام الفاخرة ذات التصميم العصري
+  void _showTermsDialog() {
+    final colorScheme = Theme.of(context).colorScheme;
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: const Color(0xFF0B1120),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(28),
+          side: BorderSide(color: const Color(0xFF38BDF8).withValues(alpha: 0.2)),
+        ),
+        title: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: const Color(0xFF38BDF8).withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: const Icon(Icons.gavel_rounded, color: Color(0xFF38BDF8), size: 22),
+            ),
+            const SizedBox(width: 12),
+            Text(
+              'الشروط والأحكام',
+              style: GoogleFonts.plusJakartaSans(
+                color: Colors.white,
+                fontWeight: FontWeight.w800,
+                fontSize: 18,
+              ),
+            ),
+          ],
+        ),
+        content: SizedBox(
+          width: double.maxFinite,
+          child: SingleChildScrollView(
+            physics: const BouncingScrollPhysics(),
+            child: Directionality(
+              textDirection: TextDirection.rtl,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildTermSection(
+                    'مقدمة:',
+                    'تطبيق "روز استور" هو منصة إلكترونية تقنية تهدف إلى ربط المتاجر الإلكترونية بالمستخدمين في مكان واحد.',
+                  ),
+                  const SizedBox(height: 16),
+                  _buildTermSection(
+                    'طبيعة المعاملات المالية:',
+                    'تتم عملية البيع والشراء والدفع نقداً (كاش) بشكل مباشر بين المستخدم والتاجر. لا يدير التطبيق الأموال النقدية مباشرة وقت إتمام صفقة البيع.',
+                  ),
+                  const SizedBox(height: 16),
+                  _buildTermSection(
+                    'فترة التجربة المجانية للتاجر:',
+                    'يتمتع كافة التجار المسجلين بفترة تجريبية مجانية تماماً لمدة أول شهرين (60 يوماً) من تاريخ تفعيل الحساب، دون أي رسوم أو عمولات.',
+                  ),
+                  const SizedBox(height: 16),
+                  _buildTermSection(
+                    'العمولة الشهرية:',
+                    'ابتداءً من الشهر الثالث، يلتزم التاجر بسداد نسبة عمولة قدرها 4% من إجمالي مبيعاته التي تمت عبر التطبيق خلال الشهر المنصرم، وذلك وفقاً للتقارير المالية الصادرة من لوحة تحكم المنصة وفي المواعيد المحددة.',
+                  ),
+                  const SizedBox(height: 16),
+                  _buildTermSection(
+                    'إخلاء المسؤولية:',
+                    'المنصة لا تتحمل أي مسؤولية قانونية أو مالية عن جودة المنتجات، أو عمليات التسليم، أو النزاعات الفردية التي تنشأ مباشرة بين المستخدم والتاجر خارج نطاق الوساطة التقنية.',
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+        actions: [
+          SizedBox(
+            width: double.infinity,
+            height: 52,
+            child: ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF38BDF8),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                elevation: 4,
+              ),
+              onPressed: () {
+                setState(() => _agreedToTerms = true);
+                Navigator.pop(context);
+              },
+              child: Text(
+                'أوافق وأغلق',
+                style: GoogleFonts.plusJakartaSans(
+                  color: const Color(0xFF0B1120),
+                  fontWeight: FontWeight.w800,
+                  fontSize: 15,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTermSection(String title, String body) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          title,
+          style: GoogleFonts.plusJakartaSans(
+            color: const Color(0xFF38BDF8),
+            fontWeight: FontWeight.w700,
+            fontSize: 14,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          body,
+          style: GoogleFonts.plusJakartaSans(
+            color: Colors.white.withValues(alpha: 0.7),
+            fontSize: 13,
+            height: 1.5,
+          ),
+        ),
+      ],
+    );
+  }
+
   Future<void> _registerUser() async {
     if (!_formKey.currentState!.validate()) return;
     
+    if (!_agreedToTerms) {
+      _showCustomSnackBar('الرجاء الموافقة على الشروط والأحكام للمتابعة', Colors.orangeAccent);
+      return;
+    }
+
     if (_passwordController.text != _confirmPasswordController.text) {
       _showCustomSnackBar('كلمات المرور غير متطابقة', AppColors.error);
       return;
@@ -121,12 +252,6 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
         password: _passwordController.text.trim(),
         referredBy: _referralController.text.trim().isEmpty ? null : _referralController.text.trim(),
       );
-
-      // ملاحظة: إذا كانت دالة إرسال الكود في الـ authService مسمّاة بشكل مختلف (مثل sendVerificationCode أو غيرها)، 
-      // يمكنك تعديل السطر أدناه ليتطابق مع ميثود الـ Service لديك، أو إزالتها إذا كان التسجيل يرسل البريد تلقائياً من الباك إند.
-      // try {
-      //   await ref.read(authServiceProvider).sendEmailVerification(); 
-      // } catch (_) {}
 
       if (!mounted) return;
 
@@ -404,24 +529,84 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                             required: false,
                           ),
                           
-                          const SizedBox(height: 32),
+                          const SizedBox(height: 24),
+
+                          // خطوة الشروط والأحكام الاحترافية (عالية الجذب البصري)
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                            decoration: BoxDecoration(
+                              color: bgColor.withValues(alpha: 0.6),
+                              borderRadius: BorderRadius.circular(16),
+                              border: Border.all(
+                                color: _agreedToTerms 
+                                    ? accentColor.withValues(alpha: 0.5) 
+                                    : Colors.white.withValues(alpha: 0.08),
+                              ),
+                            ),
+                            child: Row(
+                              children: [
+                                Checkbox(
+                                  value: _agreedToTerms,
+                                  activeColor: accentColor,
+                                  checkColor: bgColor,
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(5)),
+                                  onChanged: (val) => setState(() => _agreedToTerms = val ?? false),
+                                ),
+                                Expanded(
+                                  child: GestureDetector(
+                                    onTap: _showTermsDialog,
+                                    child: RichText(
+                                      text: TextSpan(
+                                        style: GoogleFonts.plusJakartaSans(
+                                          fontSize: 12.5,
+                                          color: Colors.white.withValues(alpha: 0.7),
+                                        ),
+                                        children: [
+                                          const TextSpan(text: 'I agree to the '),
+                                          TextSpan(
+                                            text: 'Terms & Conditions',
+                                            style: TextStyle(
+                                              color: accentColor,
+                                              fontWeight: FontWeight.w800,
+                                              decoration: TextDecoration.underline,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                IconButton(
+                                  icon: const Icon(Icons.info_outline_rounded, size: 18, color: accentColor),
+                                  onPressed: _showTermsDialog,
+                                  tooltip: 'عرض الشروط والأحكام',
+                                ),
+                              ],
+                            ),
+                          ),
+
+                          const SizedBox(height: 24),
                           
-                          // Register Button
+                          // Register Button (مرتبط ديناميكياً بحالة الشروط)
                           InkWell(
                             onTap: _isLoading ? null : _registerUser,
                             borderRadius: BorderRadius.circular(20),
                             child: Container(
                               height: 64,
                               decoration: BoxDecoration(
-                                gradient: const LinearGradient(
-                                  colors: [accentColor, Color(0xFF2563EB)],
+                                gradient: LinearGradient(
+                                  colors: _agreedToTerms 
+                                      ? [accentColor, const Color(0xFF2563EB)]
+                                      : [Colors.grey.shade700, Colors.grey.shade800],
                                   begin: Alignment.centerLeft,
                                   end: Alignment.centerRight,
                                 ),
                                 borderRadius: BorderRadius.circular(20),
                                 boxShadow: [
                                   BoxShadow(
-                                    color: accentColor.withValues(alpha: 0.3),
+                                    color: _agreedToTerms 
+                                        ? accentColor.withValues(alpha: 0.3) 
+                                        : Colors.transparent,
                                     blurRadius: 12,
                                     offset: const Offset(0, 4),
                                   ),
@@ -606,38 +791,42 @@ class _FeatureItem extends StatelessWidget {
   @override
   Widget build(BuildContext codeContext) {
     return Expanded(
-      child: Column(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: const Color(0xFF1E293B).withValues(alpha: 0.5),
-              shape: BoxShape.circle,
-              border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
+      child: Card(
+        color: Colors.transparent,
+        elevation: 0,
+        child: Column(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: const Color(0xFF1E293B).withValues(alpha: 0.5),
+                shape: BoxShape.circle,
+                border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
+              ),
+              child: Icon(icon, color: const Color(0xFF38BDF8), size: 20),
             ),
-            child: Icon(icon, color: const Color(0xFF38BDF8), size: 20),
-          ),
-          const SizedBox(height: 10),
-          Text(
-            title,
-            style: GoogleFonts.plusJakartaSans(
-              color: Colors.white,
-              fontSize: 12,
-              fontWeight: FontWeight.w800,
+            const SizedBox(height: 10),
+            Text(
+              title,
+              style: GoogleFonts.plusJakartaSans(
+                color: Colors.white,
+                fontSize: 12,
+                fontWeight: FontWeight.w800,
+              ),
             ),
-          ),
-          const SizedBox(height: 2),
-          Text(
-            subtitle,
-            textAlign: TextAlign.center,
-            style: GoogleFonts.plusJakartaSans(
-              color: Colors.white.withValues(alpha: 0.4),
-              fontSize: 10,
-              fontWeight: FontWeight.w500,
-              height: 1.3,
+            const SizedBox(height: 2),
+            Text(
+              subtitle,
+              textAlign: TextAlign.center,
+              style: GoogleFonts.plusJakartaSans(
+                color: Colors.white.withValues(alpha: 0.4),
+                fontSize: 10,
+                fontWeight: FontWeight.w500,
+                height: 1.3,
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
