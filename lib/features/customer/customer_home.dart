@@ -15,6 +15,23 @@ final realTimeProductsStreamProvider = StreamProvider.autoDispose<List<ProductMo
   return ref.watch(customerServiceProvider).getProductsStream();
 });
 
+// دالة تحويل الكود الإنجليزي للأقسام إلى الاسم العربي المناسب
+String getCategoryArabicName(String categoryKey) {
+  final Map<String, String> categoryNames = {
+    'mens_clothing': 'ملابس رجالية',
+    'womens_clothing': 'ملابس نسائية',
+    'accessories': 'إكسسوارات',
+    'cosmetics': 'مستحضرات تجميل',
+    'mens_shoes': 'أحذية رجالية',
+    'womens_shoes': 'أحذية نسائية',
+    'kids_clothing': 'ملابس أطفال',
+    'bags_wallets': 'حقائب ومحافظ',
+    'perfumes': 'عطور',
+  };
+  
+  return categoryNames[categoryKey.toLowerCase().trim()] ?? categoryKey;
+}
+
 class CustomerHome extends ConsumerWidget {
   const CustomerHome({super.key});
 
@@ -25,6 +42,7 @@ class CustomerHome extends ConsumerWidget {
     final connectivity = ref.watch(connectivityProvider).asData?.value;
     final isOffline = connectivity == ConnectivityResult.none;
 
+    // Dynamic Theme Mapping
     final bgColor = isLight ? AppColors.lightBackground : AppColors.premiumDarkBackground;
     final primaryColor = isLight ? AppColors.lightPrimary : AppColors.premiumDarkPrimary;
     final textColor = isLight ? AppColors.lightTextPrimary : AppColors.premiumDarkTextPrimary;
@@ -33,117 +51,129 @@ class CustomerHome extends ConsumerWidget {
       backgroundColor: bgColor,
       body: Stack(
         children: [
+          // Background Gradient Glow
+          Positioned(
+            top: -150,
+            left: -50,
+            child: Container(
+              width: 350,
+              height: 350,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: RadialGradient(
+                  colors: [primaryColor.withValues(alpha: isLight ? 0.15 : 0.1), Colors.transparent],
+                ),
+              ),
+            ),
+          ),
+          
           CustomScrollView(
             physics: const BouncingScrollPhysics(),
             slivers: [
-              // رأس الصفحة الاحترافي المطابق للصورة تماماً
               SliverAppBar(
+                expandedHeight: 160,
                 floating: true,
                 pinned: true,
                 elevation: 0,
-                backgroundColor: bgColor.withOpacity(0.92),
-                automaticallyImplyLeading: false,
-                title: _TopHeaderBar(ref: ref),
+                backgroundColor: bgColor.withOpacity(0.85),
+                flexibleSpace: FlexibleSpaceBar(
+                  background: BackdropFilter(
+                    filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
+                    child: Container(color: Colors.transparent),
+                  ),
+                ),
+                title: _LocationHeader(ref: ref),
                 bottom: PreferredSize(
-                  preferredSize: const Size.fromHeight(65),
+                  preferredSize: const Size.fromHeight(80),
                   child: Column(
                     children: [
                       if (isOffline)
                         Container(
                           width: double.infinity,
-                          padding: const EdgeInsets.symmetric(vertical: 2),
-                          color: AppColors.error,
+                          padding: const EdgeInsets.symmetric(vertical: 4),
+                          color: AppColors.error.withOpacity(0.9),
                           child: const Center(
                             child: Text(
                               'WORKING OFFLINE • VIEWING CACHED DATA',
-                              style: TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.bold),
+                              style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w900, letterSpacing: 1),
                             ),
                           ),
                         ),
                       const Padding(
-                        padding: EdgeInsets.fromLTRB(16, 0, 16, 12),
+                        padding: EdgeInsets.fromLTRB(20, 10, 20, 20),
                         child: _SearchBar(),
                       ),
                     ],
                   ),
                 ),
               ),
-              
               SliverToBoxAdapter(
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const SizedBox(height: 8),
-                      // البنر الترويجي العلوي
-                      const _TopPromoBannerCard(),
+                      const SizedBox(height: 10),
+                      // تم نقل سلايدر البنرات الترويجية وتكبيره هنا ليصبح تحت شريط البحث مباش وقبل الأقسام
+                      const _PromoBannersSlider(),
                       const SizedBox(height: 24),
-                      
-                      // عنوان الأقسام
-                      const Text(
-                        'الأقسام الرئيسية',
-                        style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
-                      ),
-                      const SizedBox(height: 12),
-                      
-                      // الأقسام الدائرية الاحترافية الجديدة
+                      _SectionHeader(title: 'الأقسام الرئيسية', showSeeAll: false, textColor: textColor, primaryColor: primaryColor),
+                      const SizedBox(height: 16),
                       const _CategoryGrid(),
-                      const SizedBox(height: 24),
-                      
-                      // التصنيفات السريعة الأفقية
-                      const _SubCategoriesBannerList(),
-                      const SizedBox(height: 24),
-                      
-                      // بنر عروض لفترة محدودة
-                      const _FlashOffersBanner(),
-                      const SizedBox(height: 28),
-                      
-                      _SectionHeader(
-                        title: 'متاجر مميزة', 
-                        showSeeAll: true,
-                        onSeeAll: '/customer/featured-shops',
-                        textColor: textColor,
-                        primaryColor: primaryColor,
-                      ),
-                      const SizedBox(height: 14),
-                      const _FeaturedShops(),
-                      const SizedBox(height: 28),
-                      
-                      _SectionHeader(
-                        title: 'الأكثر رواجاً', 
-                        showSeeAll: true, 
-                        onSeeAll: '/customer/trending-products',
-                        textColor: textColor, 
-                        primaryColor: primaryColor,
-                      ),
-                      const SizedBox(height: 14),
-                      const _TrendingProducts(),
-                      const SizedBox(height: 24),
-                      
+                      const SizedBox(height: 32),
                       _SectionHeader(
                         title: 'جميع المنتجات', 
                         showSeeAll: true, 
                         onSeeAll: '/customer/all-products',
                         textColor: textColor, 
-                        primaryColor: primaryColor,
+                        primaryColor: primaryColor
                       ),
-                      const SizedBox(height: 14),
+                      const SizedBox(height: 16),
                     ],
                   ),
                 ),
               ),
-              
+              // قسم جميع المنتجات
               const _AllMerchantProductsGridList(),
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const SizedBox(height: 32),
+                      _SectionHeader(
+                        title: 'المتاجر المميزة', 
+                        showSeeAll: true,
+                        onSeeAll: '/customer/featured-shops',
+                        textColor: textColor,
+                        primaryColor: primaryColor,
+                      ),
+                      const SizedBox(height: 16),
+                      const _FeaturedShops(),
+                      const SizedBox(height: 32),
+                      _SectionHeader(
+                        title: 'المنتجات الرائجة', 
+                        showSeeAll: true, 
+                        onSeeAll: '/customer/trending-products',
+                        textColor: textColor, 
+                        primaryColor: primaryColor
+                      ),
+                      const SizedBox(height: 16),
+                      const _TrendingProducts(),
+                    ],
+                  ),
+                ),
+              ),
               const SliverToBoxAdapter(child: SizedBox(height: 120)),
             ],
           ),
           
-          const Positioned(
+          Positioned(
             left: 0,
             right: 0,
             bottom: 0,
-            child: CustomerBottomNav(currentIndex: 0),
+            child: const CustomerBottomNav(currentIndex: 0),
           ),
         ],
       ),
@@ -151,73 +181,114 @@ class CustomerHome extends ConsumerWidget {
   }
 }
 
-// شريط العنوان العلوي المطابق للصورة (اللوكيشن يمين والأيقونات يسار، وبدون شعار)
-class _TopHeaderBar extends StatelessWidget {
+class _LocationHeader extends StatelessWidget {
   final WidgetRef ref;
-  const _TopHeaderBar({required this.ref});
+  const _LocationHeader({required this.ref});
 
   @override
   Widget build(BuildContext context) {
     final defaultAddress = ref.watch(defaultAddressProvider);
+    final user = ref.watch(userModelProvider).asData?.value;
     final isLight = Theme.of(context).brightness == Brightness.light;
+    
+    final primaryColor = isLight ? AppColors.lightPrimary : AppColors.premiumDarkPrimary;
     final textColor = isLight ? AppColors.lightTextPrimary : AppColors.premiumDarkTextPrimary;
+    final cardColor = isLight ? Colors.white : const Color(0xFF1E293B);
 
     return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        // الجهة اليمين: معلومات التوصيل واللوكيشن
         Expanded(
           child: InkWell(
             onTap: () => context.push('/customer/addresses'),
-            borderRadius: BorderRadius.circular(10),
+            borderRadius: BorderRadius.circular(16),
             child: Row(
-              mainAxisSize: MainAxisSize.min,
               children: [
-                const Icon(Icons.location_on_rounded, color: Color(0xFFE91E63), size: 20),
-                const SizedBox(width: 4),
-                Flexible(
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(colors: [primaryColor.withOpacity(0.2), primaryColor.withOpacity(0.05)]),
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: primaryColor.withOpacity(0.2)),
+                  ),
+                  child: Icon(Icons.location_on_rounded, color: primaryColor, size: 20),
+                ),
+                const SizedBox(width: 14),
+                Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisAlignment: MainAxisAlignment.center,
+                    mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Text(
-                        'التوصيل إلى',
-                        style: TextStyle(fontSize: 9, color: Colors.grey, fontWeight: FontWeight.w600),
-                      ),
                       Text(
-                        defaultAddress?.fullAddress ?? 'جبرة',
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: textColor),
+                        'التوصيل إلى',
+                        style: TextStyle(
+                          color: primaryColor.withOpacity(0.9),
+                          fontSize: 9,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: 1.5,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Row(
+                        children: [
+                          Flexible(
+                            child: Text(
+                              defaultAddress?.fullAddress ?? 'اختر موقع التوصيل',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: textColor),
+                            ),
+                          ),
+                          Icon(Icons.keyboard_arrow_down_rounded, size: 16, color: textColor.withOpacity(0.5)),
+                        ],
                       ),
                     ],
                   ),
                 ),
-                const Icon(Icons.keyboard_arrow_down_rounded, size: 16, color: Colors.grey),
               ],
             ),
           ),
         ),
-
-        // الجهة اليسار: أيقونات التفاعل (بحث، مفضلة، إشعارات)
-        Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            _HeaderActionBtn(
-              icon: Icons.search_rounded, 
-              onTap: () => context.push('/customer/search'),
+        _HeaderActionBtn(
+          icon: Icons.notifications_none_rounded, 
+          onTap: () => context.push('/customer/notifications'),
+          cardColor: cardColor,
+          textColor: textColor,
+          isLight: isLight,
+        ),
+        const SizedBox(width: 10),
+        _HeaderActionBtn(
+          icon: Icons.favorite_border_rounded, 
+          onTap: () => context.push('/customer/wishlist'),
+          cardColor: cardColor,
+          textColor: textColor,
+          isLight: isLight,
+        ),
+        const SizedBox(width: 10),
+        GestureDetector(
+          onTap: () => context.push('/customer/profile'),
+          child: Hero(
+            tag: 'profile_avatar',
+            child: Container(
+              padding: const EdgeInsets.all(2),
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: LinearGradient(colors: [primaryColor, primaryColor.withOpacity(0.3)]),
+              ),
+              child: CircleAvatar(
+                radius: 18,
+                backgroundColor: cardColor,
+                backgroundImage: (user?.profilePicture != null && user!.profilePicture!.isNotEmpty)
+                    ? NetworkImage(user.profilePicture!)
+                    : null,
+                child: (user?.profilePicture == null || user!.profilePicture!.isEmpty)
+                    ? Text(
+                        user?.name.substring(0, 1).toUpperCase() ?? '?',
+                        style: TextStyle(color: primaryColor, fontSize: 12, fontWeight: FontWeight.bold),
+                      )
+                    : null,
+              ),
             ),
-            const SizedBox(width: 8),
-            _HeaderActionBtn(
-              icon: Icons.favorite_border_rounded, 
-              onTap: () => context.push('/customer/wishlist'),
-            ),
-            const SizedBox(width: 8),
-            _HeaderActionBtn(
-              icon: Icons.notifications_none_rounded, 
-              onTap: () => context.push('/customer/notifications'),
-            ),
-          ],
+          ),
         ),
       ],
     );
@@ -227,286 +298,252 @@ class _TopHeaderBar extends StatelessWidget {
 class _HeaderActionBtn extends StatelessWidget {
   final IconData icon;
   final VoidCallback onTap;
-  const _HeaderActionBtn({required this.icon, required this.onTap});
+  final Color cardColor;
+  final Color textColor;
+  final bool isLight;
+  const _HeaderActionBtn({required this.icon, required this.onTap, required this.cardColor, required this.textColor, required this.isLight});
 
   @override
   Widget build(BuildContext context) {
-    final isLight = Theme.of(context).brightness == Brightness.light;
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(12),
+      borderRadius: BorderRadius.circular(14),
       child: Container(
-        padding: const EdgeInsets.all(8),
+        padding: const EdgeInsets.all(10),
         decoration: BoxDecoration(
-          color: isLight ? Colors.grey.shade100 : const Color(0xFF1E293B),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: isLight ? Colors.grey.shade300 : Colors.white10),
+          color: cardColor,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: isLight ? AppColors.lightBorder : AppColors.premiumDarkDivider, width: 1.2),
+          boxShadow: isLight ? [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 12, offset: const Offset(0, 4))] : null,
         ),
-        child: Icon(icon, size: 18, color: isLight ? Colors.black87 : Colors.white),
+        child: Icon(icon, color: textColor, size: 20),
       ),
     );
   }
 }
 
-class _SearchBar extends StatelessWidget {
+class _SearchBar extends ConsumerWidget {
   const _SearchBar();
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final isLight = Theme.of(context).brightness == Brightness.light;
+    final primaryColor = isLight ? AppColors.lightPrimary : AppColors.premiumDarkPrimary;
+    final cardColor = isLight ? AppColors.lightSurface : AppColors.premiumDarkSurface;
+    final secondaryTextColor = isLight ? AppColors.lightTextSecondary : AppColors.premiumDarkTextSecondary;
+
     return GestureDetector(
       onTap: () => context.push('/customer/search'),
       child: Container(
-        height: 46,
-        padding: const EdgeInsets.symmetric(horizontal: 14),
+        height: 56,
+        padding: const EdgeInsets.symmetric(horizontal: 20),
         decoration: BoxDecoration(
-          color: isLight ? Colors.white : const Color(0xFF1E293B),
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: isLight ? Colors.grey.shade300 : Colors.white12, width: 1),
+          color: cardColor,
+          borderRadius: BorderRadius.circular(22),
+          boxShadow: [
+            BoxShadow(
+              color: isLight ? primaryColor.withOpacity(0.08) : Colors.black.withOpacity(0.2), 
+              blurRadius: 25, 
+              offset: const Offset(0, 10)
+            ),
+          ],
+          border: Border.all(color: isLight ? primaryColor.withOpacity(0.2) : AppColors.premiumDarkDivider.withOpacity(0.5), width: 1.5),
         ),
         child: Row(
           children: [
-            const Icon(Icons.search_rounded, color: Color(0xFFE91E63), size: 20),
-            const SizedBox(width: 10),
+            Icon(Icons.search_rounded, color: primaryColor, size: 24),
+            const SizedBox(width: 14),
             Text(
               'ابحث عما ترغب فيه اليوم...',
-              style: TextStyle(color: Colors.grey.shade500, fontSize: 12, fontWeight: FontWeight.w600),
+              style: TextStyle(color: secondaryTextColor.withOpacity(0.7), fontSize: 14, fontWeight: FontWeight.w600),
             ),
             const Spacer(),
-            Icon(Icons.tune_rounded, color: Colors.grey.shade400, size: 18),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _TopPromoBannerCard extends StatelessWidget {
-  const _TopPromoBannerCard();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      height: 160,
-      width: double.infinity,
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(20),
-        image: const DecorationImage(
-          image: NetworkImage('https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?q=80&w=600'),
-          fit: BoxFit.cover,
-        ),
-      ),
-      child: Container(
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(20),
-          gradient: LinearGradient(
-            colors: [Colors.black.withOpacity(0.75), Colors.black.withOpacity(0.2), Colors.transparent],
-            begin: Alignment.centerLeft,
-            end: Alignment.centerRight,
-          ),
-        ),
-        padding: const EdgeInsets.all(18),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Text(
-              'تألقي بإطلالتك',
-              style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 4),
-            const Text(
-              'مع مجموعة ROSE الجديدة',
-              style: TextStyle(color: Colors.white70, fontSize: 12, fontWeight: FontWeight.w600),
-            ),
-            const SizedBox(height: 12),
-            ElevatedButton(
-              onPressed: () => context.push('/customer/all-products'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.white,
-                foregroundColor: Colors.black,
-                minimumSize: const Size(90, 32),
-                elevation: 0,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-              ),
-              child: const Text('تسوق الآن', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 11)),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-// الأقسام الدائرية الاحترافية
-class _CategoryGrid extends StatelessWidget {
-  const _CategoryGrid();
-
-  @override
-  Widget build(BuildContext context) {
-    final isLight = Theme.of(context).brightness == Brightness.light;
-    final textColor = isLight ? AppColors.lightTextPrimary : AppColors.premiumDarkTextPrimary;
-
-    final categories = [
-      {'name': 'رجالية', 'key': 'mens_clothing', 'icon': Icons.man_rounded},
-      {'name': 'نسائية', 'key': 'womens_clothing', 'icon': Icons.woman_rounded},
-      {'name': 'أطفال', 'key': 'kids_clothing', 'icon': Icons.child_care_rounded},
-      {'name': 'تجميل', 'key': 'cosmetics', 'icon': Icons.face_retouching_natural_rounded},
-      {'name': 'أحذية', 'key': 'mens_shoes', 'icon': Icons.roller_skating_rounded},
-      {'name': 'حقائب', 'key': 'bags_wallets', 'icon': Icons.shopping_bag_rounded},
-      {'name': 'إكسسوارات', 'key': 'accessories', 'icon': Icons.watch_rounded},
-      {'name': 'عطور', 'key': 'perfumes', 'icon': Icons.local_florist_rounded},
-    ];
-
-    return SizedBox(
-      height: 95,
-      child: ListView.separated(
-        scrollDirection: Axis.horizontal,
-        physics: const BouncingScrollPhysics(),
-        itemCount: categories.length,
-        separatorBuilder: (_, __) => const SizedBox(width: 14),
-        itemBuilder: (context, index) {
-          final cat = categories[index];
-          return InkWell(
-            onTap: () => context.push('/customer/category/${cat['key']}'),
-            borderRadius: BorderRadius.circular(16),
-            child: Column(
-              children: [
-                Container(
-                  width: 58,
-                  height: 58,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFE91E63).withOpacity(0.12),
-                    shape: BoxShape.circle,
-                    border: Border.all(color: const Color(0xFFE91E63).withOpacity(0.3), width: 1.5),
-                  ),
-                  child: Icon(cat['icon'] as IconData, color: const Color(0xFFE91E63), size: 26),
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  cat['name'] as String,
-                  style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: textColor),
-                ),
-              ],
-            ),
-          );
-        },
-      ),
-    );
-  }
-}
-
-class _SubCategoriesBannerList extends StatelessWidget {
-  const _SubCategoriesBannerList();
-
-  @override
-  Widget build(BuildContext context) {
-    final items = [
-      {'title': 'وصل حديثاً', 'subtitle': 'NEW IN', 'img': 'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?q=80&w=400', 'route': '/customer/category/mens_clothing'},
-      {'title': 'رجالي', 'subtitle': 'MEN', 'img': 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?q=80&w=400', 'route': '/customer/category/mens_clothing'},
-      {'title': 'نسائي', 'subtitle': 'WOMEN', 'img': 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=400', 'route': '/customer/category/womens_clothing'},
-      {'title': 'جمال', 'subtitle': 'BEAUTY', 'img': 'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?q=80&w=400', 'route': '/customer/category/cosmetics'},
-      {'title': 'إكسسوارات', 'subtitle': 'ACCESSORIES', 'img': 'https://images.unsplash.com/photo-1523293182086-7651a899d37f?q=80&w=400', 'route': '/customer/category/accessories'},
-    ];
-
-    return SizedBox(
-      height: 110,
-      child: ListView.separated(
-        scrollDirection: Axis.horizontal,
-        physics: const BouncingScrollPhysics(),
-        itemCount: items.length,
-        separatorBuilder: (_, __) => const SizedBox(width: 10),
-        itemBuilder: (context, index) {
-          final item = items[index];
-          return InkWell(
-            onTap: () => context.push(item['route']!),
-            borderRadius: BorderRadius.circular(16),
-            child: Container(
-              width: 100,
+            Container(
+              padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(16),
-                image: DecorationImage(image: NetworkImage(item['img']!), fit: BoxFit.cover),
+                gradient: LinearGradient(colors: [primaryColor.withOpacity(0.2), primaryColor.withOpacity(0.05)]),
+                borderRadius: BorderRadius.circular(12),
               ),
-              child: Container(
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(16),
-                  gradient: LinearGradient(
-                    colors: [Colors.black.withOpacity(0.7), Colors.transparent],
-                    begin: Alignment.bottomCenter,
-                    end: Alignment.topCenter,
-                  ),
-                ),
-                padding: const EdgeInsets.all(8),
-                alignment: Alignment.bottomCenter,
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(item['title']!, style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold)),
-                    Text(item['subtitle']!, style: const TextStyle(color: Colors.white70, fontSize: 7)),
-                  ],
-                ),
-              ),
+              child: Icon(Icons.tune_rounded, color: primaryColor, size: 18),
             ),
-          );
-        },
+          ],
+        ),
       ),
     );
   }
 }
 
-class _FlashOffersBanner extends StatelessWidget {
-  const _FlashOffersBanner();
+class _PromoBannersSlider extends ConsumerStatefulWidget {
+  const _PromoBannersSlider();
+
+  @override
+  ConsumerState<_PromoBannersSlider> createState() => _PromoBannersSliderState();
+}
+
+class _PromoBannersSliderState extends ConsumerState<_PromoBannersSlider> {
+  final PageController _pageController = PageController();
+  int _currentIndex = 0;
+  Timer? _timer;
+
+  @override
+  void initState() {
+    super.initState();
+    _timer = Timer.periodic(const Duration(seconds: 4), (timer) {
+      final offersAsync = ref.read(activeOffersProvider);
+      offersAsync.whenData((offers) {
+        if (offers.length > 1 && _pageController.hasClients) {
+          if (_currentIndex < offers.length - 1) {
+            _currentIndex++;
+          } else {
+            _currentIndex = 0;
+          }
+          _pageController.animateToPage(
+            _currentIndex,
+            duration: const Duration(milliseconds: 600),
+            curve: Curves.easeInOutCubic,
+          );
+        }
+      });
+    });
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    _pageController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      height: 100,
-      width: double.infinity,
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(20),
-        gradient: const LinearGradient(
-          colors: [Color(0xFF311026), Color(0xFF1E1B4B)],
-        ),
-      ),
-      padding: const EdgeInsets.symmetric(horizontal: 18),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Row(
-                children: [
-                  Icon(Icons.flash_on_rounded, color: Colors.amber, size: 14),
-                  SizedBox(width: 4),
-                  Text('FLASH OFFERS', style: TextStyle(color: Colors.amber, fontSize: 10, fontWeight: FontWeight.bold)),
-                ],
+    final offersAsync = ref.watch(activeOffersProvider);
+    final isLight = Theme.of(context).brightness == Brightness.light;
+    final primaryColor = isLight ? AppColors.lightPrimary : AppColors.premiumDarkPrimary;
+
+    return offersAsync.when(
+      data: (offers) {
+        if (offers.isEmpty) return const SizedBox.shrink();
+
+        return Column(
+          children: [
+            SizedBox(
+              height: 245, // تم زيادة الارتفاع قليلاً لتكبير حجم البرمو بناءً على طلبك
+              child: PageView.builder(
+                controller: _pageController,
+                physics: const BouncingScrollPhysics(),
+                onPageChanged: (index) {
+                  setState(() {
+                    _currentIndex = index;
+                  });
+                },
+                itemCount: offers.length,
+                itemBuilder: (context, index) {
+                  final offer = offers[index];
+                  return Container(
+                    margin: const EdgeInsets.symmetric(horizontal: 4),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(36),
+                      boxShadow: [
+                        BoxShadow(
+                          color: isLight ? primaryColor.withOpacity(0.22) : Colors.black.withOpacity(0.5), 
+                          blurRadius: 40, 
+                          offset: const Offset(0, 18)
+                        ),
+                      ],
+                    ),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(36),
+                      child: Stack(
+                        children: [
+                          Positioned.fill(
+                            child: Image.network(
+                              offer.imageUrl.isNotEmpty ? offer.imageUrl : 'https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?q=80&w=600',
+                              fit: BoxFit.cover,
+                            ),
+                          ),
+                          Positioned.fill(
+                            child: Container(
+                              decoration: BoxDecoration(
+                                gradient: LinearGradient(
+                                  colors: [Colors.black.withOpacity(0.9), Colors.black.withOpacity(0.4), Colors.transparent],
+                                  begin: Alignment.centerLeft,
+                                  end: Alignment.centerRight,
+                                ),
+                              ),
+                            ),
+                          ),
+                          Padding(
+                            padding: const EdgeInsets.all(28),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                                  decoration: BoxDecoration(
+                                    color: primaryColor,
+                                    borderRadius: BorderRadius.circular(12),
+                                    boxShadow: [BoxShadow(color: primaryColor.withOpacity(0.4), blurRadius: 10)],
+                                  ),
+                                  child: Text(
+                                    offer.offerType == 'percentage' ? '${offer.value.round()}% خصم حصري' : 'عرض مميز',
+                                    style: TextStyle(color: isLight ? Colors.white : AppColors.premiumDarkBackground, fontSize: 11, fontWeight: FontWeight.w900, letterSpacing: 1),
+                                  ),
+                                ),
+                                const SizedBox(height: 12),
+                                Text(
+                                  offer.title,
+                                  style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.w900, letterSpacing: -0.5),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                                const SizedBox(height: 16),
+                                ElevatedButton(
+                                  onPressed: () => context.push('/customer/offer', extra: offer),
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: Colors.white,
+                                    foregroundColor: Colors.black,
+                                    minimumSize: const Size(120, 44),
+                                    elevation: 0,
+                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                                    shadowColor: Colors.black.withOpacity(0.2),
+                                  ),
+                                  child: const Text('تسوق الآن', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 13)),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                },
               ),
-              const SizedBox(height: 2),
-              const Text('عروض لفترة محدودة', style: TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold)),
-              const SizedBox(height: 6),
-              OutlinedButton(
-                onPressed: () => context.push('/customer/all-products'),
-                style: OutlinedButton.styleFrom(
-                  side: const BorderSide(color: Colors.white38),
-                  minimumSize: const Size(70, 26),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            ),
+            if (offers.length > 1) ...[
+              const SizedBox(height: 16),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: List.generate(
+                  offers.length,
+                  (index) => AnimatedContainer(
+                    duration: const Duration(milliseconds: 350),
+                    margin: const EdgeInsets.symmetric(horizontal: 4),
+                    width: _currentIndex == index ? 28 : 8,
+                    height: 8,
+                    decoration: BoxDecoration(
+                      color: _currentIndex == index ? primaryColor : primaryColor.withOpacity(0.25),
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                  ),
                 ),
-                child: const Text('اكتشف', style: TextStyle(color: Colors.white, fontSize: 9)),
               ),
             ],
-          ),
-          const Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text('حتى', style: TextStyle(color: Colors.white60, fontSize: 9)),
-              Text('70%', style: TextStyle(color: Color(0xFFE91E63), fontSize: 22, fontWeight: FontWeight.w900)),
-              Text('خصم', style: TextStyle(color: Colors.white60, fontSize: 9)),
-            ],
-          ),
-        ],
-      ),
+          ],
+        );
+      },
+      loading: () => const _Skeleton(height: 245, radius: 36),
+      error: (e, s) => const SizedBox.shrink(),
     );
   }
 }
@@ -524,15 +561,269 @@ class _SectionHeader extends StatelessWidget {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(title, style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: textColor)),
+        Expanded(
+          child: Row(
+            children: [
+              Container(
+                width: 4,
+                height: 20,
+                decoration: BoxDecoration(
+                  color: primaryColor,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  title,
+                  style: TextStyle(
+                    fontSize: 20, 
+                    fontWeight: FontWeight.w900, 
+                    color: textColor, 
+                    letterSpacing: -0.5
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ],
+          ),
+        ),
         if (showSeeAll)
           TextButton(
             onPressed: () {
-              if (onSeeAll != null) context.push(onSeeAll!);
+              if (onSeeAll != null) {
+                context.push(onSeeAll!);
+              }
             },
-            child: const Text('عرض الكل', style: TextStyle(color: Color(0xFFE91E63), fontWeight: FontWeight.bold, fontSize: 11)),
+            style: TextButton.styleFrom(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text('عرض الكل', style: TextStyle(color: primaryColor, fontWeight: FontWeight.w900, fontSize: 12, letterSpacing: 0.5)),
+                const SizedBox(width: 4),
+                Icon(Icons.arrow_forward_ios_rounded, size: 10, color: primaryColor),
+              ],
+            ),
           ),
       ],
+    );
+  }
+}
+
+class _CategoryGrid extends StatelessWidget {
+  const _CategoryGrid();
+
+  @override
+  Widget build(BuildContext context) {
+    final isLight = Theme.of(context).brightness == Brightness.light;
+    final cardColor = isLight ? AppColors.lightSurface : AppColors.premiumDarkSurface;
+    final secondaryTextColor = isLight ? AppColors.lightTextSecondary : AppColors.premiumDarkTextSecondary;
+
+    final categories = [
+      {'name': 'ملابس رجالية', 'key': 'mens_clothing', 'icon': Icons.man_rounded, 'color': const Color(0xFF3B82F6)},
+      {'name': 'ملابس نسائية', 'key': 'womens_clothing', 'icon': Icons.woman_rounded, 'color': const Color(0xFFEC4899)},
+      {'name': 'إكسسوارات', 'key': 'accessories', 'icon': Icons.watch_rounded, 'color': const Color(0xFF8B5CF6)},
+      {'name': 'مستحضرات تجميل', 'key': 'cosmetics', 'icon': Icons.face_retouching_natural_rounded, 'color': const Color(0xFFF43F5E)},
+      {'name': 'أحذية رجالية', 'key': 'mens_shoes', 'icon': Icons.roller_skating_rounded, 'color': const Color(0xFF6366F1)},
+      {'name': 'أحذية نسائية', 'key': 'womens_shoes', 'icon': Icons.set_meal_rounded, 'color': const Color(0xFF14B8A6)},
+      {'name': 'ملابس أطفال', 'key': 'kids_clothing', 'icon': Icons.child_care_rounded, 'color': const Color(0xFFEF4444)},
+      {'name': 'حقائب ومحافظ', 'key': 'bags_wallets', 'icon': Icons.shopping_bag_rounded, 'color': const Color(0xFFF59E0B)},
+      {'name': 'عطور', 'key': 'perfumes', 'icon': Icons.propane_tank_rounded, 'color': const Color(0xFF10B981)},
+    ];
+
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      physics: const BouncingScrollPhysics(),
+      child: Row(
+        children: categories.map((cat) {
+          final color = cat['color'] as Color;
+          return Padding(
+            padding: const EdgeInsets.only(right: 16),
+            child: InkWell(
+              onTap: () => context.push('/customer/category/${cat['key']}'),
+              borderRadius: BorderRadius.circular(24),
+              child: Column(
+                children: [
+                  Container(
+                    width: 76,
+                    height: 76,
+                    decoration: BoxDecoration(
+                      color: cardColor,
+                      borderRadius: BorderRadius.circular(24),
+                      border: Border.all(color: color.withOpacity(0.3), width: 1.5),
+                      boxShadow: [
+                        BoxShadow(
+                          color: color.withOpacity(isLight ? 0.15 : 0.08), 
+                          blurRadius: 15, 
+                          offset: const Offset(0, 6)
+                        ),
+                      ],
+                    ),
+                    child: Center(
+                      child: Container(
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: color.withOpacity(0.12),
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(cat['icon'] as IconData, color: color, size: 28),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  Text(cat['name'] as String, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: secondaryTextColor)),
+                ],
+              ),
+            ),
+          );
+        }).toList(),
+      ),
+    );
+  }
+}
+
+class _AllMerchantProductsGridList extends ConsumerWidget {
+  const _AllMerchantProductsGridList();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final allProductsAsync = ref.watch(realTimeProductsStreamProvider);  
+    final isLight = Theme.of(context).brightness == Brightness.light;
+    final primaryColor = isLight ? AppColors.lightPrimary : AppColors.premiumDarkPrimary;
+
+    return allProductsAsync.when(
+      data: (products) {
+        if (products.isEmpty) return const SliverToBoxAdapter(child: SizedBox.shrink());
+        return SliverPadding(
+          padding: const EdgeInsets.symmetric(horizontal: 20),
+          sliver: SliverGrid(
+            delegate: SliverChildBuilderDelegate(
+              (context, index) {
+                return _GridProductCard(product: products[index]);
+              },
+              childCount: products.length,
+            ),
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 2,
+              mainAxisSpacing: 16,
+              crossAxisSpacing: 16,
+              childAspectRatio: 0.70,
+            ),
+          ),
+        );
+      },
+      loading: () => SliverToBoxAdapter(
+        child: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(20),
+            child: CircularProgressIndicator(color: primaryColor),
+          ),
+        ),
+      ),
+      error: (e, s) => const SliverToBoxAdapter(child: SizedBox.shrink()),
+    );
+  }
+}
+
+class _GridProductCard extends ConsumerWidget {
+  final ProductModel product;
+  const _GridProductCard({required this.product});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final isLight = Theme.of(context).brightness == Brightness.light;
+    final primaryColor = isLight ? AppColors.lightPrimary : AppColors.premiumDarkPrimary;
+    final cardColor = isLight ? AppColors.lightSurface : AppColors.premiumDarkSurface;
+    final textColor = isLight ? AppColors.lightTextPrimary : AppColors.premiumDarkTextPrimary;
+    final secondaryTextColor = isLight ? AppColors.lightTextSecondary : AppColors.premiumDarkTextSecondary;
+
+    return InkWell(
+      onTap: () => context.push('/customer/product', extra: product),
+      borderRadius: BorderRadius.circular(24),
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: cardColor, 
+          borderRadius: BorderRadius.circular(24),
+          boxShadow: [
+            BoxShadow(
+              color: isLight ? Colors.black.withOpacity(0.05) : Colors.black.withOpacity(0.2), 
+              blurRadius: 15, 
+              offset: const Offset(0, 6)
+            ),
+          ],
+          border: Border.all(
+            color: isLight ? AppColors.lightBorder : AppColors.premiumDarkDivider.withOpacity(0.5), 
+            width: 1.2
+          ),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(18),
+                child: product.imageUrl.isNotEmpty 
+                    ? Image.network(product.imageUrl, fit: BoxFit.cover, width: double.infinity)
+                    : Container(
+                        width: double.infinity, 
+                        color: isLight ? AppColors.lightSecondaryBackground : AppColors.premiumDarkSecondaryBackground, 
+                        child: Center(child: Icon(Icons.image_rounded, color: textColor.withOpacity(0.2), size: 30))
+                      ),
+              ),
+            ),
+            const SizedBox(height: 10),
+            Text(
+              product.name, 
+              style: TextStyle(
+                fontWeight: FontWeight.w900, 
+                fontSize: 13.5, 
+                color: textColor
+              ), 
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+            const SizedBox(height: 2),
+            Text(
+              getCategoryArabicName(product.category), 
+              style: TextStyle(
+                color: primaryColor, 
+                fontSize: 11, 
+                fontWeight: FontWeight.w800
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+            const SizedBox(height: 8),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  '${product.price.round()} ${product.currency}', 
+                  style: TextStyle(
+                    color: primaryColor, 
+                    fontWeight: FontWeight.w900, 
+                    fontSize: 14
+                  )
+                ),
+                Container(
+                  padding: const EdgeInsets.all(6),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(colors: [primaryColor, primaryColor.withOpacity(0.8)]),
+                    borderRadius: BorderRadius.circular(10),
+                    boxShadow: [BoxShadow(color: primaryColor.withOpacity(0.4), blurRadius: 8, offset: const Offset(0, 3))],
+                  ),
+                  child: const Icon(Icons.add_rounded, color: Colors.white, size: 16),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
@@ -546,76 +837,177 @@ class _FeaturedShops extends ConsumerWidget {
 
     return featuredAsync.when(
       data: (shops) {
-        if (shops.isEmpty) {
-          final customShops = [
-            {'name': 'متجر نسائي', 'route': '/customer/category/womens_clothing', 'img': 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?q=80&w=400'},
-            {'name': 'متجر رجالي', 'route': '/customer/category/mens_clothing', 'img': 'https://images.unsplash.com/photo-1472851294608-062f824d29cc?q=80&w=400'},
-            {'name': 'متجر أحذية', 'route': '/customer/category/mens_shoes', 'img': 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?q=80&w=400'},
-          ];
-          return SizedBox(
-            height: 130,
-            child: ListView.separated(
-              scrollDirection: Axis.horizontal,
-              physics: const BouncingScrollPhysics(),
-              itemCount: customShops.length,
-              separatorBuilder: (_, __) => const SizedBox(width: 10),
-              itemBuilder: (context, index) {
-                final shop = customShops[index];
-                return InkWell(
-                  onTap: () => context.push(shop['route']!),
-                  borderRadius: BorderRadius.circular(16),
-                  child: Container(
-                    width: 115,
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(16),
-                      image: DecorationImage(image: NetworkImage(shop['img']!), fit: BoxFit.cover),
-                    ),
-                    child: Container(
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(16),
-                        color: Colors.black.withOpacity(0.45),
-                      ),
-                      alignment: Alignment.center,
-                      child: Text(shop['name']!, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 11)),
-                    ),
-                  ),
-                );
-              },
-            ),
-          );
-        }
+        if (shops.isEmpty) return const SizedBox.shrink();
         return SizedBox(
-          height: 130,
+          height: 250,
           child: ListView.separated(
             scrollDirection: Axis.horizontal,
             physics: const BouncingScrollPhysics(),
             itemCount: shops.length,
-            separatorBuilder: (_, __) => const SizedBox(width: 10),
-            itemBuilder: (context, index) {
-              final shop = shops[index];
-              return InkWell(
-                onTap: () => context.push('/customer/shop/${shop.id}'),
-                borderRadius: BorderRadius.circular(16),
-                child: Container(
-                  width: 115,
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(16),
-                    image: shop.imageUrl.isNotEmpty ? DecorationImage(image: NetworkImage(shop.imageUrl), fit: BoxFit.cover) : null,
-                  ),
-                  alignment: Alignment.bottomCenter,
-                  child: Container(
-                    padding: const EdgeInsets.all(6),
-                    color: Colors.black54,
-                    child: Text(shop.name, style: const TextStyle(color: Colors.white, fontSize: 10)),
-                  ),
-                ),
-              );
-            },
+            padding: const EdgeInsets.only(right: 20),
+            separatorBuilder: (_, __) => const SizedBox(width: 16),
+            itemBuilder: (context, index) => _FeaturedShopCard(shop: shops[index]),
           ),
         );
       },
-      loading: () => const SizedBox.shrink(),
+      loading: () => SizedBox(height: 250, child: ListView(scrollDirection: Axis.horizontal, children: List.generate(2, (_) => const Padding(padding: EdgeInsets.only(right: 16), child: _Skeleton(width: 270, height: 250, radius: 28))))),
       error: (e, s) => const SizedBox.shrink(),
+    );
+  }
+}
+
+class _FeaturedShopCard extends StatelessWidget {
+  final ShopModel shop;
+  const _FeaturedShopCard({required this.shop});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isLight = theme.brightness == Brightness.light;
+    final cardColor = isLight ? AppColors.lightSurface : AppColors.premiumDarkSurface;
+    final textColor = isLight ? AppColors.lightTextPrimary : AppColors.premiumDarkTextPrimary;
+
+    return InkWell(
+      onTap: () => context.push('/customer/shop/${shop.id}'),
+      borderRadius: BorderRadius.circular(28),
+      child: Container(
+        width: 280,
+        decoration: BoxDecoration(
+          color: cardColor,
+          borderRadius: BorderRadius.circular(28),
+          boxShadow: [
+            BoxShadow(
+              color: isLight ? Colors.black.withOpacity(0.06) : Colors.black.withOpacity(0.25), 
+              blurRadius: 24, 
+              offset: const Offset(0, 10)
+            )
+          ],
+          border: Border.all(color: isLight ? AppColors.lightBorder : AppColors.premiumDarkDivider.withOpacity(0.5), width: 1.2),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Stack(
+              children: [
+                ClipRRect(
+                  borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+                  child: Hero(
+                    tag: 'shop_home_${shop.id}',
+                    child: shop.imageUrl.isNotEmpty 
+                        ? Image.network(shop.imageUrl, height: 145, width: double.infinity, fit: BoxFit.cover)
+                        : Container(height: 145, color: isLight ? AppColors.lightSecondaryBackground : AppColors.premiumDarkSecondaryBackground, child: Center(child: Icon(Icons.storefront_rounded, color: textColor.withOpacity(0.2), size: 45))),
+                  ),
+                ),
+                Positioned(
+                  top: 12,
+                  left: 12,
+                  child: _GlassBadge(label: '${shop.rating}', icon: Icons.star_rounded, color: AppColors.warning),
+                ),
+                if (shop.hasFreeDelivery)
+                  Positioned(
+                    top: 12,
+                    right: 12,
+                    child: _GlassBadge(label: 'توصيل مجاني', icon: Icons.bolt_rounded, color: AppColors.success),
+                  ),
+              ],
+            ),
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Expanded(
+                        child: Text(
+                          shop.name, 
+                          style: TextStyle(
+                            fontWeight: FontWeight.w900, 
+                            fontSize: 16, 
+                            color: textColor, 
+                            letterSpacing: -0.2
+                          ), 
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: theme.colorScheme.primary.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Text(
+                          shop.deliveryTime,
+                          style: TextStyle(color: theme.colorScheme.primary, fontSize: 11, fontWeight: FontWeight.w900),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _GlassBadge extends StatelessWidget {
+  final String label;
+  final IconData icon;
+  final Color color;
+  const _GlassBadge({required this.label, required this.icon, required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(12),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+          decoration: BoxDecoration(
+            color: Colors.black.withOpacity(0.55),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: Colors.white.withOpacity(0.15)),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(icon, color: color, size: 14),
+              const SizedBox(width: 4),
+              Text(
+                label,
+                style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w900),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _Skeleton extends StatelessWidget {
+  final double? width;
+  final double height;
+  final double radius;
+  const _Skeleton({this.width, required this.height, required this.radius});
+
+  @override
+  Widget build(BuildContext context) {
+    final isLight = Theme.of(context).brightness == Brightness.light;
+    return Container(
+      width: width,
+      height: height,
+      decoration: BoxDecoration(
+        color: isLight ? Colors.black.withOpacity(0.06) : Colors.white.withOpacity(0.06),
+        borderRadius: BorderRadius.circular(radius),
+      ),
     );
   }
 }
@@ -631,103 +1023,22 @@ class _TrendingProducts extends ConsumerWidget {
       data: (products) {
         if (products.isEmpty) return const SizedBox.shrink();
         return SizedBox(
-          height: 210,
+          height: 240,
           child: ListView.separated(
             scrollDirection: Axis.horizontal,
             physics: const BouncingScrollPhysics(),
             itemCount: products.length,
-            separatorBuilder: (_, __) => const SizedBox(width: 10),
+            padding: const EdgeInsets.only(right: 20),
+            separatorBuilder: (_, __) => const SizedBox(width: 14),
             itemBuilder: (context, index) => SizedBox(
-              width: 140,
+              width: 160,
               child: _GridProductCard(product: products[index]),
             ),
           ),
         );
       },
-      loading: () => const SizedBox.shrink(),
+      loading: () => SizedBox(height: 240, child: ListView(scrollDirection: Axis.horizontal, children: List.generate(2, (_) => const Padding(padding: EdgeInsets.only(right: 14), child: _Skeleton(width: 160, height: 240, radius: 24))))),
       error: (e, s) => const SizedBox.shrink(),
-    );
-  }
-}
-
-class _AllMerchantProductsGridList extends ConsumerWidget {
-  const _AllMerchantProductsGridList();
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final allProductsAsync = ref.watch(realTimeProductsStreamProvider);  
-
-    return allProductsAsync.when(
-      data: (products) {
-        if (products.isEmpty) return const SliverToBoxAdapter(child: SizedBox.shrink());
-        return SliverPadding(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          sliver: SliverGrid(
-            delegate: SliverChildBuilderDelegate(
-              (context, index) {
-                return _GridProductCard(product: products[index]);
-              },
-              childCount: products.length,
-            ),
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 2,
-              mainAxisSpacing: 10,
-              crossAxisSpacing: 10,
-              childAspectRatio: 0.75,
-            ),
-          ),
-        );
-      },
-      loading: () => const SliverToBoxAdapter(child: SizedBox.shrink()),
-      error: (e, s) => const SliverToBoxAdapter(child: SizedBox.shrink()),
-    );
-  }
-}
-
-class _GridProductCard extends StatelessWidget {
-  final ProductModel product;
-  const _GridProductCard({required this.product});
-
-  @override
-  Widget build(BuildContext context) {
-    final isLight = Theme.of(context).brightness == Brightness.light;
-    final cardColor = isLight ? Colors.white : const Color(0xFF1E293B);
-    final textColor = isLight ? AppColors.lightTextPrimary : AppColors.premiumDarkTextPrimary;
-
-    return InkWell(
-      onTap: () => context.push('/customer/product', extra: product),
-      borderRadius: BorderRadius.circular(16),
-      child: Container(
-        padding: const EdgeInsets.all(8),
-        decoration: BoxDecoration(
-          color: cardColor,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: isLight ? Colors.grey.shade200 : Colors.white10),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Expanded(
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(12),
-                child: product.imageUrl.isNotEmpty
-                    ? Image.network(product.imageUrl, fit: BoxFit.cover, width: double.infinity)
-                    : Container(color: Colors.grey.shade800),
-              ),
-            ),
-            const SizedBox(height: 6),
-            Text(product.name, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 11, color: textColor), maxLines: 1),
-            const SizedBox(height: 4),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text('${product.price.round()} ${product.currency}', style: const TextStyle(color: Color(0xFFE91E63), fontWeight: FontWeight.bold, fontSize: 11)),
-                const Icon(Icons.favorite_border_rounded, size: 14, color: Colors.grey),
-              ],
-            ),
-          ],
-        ),
-      ),
     );
   }
 }
