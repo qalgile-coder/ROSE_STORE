@@ -37,9 +37,9 @@ local.properties
 #lib/core/secrets.dart
 
 # Keystore / Signing (Sensitive)
-*.jks
-*.keystore
-android/key.properties
+#*.jks
+#*.keystore
+#android/key.properties
 
 # Firebase configuration (Sensitive)
 #lib/firebase_options*.dart
