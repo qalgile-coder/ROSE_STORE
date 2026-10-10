@@ -1,0 +1,34 @@
+workflows:
+  default-workflow:
+    name: ROOZ Store APK Build
+    max_build_duration: 30
+    instance_type: mac_mini_m2
+    environment:
+      flutter: stable
+      java: 17
+      android_signing:
+        - rooz-store-key
+    scripts:
+      - name: Set up keystore
+        script: |
+          # نسخ ملف الـ Keystore تلقائياً إلى مجلد android/app بالاسم المطلوب
+          if [ -n "$CM_KEYSTORE_PATH" ]; then
+            cp "$CM_KEYSTORE_PATH" android/app/upload-keystore.jks
+          fi
+          
+          # كتابة بيانات الاعتماد في ملف key.properties
+          echo "storePassword=009600" > android/key.properties
+          echo "keyPassword=009600" >> android/key.properties
+          echo "keyAlias=upload" >> android/key.properties
+          echo "storeFile=upload-keystore.jks" >> android/key.properties
+      - name: Get dependencies & Generate Icons
+        script: |
+          flutter clean
+          flutter pub get
+          flutter pub run flutter_launcher_icons:main
+      - name: Build APK with Localization & Custom Icon
+        script: |
+          flutter gen-l10n
+          flutter build apk --release --android-skip-build-dependency-validation
+    artifacts:
+      - build/app/outputs/flutter-apk/*.apk
