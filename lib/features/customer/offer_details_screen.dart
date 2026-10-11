@@ -211,7 +211,23 @@ class _ProductOfferCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final currencySymbol = product.currency != null && product.currency.isNotEmpty ? product.currency : 'ج.س';
+    final currencySymbol = product.currency != null && product.currency.isNotEmpty ? product.currency : 'SDG';
+
+    // احتساب السعر قبل الخصم والسعر بعد الخصم
+    final double originalPrice = (product.price ?? 0.0).toDouble();
+    final double discount = (product.discount ?? 0.0).toDouble();
+
+    double discountedPrice = originalPrice;
+    if (discount > 0) {
+      if (discount <= 100) {
+        discountedPrice = originalPrice * (1 - (discount / 100));
+      } else {
+        discountedPrice = originalPrice - discount;
+      }
+      if (discountedPrice < 0) discountedPrice = 0;
+    }
+
+    final bool hasDiscount = discount > 0 && discountedPrice < originalPrice;
 
     return InkWell(
       onTap: () => context.push('/customer/product', extra: product),
@@ -245,9 +261,33 @@ class _ProductOfferCard extends StatelessWidget {
                     overflow: TextOverflow.ellipsis
                   ),
                   const SizedBox(height: 6),
-                  Text(
-                    '${product.price.toStringAsFixed(0)} $currencySymbol', 
-                    style: TextStyle(color: colorScheme.primary, fontWeight: FontWeight.w900, fontSize: 15)
+                  FittedBox(
+                    fit: BoxFit.scaleDown,
+                    alignment: Alignment.centerLeft,
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.baseline,
+                      textBaseline: TextBaseline.alphabetic,
+                      children: [
+                        Text(
+                          '$currencySymbol ${discountedPrice.toStringAsFixed(1)}', 
+                          style: TextStyle(color: colorScheme.primary, fontWeight: FontWeight.w900, fontSize: 15)
+                        ),
+                        if (hasDiscount) ...[
+                          const SizedBox(width: 6),
+                          Text(
+                            '$currencySymbol ${originalPrice.toStringAsFixed(1)}', 
+                            style: TextStyle(
+                              color: colorScheme.onSurface.withValues(alpha: 0.4), 
+                              fontWeight: FontWeight.w600, 
+                              fontSize: 12,
+                              decoration: TextDecoration.lineThrough,
+                              decorationColor: colorScheme.onSurface.withValues(alpha: 0.4),
+                            )
+                          ),
+                        ],
+                      ],
+                    ),
                   ),
                 ],
               ),

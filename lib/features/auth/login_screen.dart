@@ -106,16 +106,25 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     );
   }
 
-  Future<void> _signInWithEmailSocial() async {
-    if (_isEmailLoginLoading || _isLoading || _isGoogleLoading) return;
-
-    await _handleAuthAction(
-      () async {
-        if (!_formKey.currentState!.validate()) throw Exception('الرجاء إدخال البريد الإلكتروني');
-        await ref.read(authServiceProvider).signIn(_emailController.text.trim(), _passwordController.text.trim());
-      },
-      setLoading: (val) => setState(() => _isEmailLoginLoading = val),
+  void _showSoonSnackBar() {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          'SOON',
+          style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w800, color: Colors.white, letterSpacing: 1.2),
+          textAlign: TextAlign.center,
+        ),
+        backgroundColor: _mysteriousPinkPrimary,
+        behavior: SnackBarBehavior.floating,
+        margin: const EdgeInsets.symmetric(horizontal: 50, vertical: 20),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        duration: const Duration(seconds: 2),
+      ),
     );
+  }
+
+  Future<void> _signInWithEmailSocial() async {
+    _showSoonSnackBar();
   }
 
   void _showErrorSnackBar(String message) {
@@ -489,21 +498,21 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
                               _buildSocialButton(
-                                icon: Icons.mail_rounded,
-                                onTap: _signInWithEmailSocial,
-                                isLoading: _isEmailLoginLoading,
+                                icon: Icons.g_mobiledata_rounded,
+                                onTap: _signInWithGoogle,
+                                isLoading: _isGoogleLoading,
                               ),
                               const SizedBox(width: 16),
                               _buildSocialButton(
                                 icon: Icons.apple,
-                                onTap: () {},
+                                onTap: _showSoonSnackBar,
                                 isLoading: false,
                               ),
                               const SizedBox(width: 16),
                               _buildSocialButton(
-                                icon: Icons.g_mobiledata_rounded,
-                                onTap: _signInWithGoogle,
-                                isLoading: _isGoogleLoading,
+                                icon: Icons.mail_rounded,
+                                onTap: _signInWithEmailSocial,
+                                isLoading: _isEmailLoginLoading,
                               ),
                             ],
                           ),

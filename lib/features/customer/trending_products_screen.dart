@@ -61,7 +61,7 @@ class _TrendingProductsScreenState extends ConsumerState<TrendingProductsScreen>
   }
 }
 
-class _TrendingProductCard extends StatelessWidget {
+class _TrendingProductCard extends ConsumerWidget {
   final ProductModel product;
   final ColorScheme colorScheme;
   final bool isLight;
@@ -69,7 +69,7 @@ class _TrendingProductCard extends StatelessWidget {
   const _TrendingProductCard({required this.product, required this.colorScheme, required this.isLight});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return InkWell(
       onTap: () => context.push('/customer/product', extra: product),
       borderRadius: BorderRadius.circular(28),
@@ -131,10 +131,23 @@ class _TrendingProductCard extends StatelessWidget {
                         'Rs ${product.price.round()}', 
                         style: TextStyle(color: colorScheme.primary, fontWeight: FontWeight.w900, fontSize: 16),
                       ),
-                      Container(
-                        padding: const EdgeInsets.all(6),
-                        decoration: BoxDecoration(color: colorScheme.primary, shape: BoxShape.circle),
-                        child: const Icon(Icons.add_rounded, color: Colors.white, size: 18),
+                      InkWell(
+                        onTap: () {
+                          ref.read(cartProvider.notifier).addItem(product);
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text('Added ${product.name} to cart'),
+                              duration: const Duration(seconds: 1),
+                              behavior: SnackBarBehavior.floating,
+                            ),
+                          );
+                        },
+                        borderRadius: BorderRadius.circular(20),
+                        child: Container(
+                          padding: const EdgeInsets.all(6),
+                          decoration: BoxDecoration(color: colorScheme.primary, shape: BoxShape.circle),
+                          child: const Icon(Icons.add_rounded, color: Colors.white, size: 18),
+                        ),
                       ),
                     ],
                   ),
