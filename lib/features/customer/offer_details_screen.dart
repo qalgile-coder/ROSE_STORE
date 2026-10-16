@@ -149,7 +149,12 @@ class OfferDetailsScreen extends ConsumerWidget {
                     childAspectRatio: 0.82,
                   ),
                   delegate: SliverChildBuilderDelegate(
-                    (context, index) => _ProductOfferCard(product: products[index], colorScheme: colorScheme, isLight: isLight),
+                    (context, index) => _ProductOfferCard(
+                      product: products[index], 
+                      colorScheme: colorScheme, 
+                      isLight: isLight,
+                      offer: offer,
+                    ),
                     childCount: products.length,
                   ),
                 ),
@@ -207,27 +212,57 @@ class _ProductOfferCard extends StatelessWidget {
   final dynamic product;
   final ColorScheme colorScheme;
   final bool isLight;
-  const _ProductOfferCard({required this.product, required this.colorScheme, required this.isLight});
+  final OfferModel? offer;
+
+  const _ProductOfferCard({
+    required this.product, 
+    required this.colorScheme, 
+    required this.isLight,
+    this.offer,
+  });
 
   @override
   Widget build(BuildContext context) {
-    final currencySymbol = product.currency != null && product.currency.isNotEmpty ? product.currency : 'SDG';
+    final currencySymbol = (product.currency != null && product.currency.toString().isNotEmpty)
+        ? product.currency
+        : 'SDG';
 
-    // احتساب السعر قبل الخصم والسعر بعد الخصم
+    // 1. استخراج السعر الأساسي للمنتج
     final double originalPrice = (product.price ?? 0.0).toDouble();
-    final double discount = (product.discount ?? 0.0).toDouble();
 
-    double discountedPrice = originalPrice;
-    if (discount > 0) {
-      if (discount <= 100) {
-        discountedPrice = originalPrice * (1 - (discount / 100));
-      } else {
-        discountedPrice = originalPrice - discount;
-      }
-      if (discountedPrice < 0) discountedPrice = 0;
+    // 2. التحقق مما إذا كان للمنتج خصم خاص به في موديل المنتج نفسه
+    double productDiscount = 0.0;
+    try {
+      productDiscount = (product.discount ?? 0.0).toDouble();
+    } catch (_) {}
+
+    // 3. التحقق مما إذا كان هناك خصم قادم من كائن العرض (OfferModel)
+    double offerDiscount = 0.0;
+    String offerType = '';
+    if (offer != null) {
+      offerDiscount = offer!.value.toDouble();
+      offerType = offer!.offerType;
     }
 
-    final bool hasDiscount = discount > 0 && discountedPrice < originalPrice;
+    // 4. احتساب السعر النهائي بعد الخصم بأعلى دقة واحترافية
+    double discountedPrice = originalPrice;
+
+    if (offerType == 'percentage' && offerDiscount > 0) {
+      discountedPrice = originalPrice * (1 - (offerDiscount / 100));
+    } else if (offerType == 'fixed' && offerDiscount > 0) {
+      discountedPrice = originalPrice - offerDiscount;
+    } else if (productDiscount > 0) {
+      if (productDiscount <= 100) {
+        discountedPrice = originalPrice * (1 - (productDiscount / 100));
+      } else {
+        discountedPrice = originalPrice - productDiscount;
+      }
+    }
+
+    if (discountedPrice < 0) discountedPrice = 0;
+
+    // حالة وجود خصم فعلي للمنتج
+    final bool hasDiscount = (discountedPrice < originalPrice) && originalPrice > 0;
 
     return InkWell(
       onTap: () => context.push('/customer/product', extra: product),
@@ -244,9 +279,12 @@ class _ProductOfferCard extends StatelessWidget {
             Expanded(
               child: ClipRRect(
                 borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-                child: product.imageUrl.isNotEmpty 
+                child: (product.imageUrl != null && product.imageUrl.toString().isNotEmpty)
                   ? Image.network(product.imageUrl, fit: BoxFit.cover, width: double.infinity)
-                  : Container(color: isLight ? AppColors.lightSecondaryBackground : AppColors.premiumDarkSecondaryBackground, child: Icon(Icons.image, color: colorScheme.onSurface.withValues(alpha: 0.1))),
+                  : Container(
+                      color: isLight ? AppColors.lightSecondaryBackground : AppColors.premiumDarkSecondaryBackground, 
+                      child: Icon(Icons.image, color: colorScheme.onSurface.withValues(alpha: 0.1))
+                    ),
               ),
             ),
             Padding(
@@ -269,10 +307,12 @@ class _ProductOfferCard extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.baseline,
                       textBaseline: TextBaseline.alphabetic,
                       children: [
+                        // السعر النهائي بعد الخصم
                         Text(
                           '$currencySymbol ${discountedPrice.toStringAsFixed(1)}', 
                           style: TextStyle(color: colorScheme.primary, fontWeight: FontWeight.w900, fontSize: 15)
                         ),
+                        // السعر الأساسي القديم المشطوب بخط (يظهر فقط عند وجود خصم)
                         if (hasDiscount) ...[
                           const SizedBox(width: 6),
                           Text(
