@@ -27,6 +27,17 @@ class CustomerAllProductsScreen extends ConsumerWidget {
         backgroundColor: bgColor,
         elevation: 0,
         iconTheme: IconThemeData(color: textColor),
+        // إضافة زر رجوع يدوي آمن في الـ AppBar لضمان عدم التعليق نهائياً
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 18),
+          onPressed: () {
+            if (context.canPop()) {
+              context.pop();
+            } else {
+              context.go('/customer/home');
+            }
+          },
+        ),
       ),
       body: productsAsync.when(
         data: (products) {
@@ -86,7 +97,18 @@ class _GridProductCard extends ConsumerWidget {
         : originalPrice;
 
     return InkWell(
-      onTap: () => GoRouter.of(context).go('/product/${product.id}'),
+      // استخدام حماية وتجربة الانتقال بـ extra لضمان تمرير كائن المنتج بشكل سليم لشاشة التفاصيل لمنع أي تعليق
+      onTap: () {
+        try {
+          context.push('/customer/product/${product.id}', extra: product);
+        } catch (_) {
+          try {
+            context.push('/product/${product.id}', extra: product);
+          } catch (_) {
+            context.push('/customer/product/${product.id}');
+          }
+        }
+      },
       borderRadius: BorderRadius.circular(24),
       child: Container(
         padding: const EdgeInsets.all(12),
@@ -156,8 +178,9 @@ class _GridProductCard extends ConsumerWidget {
                 if (hasDiscount) ...[
                   Row(
                     children: [
+                      // عملة المنتج الحقيقية للسعر المشطوب
                       Text(
-                        'Rs ${originalPrice.round()}',
+                        '${product.currency} ${originalPrice.round()}',
                         style: TextStyle(
                           color: secondaryTextColor.withValues(alpha: 0.6),
                           fontSize: 11,
@@ -173,8 +196,9 @@ class _GridProductCard extends ConsumerWidget {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
+                    // عملة المنتج الحقيقية للسعر النهائي
                     Text(
-                      'Rs ${finalPrice.round()}', 
+                      '${product.currency} ${finalPrice.round()}', 
                       style: TextStyle(
                         color: hasDiscount ? Colors.green.shade700 : primaryColor, 
                         fontWeight: FontWeight.w900, 

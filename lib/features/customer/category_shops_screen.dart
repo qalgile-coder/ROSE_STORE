@@ -19,7 +19,6 @@ class _CategoryShopsScreenState extends ConsumerState<CategoryShopsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // استخدام المزود الاحترافي الجديد لجلب منتجات القسم مباشرة بناءً على المفتاح المطابق لقاعدة البيانات
     final productsAsync = ref.watch(categoryProductsProvider(widget.category));
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
@@ -83,7 +82,7 @@ class _CategoryShopsScreenState extends ConsumerState<CategoryShopsScreen> {
             physics: const BouncingScrollPhysics(),
             gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
               crossAxisCount: 2,
-              childAspectRatio: 0.7,
+              childAspectRatio: 0.68,
               crossAxisSpacing: 16,
               mainAxisSpacing: 16,
             ),
@@ -101,7 +100,7 @@ class _CategoryShopsScreenState extends ConsumerState<CategoryShopsScreen> {
   }
 }
 
-class _ProductCard extends StatelessWidget {
+class _ProductCard extends ConsumerWidget {
   final ProductModel product;
   final bool isLight;
   final ColorScheme colorScheme;
@@ -109,11 +108,26 @@ class _ProductCard extends StatelessWidget {
   const _ProductCard({required this.product, required this.isLight, required this.colorScheme});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final double originalPrice = product.price;
+    final double discountPercent = product.discount;
+    final bool hasDiscount = discountPercent > 0;
+    
+    final double finalPrice = hasDiscount 
+        ? originalPrice - (originalPrice * (discountPercent / 100)) 
+        : originalPrice;
+
     return InkWell(
-      onTap: () => context.push('/customer/product/${product.id}'),
+      onTap: () {
+        try {
+          context.push('/customer/product/${product.id}', extra: product);
+        } catch (_) {
+          context.push('/customer/product/${product.id}');
+        }
+      },
       borderRadius: BorderRadius.circular(24),
       child: Container(
+        padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
           color: colorScheme.surface,
           borderRadius: BorderRadius.circular(24),
@@ -130,35 +144,142 @@ class _ProductCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Expanded(
-              child: ClipRRect(
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-                child: Container(
-                  width: double.infinity,
-                  color: isLight ? AppColors.lightSecondaryBackground : AppColors.premiumDarkSecondaryBackground,
-                  child: product.imageUrl.isNotEmpty 
-                      ? Image.network(product.imageUrl, fit: BoxFit.cover)
-                      : Icon(Icons.shopping_bag, size: 36, color: colorScheme.onSurface.withOpacity(0.1)),
-                ),
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.all(12),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+              child: Stack(
                 children: [
-                  Text(
-                    product.name, 
-                    style: TextStyle(fontWeight: FontWeight.w800, fontSize: 14, color: colorScheme.onSurface),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(16),
+                    child: Container(
+                      width: double.infinity,
+                      color: isLight ? AppColors.lightSecondaryBackground : AppColors.premiumDarkSecondaryBackground,
+                      child: product.imageUrl.isNotEmpty 
+                          ? Image.network(product.imageUrl, fit: BoxFit.cover, width: double.infinity, height: double.infinity)
+                          : Center(child: Icon(Icons.shopping_bag, size: 36, color: colorScheme.onSurface.withOpacity(0.1))),
+                    ),
                   ),
-                  const SizedBox(height: 4),
-                  Text(
-                    '${product.price} ${product.currency}', 
-                    style: TextStyle(color: colorScheme.primary, fontSize: 13, fontWeight: FontWeight.w900),
-                  ),
+                  if (hasDiscount)
+                    Positioned(
+                      top: 8,
+                      right: 8,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+                        decoration: BoxDecoration(
+                          color: Colors.red,
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Text(
+                          '-${discountPercent.round()}%',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 10,
+                            fontWeight: FontWeight.w900,
+                          ),
+                        ),
+                      ),
+                    ),
                 ],
               ),
+            ),
+            const SizedBox(height: 10),
+            Text(
+              product.name, 
+              style: TextStyle(fontWeight: FontWeight.w900, fontSize: 14, color: colorScheme.onSurface),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+            const SizedBox(height: 4),
+            Text(
+              product.description.isNotEmpty ? product.description : 'Offer Product',
+              style: TextStyle(color: colorScheme.onSurface.withOpacity(0.6), fontSize: 11, fontWeight: FontWeight.w600),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+            const SizedBox(height: 8),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (hasDiscount) ...[
+                  Text(
+                    '${product.currency} ${originalPrice.round()}',
+                    style: TextStyle(
+                      color: colorScheme.onSurface.withOpacity(0.5),
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700,
+                      decoration: TextDecoration.lineThrough,
+                      decorationColor: Colors.red,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                ],
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Expanded(
+                      child: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        alignment: Alignment.centerLeft,
+                        child: Text(
+                          '${product.currency} ${finalPrice.round()}', 
+                          style: TextStyle(
+                            color: hasDiscount ? Colors.green.shade700 : colorScheme.primary, 
+                            fontWeight: FontWeight.w900, 
+                            fontSize: 14.5,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 4),
+                    InkWell(
+                      onTap: () {
+                        ref.read(cartProvider.notifier).addItem(product);
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Row(
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.all(4),
+                                  decoration: const BoxDecoration(
+                                    color: Colors.white,
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: const Icon(Icons.check_rounded, color: Color(0xFF10B981), size: 16),
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Text(
+                                    'تم إضافة "${product.name}" إلى السلة',
+                                    style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 13),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            backgroundColor: const Color(0xFF10B981),
+                            behavior: SnackBarBehavior.floating,
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                            margin: const EdgeInsets.all(16),
+                            duration: const Duration(seconds: 2),
+                          ),
+                        );
+                      },
+                      borderRadius: BorderRadius.circular(10),
+                      child: Container(
+                        padding: const EdgeInsets.all(6),
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(colors: [colorScheme.primary, colorScheme.primary.withOpacity(0.8)]),
+                          borderRadius: BorderRadius.circular(10),
+                          boxShadow: [
+                            BoxShadow(
+                              color: colorScheme.primary.withOpacity(0.4), 
+                              blurRadius: 8, 
+                              offset: const Offset(0, 3)
+                            ),
+                          ],
+                        ),
+                        child: const Icon(Icons.add_rounded, color: Colors.white, size: 16),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
             ),
           ],
         ),
